@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Summer Splash",
+    "banners": [
+      {
+        "title": "Main Splash Banner",
+        "variants": [
+          { "name": "Variant A", "color": "bg-blue-400" },
+          { "name": "Variant B", "color": "bg-green-400" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Winter Wonderland",
+    "banners": [
+      {
+        "title": "Holiday Banner",
+        "variants": [
+          { "name": "Variant A", "color": "bg-red-400" },
+          { "name": "Variant B", "color": "bg-yellow-400" },
+          { "name": "Variant C", "color": "bg-indigo-400" }
+        ]
+      },
+      {
+        "title": "Snow Day Banner",
+        "variants": [
+          { "name": "Variant A", "color": "bg-teal-400" },
+          { "name": "Variant B", "color": "bg-pink-400" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Spring Bloom",
+    "banners": [
+      {
+        "title": "Flower Banner",
+        "variants": [
+          { "name": "Variant A", "color": "bg-purple-400" }
+        ]
+      }
+    ]
+  }
+]
