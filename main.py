@@ -1,17 +1,20 @@
+import redis
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 import json
-import uvicorn
 import random
 
 app = FastAPI()
 
-# Load campaigns.json once on startup
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# load static campaign data once on startup.
+# TODO: Move to a db. Will also need to store links to imgs 
 with open("src/data/campaigns.json", "r", encoding="utf-8") as f:
     campaigns = json.load(f)
 
-# Assign IDs dynamically for simplicity
+# Assign IDs dynamically for simplicity - will be replaced
 for i, campaign in enumerate(campaigns):
     campaign["id"] = i + 1
     for j, banner in enumerate(campaign.get("banners", [])):
@@ -67,6 +70,21 @@ class ReportEventResponse(BaseModel):
     impressions: int
     successes: int
 
+# --------- HELPERS ---------
+
+def pick_variant_randomly(banner):
+    return random.choice(banner["variants"])
+
+# Helper to generate Redis keys for stats
+def impressions_key(campaign_id, banner_id, variant_id):
+    return f"stats:{campaign_id}:{banner_id}:{variant_id}:impressions"
+
+def successes_key(campaign_id, banner_id, variant_id):
+    return f"stats:{campaign_id}:{banner_id}:{variant_id}:successes"
+
+# --------- ENDPOINTS ---------
+
+
 @app.get("/campaigns", response_model=List[Campaign])
 def get_campaigns():
     return campaigns
@@ -78,9 +96,6 @@ def get_campaign(campaign_id: int):
             return c
     raise HTTPException(status_code=404, detail="Campaign not found")
 
-def pick_variant_randomly(banner):
-    return random.choice(banner["variants"])
-
 @app.post("/request-variants/{campaign_id}", response_model=RequestVariantsResponse)
 def request_variants(campaign_id: int):
     campaign = next((c for c in campaigns if c["id"] == campaign_id), None)
@@ -90,8 +105,10 @@ def request_variants(campaign_id: int):
     selections = []
     for banner in campaign.get("banners", []):
         variant = pick_variant_randomly(banner)
+
         # Increment impression count on serve
-        variant["impressions"] += 1
+        r.incr(impressions_key(campaign_id, banner["id"], variant["id"]))
+
         selections.append(
             VariantSelection(
                 banner_id=banner["id"],
@@ -117,10 +134,13 @@ def report_event(event: ReportEventRequest):
         raise HTTPException(status_code=404, detail="Variant not found")
 
     if event.clicked:
-        variant["successes"] += 1
+        r.incr(successes_key(event.campaign_id, event.banner_id, event.variant_id))
+    
+    impressions = int(r.get(impressions_key(event.campaign_id, event.banner_id, event.variant_id)) or 0)
+    successes = int(r.get(successes_key(event.campaign_id, event.banner_id, event.variant_id)) or 0)
 
     return ReportEventResponse(
         message="Event recorded",
-        impressions=variant["impressions"],
-        successes=variant["successes"],
+        impressions=impressions,
+        successes=successes,
     )
