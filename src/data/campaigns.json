@@ -1,40 +1,47 @@
 [
   {
     "name": "Summer Splash",
+    "id": 1,
     "banners": [
       {
         "title": "Main Splash Banner",
+        "id": 1,
         "variants": [
-          { "name": "Variant A", "color": "bg-blue-400" },
-          { "name": "Variant B", "color": "bg-green-400" }
+          { "name": "Variant A", "id": 1, "color": "bg-blue-400" },
+          { "name": "Variant B", "id": 2, "color": "bg-green-400" }
         ]
       }
     ]
   },
   {
     "name": "Winter Wonderland",
+    "id": 2,
     "banners": [
       {
         "title": "Holiday Banner",
+        "id": 1,
         "variants": [
-          { "name": "Variant A", "color": "bg-red-400" },
-          { "name": "Variant B", "color": "bg-yellow-400" },
-          { "name": "Variant C", "color": "bg-indigo-400" }
+          { "name": "Variant A", "id": 1, "color": "bg-red-400" },
+          { "name": "Variant B", "id": 2, "color": "bg-yellow-400" },
+          { "name": "Variant C", "id": 3, "color": "bg-indigo-400" }
         ]
       },
       {
         "title": "Snow Day Banner",
+        "id": 2,
         "variants": [
-          { "name": "Variant A", "color": "bg-teal-400" },
-          { "name": "Variant B", "color": "bg-pink-400" }
+          { "name": "Variant A", "id": 1, "color": "bg-teal-400" },
+          { "name": "Variant B", "id": 2, "color": "bg-pink-400" }
         ]
       }
     ]
   },
   {
     "name": "Spring Bloom",
+    "id": 3,
     "banners": [
       {
+        "id": 1,
         "title": "Flower Banner",
         "variants": [
           { "name": "Variant A", "color": "bg-purple-400" }
