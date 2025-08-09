@@ -117,6 +117,13 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
 
     return {"status": "created", "data_campaign_id": new_campaign.id}
 
+@app.get("/data_campaign/{data_campaign_id}")
+def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
+    dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
+    if not dc:
+        raise HTTPException(status_code=404, detail="Data campaign not found")
+    return dc
+
 
 # --- Serve Endpoint ---
 @app.post("/serve")
