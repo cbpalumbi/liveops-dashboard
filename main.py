@@ -99,9 +99,11 @@ def serve_variant(req: ServeRequest, db: Session = Depends(get_db)):
     # --- Variant Selection Logic ---
 
     if dc.campaign_type.lower() == "mab":
+        print("DEBUG: Running Thompson Sampling")
         variant_id = run_thompson_sampling(dc.id, banner["id"], db)
         chosen_variant = next(v for v in banner["variants"] if v["id"] == variant_id)
     else:
+        print("DEBUG: Running random choice")
         # Default fallback: random choice
         chosen_variant = random.choice(banner["variants"])
 

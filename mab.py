@@ -56,6 +56,8 @@ def run_thompson_sampling(data_campaign_id: int, banner_id: int, db: Session):
         variant_scores.append((variant_id, score))
 
     # Pick variant with max score
+    print(f"DEBUG: Variants: {variant_scores}")
     best_variant = max(variant_scores, key=lambda x: x[1])[0]
+    print(f"DEBUG: best variant {best_variant}\n")
     return best_variant
 

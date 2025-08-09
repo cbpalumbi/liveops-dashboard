@@ -5,7 +5,7 @@ import hashlib
 import json
 import random
 
-API_BASE = "http://localhost:8000"  # Change if your FastAPI runs elsewhere
+API_BASE = "http://localhost:8000" 
 
 def get_static_campaign(data_campaign, static_campaigns):
     return next((c for c in static_campaigns if c["id"] == data_campaign["static_campaign_id"]), None)
@@ -32,7 +32,33 @@ def load_static_campaigns():
     with open("src/data/campaigns.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
-def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.05):
+def print_regret_summary(impression_log, true_ctrs):
+    best_ctr = max(true_ctrs.values())
+    cumulative_regret_mab = 0.0
+    cumulative_regret_uniform = 0.0
+    total_impressions = len(impression_log)
+    uniform_prob = 1 / len(true_ctrs)
+
+    for i, impression in enumerate(impression_log, 1):
+        variant_id = impression["variant_id"]
+
+        # Regret is the difference between the click through rate we could'v ehad if we had served
+        # the ideal banner variant, minus the CTR of the one we *did* serve
+        mab_regret = best_ctr - true_ctrs[variant_id]
+        cumulative_regret_mab += mab_regret
+
+        # Uniform expected click is expected CTR averaged over variants
+        expected_click_uniform = sum(ctr * uniform_prob for ctr in true_ctrs.values())
+        cumulative_regret_uniform += best_ctr - expected_click_uniform
+
+        if i % 10 == 0 or i == total_impressions:
+            print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
+
+    print(f"\nFinal cumulative regret after {total_impressions} impressions:")
+    print(f"  MAB policy: {cumulative_regret_mab:.3f}")
+    print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
+
+def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.02):
     static_campaigns = load_static_campaigns()
 
     # Get data campaign details
@@ -47,7 +73,16 @@ def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.05):
         print("Static campaign for data campaign not found")
         return
 
+    impression_log = []
     current_time = datetime.utcnow()
+
+    # Prepare true CTR dict for variants in banner
+    banner_id = data_campaign["banner_id"]
+    static_banner_variants = [v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]]
+    true_ctrs = {
+        variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
+        for variant_id in static_banner_variants
+    }
 
     for i in range(impressions):
         # Serve a variant
@@ -59,13 +94,12 @@ def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.05):
         variant = serve_data["variant"]
 
         # Get CTR for variant
-        ctr = get_ctr_for_variant(static_campaign, serve_data["banner_id"], variant["id"])
+        ctr = true_ctrs[variant["id"]]
 
         # Simulate click event
         clicked = random.random() < ctr
 
         # Report event 
-        # TODO: pass along timestamp 
         report_payload = {
             "data_campaign_id": data_campaign_id,
             "variant_id": variant["id"],
@@ -76,14 +110,20 @@ def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.05):
             print("Report error:", report_resp.text)
             break
 
+        # Log impression for regret calculation (clicked as int 0/1)
+        impression_log.append({
+            "variant_id": variant["id"],
+            "clicked": int(clicked)
+        })
+
         print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
 
-        # Increment time by 1 minute ( could be changed)
         current_time += timedelta(minutes=1)
 
         time.sleep(delay)  # optional delay between impressions
 
-
+    # After all impressions, print regret summary
+    print_regret_summary(impression_log, true_ctrs)
 
 if __name__ == "__main__":
     import sys
