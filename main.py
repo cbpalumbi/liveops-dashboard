@@ -1,37 +1,18 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine, Column, Integer, Boolean, String, DateTime, func
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from pydantic import BaseModel
 import json, random
-import sqlite3
 from datetime import datetime
-# import os
-# if os.path.exists("mab.db"):
-#     os.remove("mab.db")
+
+from sqlite_models import DataCampaign, Impression
+from db_utils import print_tables
+
 DATABASE_URL = "sqlite:///./mab.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
-
-# --- SQLite Models ---
-class DataCampaign(Base):
-    __tablename__ = "data_campaigns"
-    id = Column(Integer, primary_key=True, index=True)
-    static_campaign_id = Column(Integer, nullable=False)  # from campaigns.json
-    banner_id = Column(Integer, nullable=False)
-    campaign_type = Column(String, nullable=False)        # e.g. "MAB", "Random"
-    start_time = Column(DateTime, server_default=func.now())
-    end_time = Column(DateTime, nullable=True)
-
-class Impression(Base):
-    __tablename__ = "impressions"
-    id = Column(Integer, primary_key=True, index=True)
-    data_campaign_id = Column(Integer, nullable=False)    # Link to a data campaign run
-    banner_id = Column(Integer, index=True, nullable=False)
-    variant_id = Column(Integer, nullable=False)
-    clicked = Column(Boolean, nullable=False)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
 Base.metadata.create_all(bind=engine)
 
@@ -72,32 +53,6 @@ def validate_static_campaign(campaign_id: int, banner_id: int):
                     return True
             raise HTTPException(status_code=400, detail="Banner not found in this campaign")
     raise HTTPException(status_code=404, detail="Static campaign not found")
-
-def print_tables(db_path="mab.db"):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    # List all tables
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = cursor.fetchall()
-    print("Tables in database:", [t[0] for t in tables])
-
-    # Dump contents of each table
-    for (table_name,) in tables:
-        print(f"\n--- {table_name} ---")
-        cursor.execute(f"SELECT * FROM {table_name}")
-        rows = cursor.fetchall()
-
-        # Get column names
-        cursor.execute(f"PRAGMA table_info({table_name})")
-        columns = [col[1] for col in cursor.fetchall()]
-        print(columns)
-
-        # Print rows
-        for row in rows:
-            print(row)
-
-    conn.close()
 
 # --- Endpoint to create a data campaign ---
 @app.post("/data_campaign")
