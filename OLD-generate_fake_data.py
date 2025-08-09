@@ -8,7 +8,7 @@ import os
 API_BASE_URL = "http://localhost:8000"
 CAMPAIGNS_JSON_PATH = os.path.join("src", "data", "campaigns.json")
 
-# Hardcoded default simulation (Winter Wonderland holiday banner)
+# default simulation (Winter Wonderland holiday banner)
 DEFAULT_SIMULATION = {
     "campaign_id": 2,
     "banner_id": 1,
@@ -128,8 +128,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Run a banner click simulation.")
-    parser.add_argument("--simulation", type=int, help="Simulation (campaign) index")
-    parser.add_argument("--banner", type=int, help="Banner ID to simulate")
+    parser.add_argument("--campaign", type=int, help="Static campaign index override")
+    parser.add_argument("--banner", type=int, help="Banner ID override")
     parser.add_argument(
         "--ctr",
         nargs="*",

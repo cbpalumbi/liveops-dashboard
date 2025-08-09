@@ -7,6 +7,7 @@ from datetime import datetime
 
 from sqlite_models import DataCampaign, Impression
 from db_utils import print_tables
+from mab import run_thompson_sampling
 
 DATABASE_URL = "sqlite:///./mab.db"
 
@@ -96,8 +97,13 @@ def serve_variant(req: ServeRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Banner not found in static campaign")
 
     # --- Variant Selection Logic ---
-    # TODO: Replace with MAB logic
-    chosen_variant = random.choice(banner["variants"])
+
+    if dc.campaign_type.lower() == "mab":
+        variant_id = run_thompson_sampling(dc.id, banner["id"], db)
+        chosen_variant = next(v for v in banner["variants"] if v["id"] == variant_id)
+    else:
+        # Default fallback: random choice
+        chosen_variant = random.choice(banner["variants"])
 
     return {
         "data_campaign_id": req.data_campaign_id,
@@ -105,6 +111,7 @@ def serve_variant(req: ServeRequest, db: Session = Depends(get_db)):
         "banner_id": banner["id"],
         "variant": chosen_variant
     }
+
 
 # --- Report Endpoint ---
 @app.post("/report")
@@ -123,7 +130,7 @@ def report_impression(req: ReportRequest, db: Session = Depends(get_db)):
     db.add(impression)
     db.commit()
 
-    print_tables()
+    #print_tables()
 
     return {"status": "logged"}
 
