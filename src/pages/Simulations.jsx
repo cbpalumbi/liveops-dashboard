@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DataCampaignList from "../components/DataCampaignList";
 
 export default function Simulations() {
   const [campaigns, setCampaigns] = useState([]);
@@ -36,6 +37,29 @@ export default function Simulations() {
     }
     fetchCampaigns();
   }, []);
+
+  const [dataCampaigns, setDataCampaigns] = useState([]);
+  const [dataCampaignsLoading, setDataCampaignsLoading] = useState(true);
+  const [dataCampaignsError, setDataCampaignsError] = useState(null);
+
+  // Fetch data campaigns on load or after creating a new one
+  useEffect(() => {
+    async function fetchDataCampaigns() {
+      try {
+        setDataCampaignsLoading(true);
+        const res = await fetch("http://localhost:8000/data_campaigns");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setDataCampaigns(data);
+      } catch (err) {
+        setDataCampaignsError(err.message);
+      } finally {
+        setDataCampaignsLoading(false);
+      }
+    }
+
+    fetchDataCampaigns();
+  }, [submitSuccess]); // Reload list after successful creation
 
   // Update banner dropdown when campaign changes in form
   useEffect(() => {
@@ -172,6 +196,16 @@ export default function Simulations() {
           {submitSuccess && <p className="text-green-600 mt-2">{submitSuccess}</p>}
         </form>
       )}
+
+      {/* Existing data campaigns list */}
+      <h2 className="mt-8 mb-4 text-xl font-semibold">Existing Simulations</h2>
+      {dataCampaignsLoading && <div>Loading data campaigns...</div>}
+      {dataCampaignsError && <div className="text-red-600">Error: {dataCampaignsError}</div>}
+
+      {!dataCampaignsLoading && !dataCampaignsError && (
+        <DataCampaignList dataCampaigns={dataCampaigns} />
+      )}
+
     </div>
   );
 }

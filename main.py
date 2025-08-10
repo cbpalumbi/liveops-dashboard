@@ -78,6 +78,13 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Data campaign not found")
     return dc
 
+@app.get("/data_campaigns")
+def get_data_campaigns(db: Session = Depends(get_db)):
+    dcs = db.query(DataCampaign).all()
+    if not dcs:
+        raise HTTPException(status_code=404, detail="Data campaign not found")
+    return dcs
+
 
 # --- Serve Endpoint ---
 @app.post("/serve")
