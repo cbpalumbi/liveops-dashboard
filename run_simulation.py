@@ -127,11 +127,23 @@ def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.02):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) < 2:
-        print("Usage: python simulation.py <data_campaign_id> [impressions]")
+
+    if len(sys.argv) < 4:
+        print("Usage: python simulation.py --mode <api|local> <data_campaign_id> [impressions]")
         sys.exit(1)
 
-    data_campaign_id = int(sys.argv[1])
-    impressions = int(sys.argv[2]) if len(sys.argv) > 2 else 50
+    # Check mode flag
+    if sys.argv[1] != "--mode":
+        print("First argument must be --mode")
+        sys.exit(1)
 
-    simulate_data_campaign(data_campaign_id, impressions)
+    mode = sys.argv[2].lower()
+    if mode not in ("api", "local"):
+        print("Mode must be either 'api' or 'local'")
+        sys.exit(1)
+
+    data_campaign_id = int(sys.argv[3])
+    impressions = int(sys.argv[4]) if len(sys.argv) > 4 else 50
+
+    simulate_data_campaign(data_campaign_id, impressions, mode=mode)
+
