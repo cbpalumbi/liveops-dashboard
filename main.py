@@ -2,12 +2,10 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from pydantic import BaseModel
-import json, random
-from datetime import datetime
+import json
 
-from sqlite_models import DataCampaign, Impression
-from db_utils import print_tables
-from mab import run_thompson_sampling
+from sqlite_models import DataCampaign
+from mab import report_impression, serve_variant
 
 DATABASE_URL = "sqlite:///./mab.db"
 
@@ -83,58 +81,20 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
 
 # --- Serve Endpoint ---
 @app.post("/serve")
-def serve_variant(req: ServeRequest, db: Session = Depends(get_db)):
-    dc = db.query(DataCampaign).filter(DataCampaign.id == req.data_campaign_id).first()
-    if not dc:
-        raise HTTPException(status_code=404, detail="Data campaign not found")
+def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
+    try:
+        return serve_variant(req.data_campaign_id, db)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
 
-    static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
-    if not static_campaign:
-        raise HTTPException(status_code=404, detail="Static campaign not found")
-
-    banner = next((b for b in static_campaign["banners"] if b["id"] == dc.banner_id), None)
-    if not banner:
-        raise HTTPException(status_code=404, detail="Banner not found in static campaign")
-
-    # --- Variant Selection Logic ---
-
-    if dc.campaign_type.lower() == "mab":
-        print("DEBUG: Running Thompson Sampling")
-        variant_id = run_thompson_sampling(dc.id, banner["id"], db)
-        chosen_variant = next(v for v in banner["variants"] if v["id"] == variant_id)
-    else:
-        print("DEBUG: Running random choice")
-        # Default fallback: random choice
-        chosen_variant = random.choice(banner["variants"])
-
-    return {
-        "data_campaign_id": req.data_campaign_id,
-        "static_campaign_id": dc.static_campaign_id,
-        "banner_id": banner["id"],
-        "variant": chosen_variant
-    }
-
-
-# --- Report Endpoint ---
 @app.post("/report")
-def report_impression(req: ReportRequest, db: Session = Depends(get_db)):
-    dc = db.query(DataCampaign).filter(DataCampaign.id == req.data_campaign_id).first()
-    if not dc:
-        raise HTTPException(status_code=404, detail="Data campaign not found")
+def report_impression_api(req: ReportRequest, db: Session = Depends(get_db)):
+    try:
+        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, db)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
-    # Store impression in SQLite
-    impression = Impression(
-        data_campaign_id=req.data_campaign_id,
-        banner_id=dc.banner_id,
-        variant_id=req.variant_id,
-        clicked=req.clicked
-    )
-    db.add(impression)
-    db.commit()
-
-    #print_tables()
-
-    return {"status": "logged"}
 
 # --- Frontend Endpoints ---
 @app.get("/campaigns")

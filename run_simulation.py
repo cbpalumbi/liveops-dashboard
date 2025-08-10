@@ -4,6 +4,11 @@ from datetime import datetime, timedelta
 import hashlib
 import json
 import random
+from collections import Counter
+
+from main import SessionLocal
+
+from mab import serve_variant, report_impression
 
 API_BASE = "http://localhost:8000" 
 
@@ -54,11 +59,18 @@ def print_regret_summary(impression_log, true_ctrs):
         if i % 10 == 0 or i == total_impressions:
             print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
 
+    variant_ids = [entry["variant_id"] for entry in impression_log]
+    counts = Counter(variant_ids)
+
+    print("\nImpression counts per variant:")
+    for variant_id, count in counts.items():
+        print(f"Variant ID {variant_id}: {count} impressions")
+
     print(f"\nFinal cumulative regret after {total_impressions} impressions:")
     print(f"  MAB policy: {cumulative_regret_mab:.3f}")
     print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
 
-def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.02):
+def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
     static_campaigns = load_static_campaigns()
 
     # Get data campaign details
@@ -74,9 +86,8 @@ def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.02):
         return
 
     impression_log = []
-    current_time = datetime.utcnow()
 
-    # Prepare true CTR dict for variants in banner
+    # Hash once to find true CTRs for banner variants
     banner_id = data_campaign["banner_id"]
     static_banner_variants = [v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]]
     true_ctrs = {
@@ -84,6 +95,49 @@ def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.02):
         for variant_id in static_banner_variants
     }
 
+    if mode == "api":
+        run_simulation_via_api(true_ctrs, impression_log, impressions, delay)
+    elif mode == "local":
+        run_simulation_local(true_ctrs, impression_log, impressions, delay)
+
+def run_simulation_local(true_ctrs, impression_log, impressions, delay):
+    current_time = datetime.utcnow()
+    db = SessionLocal()
+    try:
+        for i in range(impressions):
+
+            # Serve a variant
+            serve_data = serve_variant(data_campaign_id, db)
+            variant = serve_data["variant"]
+
+            ctr = true_ctrs[variant["id"]]
+           
+            # Simulate click event with probability of success
+            clicked = random.random() < ctr
+
+            report_impression(data_campaign_id, variant["id"], clicked, db)
+
+            # Log impression for regret calculation (clicked as int 0/1)
+            impression_log.append({
+                "variant_id": variant["id"],
+                "clicked": int(clicked)
+            })
+
+            print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
+
+            current_time += timedelta(minutes=1)
+        
+
+            time.sleep(delay)  # optional delay between impressions
+    finally:
+        db.close()
+
+    # After all impressions, print regret summary
+    print_regret_summary(impression_log, true_ctrs)
+
+
+def run_simulation_via_api(true_ctrs, impression_log, impressions, delay):
+    current_time = datetime.utcnow()
     for i in range(impressions):
         # Serve a variant
         serve_resp = requests.post(f"{API_BASE}/serve", json={"data_campaign_id": data_campaign_id})
@@ -92,11 +146,10 @@ def simulate_data_campaign(data_campaign_id, impressions=50, delay=0.02):
             break
         serve_data = serve_resp.json()
         variant = serve_data["variant"]
-
-        # Get CTR for variant
+ 
         ctr = true_ctrs[variant["id"]]
 
-        # Simulate click event
+        # Simulate click event with probability of success
         clicked = random.random() < ctr
 
         # Report event 
@@ -145,5 +198,5 @@ if __name__ == "__main__":
     data_campaign_id = int(sys.argv[3])
     impressions = int(sys.argv[4]) if len(sys.argv) > 4 else 50
 
-    simulate_data_campaign(data_campaign_id, impressions, mode=mode)
+    simulate_data_campaign(data_campaign_id, mode, impressions)
 
