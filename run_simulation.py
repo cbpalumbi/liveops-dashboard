@@ -113,7 +113,11 @@ def run_simulation_local(true_ctrs, impression_log, impressions, delay):
             ctr = true_ctrs[variant["id"]]
            
             # Simulate click event with probability of success
-            clicked = random.random() < ctr
+            rand = random.random()
+            clicked = rand < ctr
+            #print("name ", variant["name"])
+            #print("rand ", rand)
+            #print("ctr ", ctr)
 
             report_impression(data_campaign_id, variant["id"], clicked, db)
 

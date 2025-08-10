@@ -20,5 +20,5 @@ class Impression(Base):
     data_campaign_id = Column(Integer, nullable=False)    # Link to a data campaign run
     banner_id = Column(Integer, index=True, nullable=False)
     variant_id = Column(Integer, nullable=False)
-    clicked = Column(Boolean, nullable=False)
+    clicked = Column(Integer)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())

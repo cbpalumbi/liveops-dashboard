@@ -31,6 +31,18 @@ def run_thompson_sampling(data_campaign_id: int, banner_id: int, db: Session):
 
     variant_scores = []
 
+    zero_impression_variants = [
+        vid for vid in static_banner_variants
+        if db.query(func.count(Impression.id)).filter(
+            Impression.data_campaign_id == data_campaign_id,
+            Impression.banner_id == banner_id,
+            Impression.variant_id == vid
+        ).scalar() == 0
+    ]
+
+    if zero_impression_variants:
+        return random.choice(zero_impression_variants)
+
     for variant_id in static_banner_variants:
         clicks = db.query(func.sum(Impression.clicked)).filter(
             Impression.data_campaign_id == data_campaign_id,
@@ -43,11 +55,6 @@ def run_thompson_sampling(data_campaign_id: int, banner_id: int, db: Session):
             Impression.banner_id == banner_id,
             Impression.variant_id == variant_id
         ).scalar() or 0
-
-        if impressions == 0:
-            # Exploration: immediately pick this variant. This ensures
-            # that all variants are returned at least once
-            return variant_id
 
         alpha = 1 + clicks
         beta = 1 + (impressions - clicks)
