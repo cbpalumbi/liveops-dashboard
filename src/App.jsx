@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Tabs from './components/Tabs'
 import Campaigns from './pages/Campaigns'
-import Analytics from './pages/Analytics'
+import Simulations from './pages/Simulations'
 import Assets from './pages/Assets'
 
 export default function App() {
@@ -12,7 +12,7 @@ export default function App() {
           <Tabs />
           <Routes>
             <Route path="/" element={<Campaigns />} />
-            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/simulations" element={<Simulations />} />
             <Route path="/assets" element={<Assets />} />
           </Routes>
         </Layout>

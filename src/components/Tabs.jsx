@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 export default function Tabs() {
     const tabs = [
         { name: 'Campaigns', path: '/' },
-        { name: 'Analytics', path: '/analytics' },
+        { name: 'Simulations', path: '/simulations' },
         { name: 'Assets', path: '/assets' },
     ]
 
