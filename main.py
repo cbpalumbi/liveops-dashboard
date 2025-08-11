@@ -2,9 +2,11 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from pydantic import BaseModel
+from datetime import datetime
+from typing import List, Optional
 import json
 
-from sqlite_models import DataCampaign
+from sqlite_models import DataCampaign, Impression
 from mab import report_impression, serve_variant
 
 DATABASE_URL = "sqlite:///./mab.db"
@@ -43,6 +45,28 @@ class ReportRequest(BaseModel):
     variant_id: int
     clicked: bool
 
+class DataCampaignRequest(BaseModel):
+    id: int
+    static_campaign_id: int
+    banner_id: int
+    campaign_type: str
+    start_time: datetime
+    end_time: Optional[datetime]
+    model_config = {
+        "from_attributes": True
+    }
+
+class ImpressionRequest(BaseModel):
+    data_campaign_id: int
+    banner_id: int
+    variant_id: int
+    clicked: bool
+    timestamp: datetime
+    model_config = {
+        "from_attributes": True
+    }
+
+
 # --- Helpers ---
 def validate_static_campaign(campaign_id: int, banner_id: int):
     for campaign in static_campaigns:
@@ -71,12 +95,6 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
 
     return {"status": "created", "data_campaign_id": new_campaign.id}
 
-@app.get("/data_campaign/{data_campaign_id}")
-def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
-    dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
-    if not dc:
-        raise HTTPException(status_code=404, detail="Data campaign not found")
-    return dc
 
 @app.get("/data_campaigns")
 def get_data_campaigns(db: Session = Depends(get_db)):
@@ -85,8 +103,32 @@ def get_data_campaigns(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Data campaign not found")
     return dcs
 
+@app.get("/campaigns")
+def get_campaigns():
+    return static_campaigns
 
-# --- Serve Endpoint ---
+@app.get("/campaigns/{campaign_id}")
+def get_campaign(campaign_id: int):
+    for c in static_campaigns:
+        if c["id"] == campaign_id:
+            return c
+    raise HTTPException(status_code=404, detail="Campaign not found")
+
+@app.get("/impressions/{data_campaign_id}", response_model=List[ImpressionRequest])
+def get_impressions(data_campaign_id: int, db: Session = Depends(get_db)):
+    imps = db.query(Impression).filter(Impression.data_campaign_id == data_campaign_id).all()
+    print("imps ",imps)
+    return imps
+
+@app.get("/data_campaign/{data_campaign_id}", response_model=DataCampaignRequest)
+def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
+    dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
+    if not dc:
+        raise HTTPException(status_code=404, detail="Data campaign not found")
+    print(dc)
+    return dc
+
+# --- MAB Endpoints ---
 @app.post("/serve")
 def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
     try:
@@ -102,15 +144,3 @@ def report_impression_api(req: ReportRequest, db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-
-# --- Frontend Endpoints ---
-@app.get("/campaigns")
-def get_campaigns():
-    return static_campaigns
-
-@app.get("/campaigns/{campaign_id}")
-def get_campaign(campaign_id: int):
-    for c in static_campaigns:
-        if c["id"] == campaign_id:
-            return c
-    raise HTTPException(status_code=404, detail="Campaign not found")
