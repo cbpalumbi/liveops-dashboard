@@ -4,6 +4,7 @@ import Tabs from './components/Tabs'
 import Campaigns from './pages/Campaigns'
 import Simulations from './pages/Simulations'
 import Assets from './pages/Assets'
+import SimulationPage from './pages/SimulationPage'
 
 export default function App() {
     return (
@@ -14,6 +15,7 @@ export default function App() {
             <Route path="/" element={<Campaigns />} />
             <Route path="/simulations" element={<Simulations />} />
             <Route path="/assets" element={<Assets />} />
+            <Route path="/simulations/:id" element={<SimulationPage />} />
           </Routes>
         </Layout>
       </Router>
