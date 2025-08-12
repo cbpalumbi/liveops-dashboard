@@ -84,9 +84,10 @@ export default function SimulationPage() {
 			{error && <p className="text-red-500">{error}</p>}
 			{/*campaign && <pre>{JSON.stringify(campaign, null, 2)}</pre>*/}
 			{/*impressions.length > 0 && <pre>{JSON.stringify(impressions, null, 2)}</pre>*/}
-
+            <br></br>
+            <h3 className="text-lg text-center">Variants Served Over Time</h3>
             <ScatterChart
-                width={800}
+                width={600}
                 height={400}
                 margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
                 >
@@ -111,6 +112,7 @@ export default function SimulationPage() {
                     return `Variant ${variantId}`;
                     }}
                     name="Variant"
+                    domain={[0, 3]}
                 />
                 
                 <Tooltip
@@ -123,12 +125,16 @@ export default function SimulationPage() {
                     }}
                 />
                 
+                
                 <Legend />
                 
                 <Scatter
                     name="Serves"
                     data={scatterData}
-                    fill="#8884d8"
+                    shape={(props) => {
+                        const color = props.payload.variant === 1 ? '#8884d8' : '#82ca9d';
+                        return <circle cx={props.cx} cy={props.cy} r={3} fill={color} />;
+                    }}
                 />
             </ScatterChart>
 
