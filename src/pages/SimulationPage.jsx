@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   ScatterChart,
   Scatter,
@@ -7,8 +7,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend
+  Legend,
+  LineChart,
+  Line
 } from "recharts";
+
+import RollingCTRChart from "../components/RollingCTRChart";
 
 
 export default function SimulationPage() {
@@ -32,6 +36,27 @@ export default function SimulationPage() {
             variant: imp.variant_id
         };
     });
+
+    const rollingCTRData = useMemo(() => {
+        if (!impressions.length) return [];
+
+        const sorted = [...impressions].sort(
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        );
+
+        let totalServes = 0;
+        let totalClicks = 0;
+
+        return sorted.map((imp) => {
+            totalServes++;
+            if (imp.clicked) totalClicks++;
+
+            return {
+            time: new Date(imp.timestamp).toLocaleTimeString(),
+            ctr: totalClicks / totalServes,
+            };
+        });
+    }, [impressions]);
 
 
 	useEffect(() => {
@@ -137,6 +162,14 @@ export default function SimulationPage() {
                     }}
                 />
             </ScatterChart>
+            <hr></hr>
+            <br></br>
+            <br></br>
+            
+            <RollingCTRChart 
+                rollingCTRData={rollingCTRData}
+            />
+
 
 		</div>
 	);
