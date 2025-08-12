@@ -44,6 +44,7 @@ class ReportRequest(BaseModel):
     data_campaign_id: int
     variant_id: int
     clicked: bool
+    timestamp: datetime
 
 class DataCampaignRequest(BaseModel):
     id: int
@@ -140,7 +141,7 @@ def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
 @app.post("/report")
 def report_impression_api(req: ReportRequest, db: Session = Depends(get_db)):
     try:
-        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, db)
+        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, req.timestamp, db)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
