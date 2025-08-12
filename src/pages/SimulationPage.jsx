@@ -1,11 +1,38 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import {
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from "recharts";
+
 
 export default function SimulationPage() {
 	const { id } = useParams();
 	const [campaign, setCampaign] = useState(null);
 	const [impressions, setImpressions] = useState([]);
 	const [error, setError] = useState(null);
+
+    // Preprocessing for the line chart
+    // Map each variant to a numeric Y value so they plot on separate lines
+    const variantMap = {};
+    let nextY = 1;
+
+    const scatterData = impressions.map(imp => {
+        if (!(imp.variant_id in variantMap)) {
+            variantMap[imp.variant_id] = nextY++;
+        }
+        return {
+            x: new Date(imp.timestamp).getTime(), // milliseconds for Recharts
+            y: variantMap[imp.variant_id],
+            variant: imp.variant_id
+        };
+    });
+
 
 	useEffect(() => {
 		async function fetchData() {
@@ -55,8 +82,56 @@ export default function SimulationPage() {
 		<div className="p-6">
 			<h1 className="text-2xl font-bold">Simulation {id}</h1>
 			{error && <p className="text-red-500">{error}</p>}
-			{campaign && <pre>{JSON.stringify(campaign, null, 2)}</pre>}
-			{impressions.length > 0 && <pre>{JSON.stringify(impressions, null, 2)}</pre>}
+			{/*campaign && <pre>{JSON.stringify(campaign, null, 2)}</pre>*/}
+			{/*impressions.length > 0 && <pre>{JSON.stringify(impressions, null, 2)}</pre>*/}
+
+            <ScatterChart
+                width={800}
+                height={400}
+                margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                >
+                <CartesianGrid />
+                
+                {/* X-axis as time */}
+                <XAxis
+                    type="number"
+                    dataKey="x"
+                    domain={['auto', 'auto']}
+                    tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString()}
+                    name="Time"
+                />
+                
+                {/* Y-axis: discrete lines for each variant */}
+                <YAxis
+                    type="number"
+                    dataKey="y"
+                    ticks={Object.values(variantMap)}
+                    tickFormatter={(y) => {
+                    const variantId = Object.keys(variantMap).find(key => variantMap[key] === y);
+                    return `Variant ${variantId}`;
+                    }}
+                    name="Variant"
+                />
+                
+                <Tooltip
+                    labelFormatter={(unixTime) => new Date(unixTime).toLocaleString()}
+                    formatter={(value, name, props) => {
+                    if (name === 'y') {
+                        return `Variant ${props.payload.variant}`;
+                    }
+                    return value;
+                    }}
+                />
+                
+                <Legend />
+                
+                <Scatter
+                    name="Serves"
+                    data={scatterData}
+                    fill="#8884d8"
+                />
+            </ScatterChart>
+
 		</div>
 	);
 }

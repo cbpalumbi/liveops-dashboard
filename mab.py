@@ -2,6 +2,7 @@
 from sqlite_models import Impression
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
+from datetime import datetime
 import random, json
 
 from sqlite_models import DataCampaign
@@ -93,7 +94,7 @@ def serve_variant(data_campaign_id: int, db: Session):
     }
 
 # --- Report Impression Core Logic (can be used by API endpoint or local function) ---
-def report_impression(data_campaign_id: int, variant_id: int, clicked: bool, db: Session):
+def report_impression(data_campaign_id: int, variant_id: int, clicked: bool, timestamp: datetime, db: Session):
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
         raise ValueError("Data campaign not found")
@@ -103,7 +104,8 @@ def report_impression(data_campaign_id: int, variant_id: int, clicked: bool, db:
         data_campaign_id=data_campaign_id,
         banner_id=dc.banner_id,
         variant_id=variant_id,
-        clicked=clicked
+        clicked=clicked,
+        timestamp=timestamp
     )
     db.add(impression)
     db.commit()

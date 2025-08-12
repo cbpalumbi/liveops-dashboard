@@ -101,7 +101,7 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
         run_simulation_local(true_ctrs, impression_log, impressions, delay)
 
 def run_simulation_local(true_ctrs, impression_log, impressions, delay):
-    current_time = datetime.utcnow()
+    timestamp = datetime.utcnow() - timedelta(weeks=1) # start one week ago - could be configurable
     db = SessionLocal()
     try:
         for i in range(impressions):
@@ -113,13 +113,11 @@ def run_simulation_local(true_ctrs, impression_log, impressions, delay):
             ctr = true_ctrs[variant["id"]]
            
             # Simulate click event with probability of success
-            rand = random.random()
-            clicked = rand < ctr
-            #print("name ", variant["name"])
-            #print("rand ", rand)
-            #print("ctr ", ctr)
+            clicked = random.random() < ctr
 
-            report_impression(data_campaign_id, variant["id"], clicked, db)
+            timestamp += timedelta(minutes=1)
+
+            report_impression(data_campaign_id, variant["id"], clicked, timestamp, db)
 
             # Log impression for regret calculation (clicked as int 0/1)
             impression_log.append({
@@ -128,9 +126,6 @@ def run_simulation_local(true_ctrs, impression_log, impressions, delay):
             })
 
             print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
-
-            current_time += timedelta(minutes=1)
-        
 
             time.sleep(delay)  # optional delay between impressions
     finally:
