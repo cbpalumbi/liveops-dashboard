@@ -1,7 +1,8 @@
 import typer
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlite_models import Base  
+from sqlite_models import Base
+from tabulate import tabulate
 
 app = typer.Typer()
 
@@ -35,11 +36,21 @@ def get_table(name_or_alias):
 
 @app.command()
 def print(name_or_alias: str):
-    """Print all rows in a table."""
+    """Pretty-print all rows in a table using tabulate."""
     table = get_table(name_or_alias)
     rows = session.query(table).all()
-    for row in rows:
-        typer.echo(row.__dict__)
+
+    if not rows:
+        typer.echo(f"Table '{name_or_alias}' is empty.")
+        return
+
+    # Extract column names
+    columns = [col.name for col in table.__table__.columns]
+
+    # Build rows as list of dict values
+    table_data = [[getattr(row, col) for col in columns] for row in rows]
+
+    typer.echo(tabulate(table_data, headers=columns, tablefmt="grid"))
 
 @app.command()
 def clear(name_or_alias: str):
@@ -76,7 +87,6 @@ def insert(name_or_alias: str):
     session.add(obj)
     session.commit()
     typer.echo(f"✅ Inserted row into '{name_or_alias}'")
-
 
 if __name__ == "__main__":
     app()
