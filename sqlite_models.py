@@ -28,8 +28,8 @@ class Segment(Base):
     __tablename__ = "segments"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    #description = Column(String, nullable=True)  # could store notes about segment definition
-    #rules_json = Column(String, nullable=True)   # optional JSON to define how segment is generated
+    description = Column(String, nullable=True) 
+    rules_json = Column(String, nullable=True)   # optional JSON to define how segment is generated
 
 class SegmentMix(Base):
     __tablename__ = "segment_mixes"

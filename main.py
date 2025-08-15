@@ -1,19 +1,18 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 import json
 
-from sqlite_models import DataCampaign, Impression
+from sqlite_models import Base, DataCampaign, Impression
 from mab import report_impression, serve_variant
 
 DATABASE_URL = "sqlite:///./mab.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-Base = declarative_base()
 
 Base.metadata.create_all(bind=engine)
 
