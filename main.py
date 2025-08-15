@@ -118,7 +118,7 @@ def get_campaign(campaign_id: int):
 @app.get("/impressions/{data_campaign_id}", response_model=List[ImpressionRequest])
 def get_impressions(data_campaign_id: int, db: Session = Depends(get_db)):
     imps = db.query(Impression).filter(Impression.data_campaign_id == data_campaign_id).all()
-    print("imps ",imps)
+    #print("imps ",imps)
     return imps
 
 @app.get("/data_campaign/{data_campaign_id}", response_model=DataCampaignRequest)
