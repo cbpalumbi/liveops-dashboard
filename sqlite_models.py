@@ -23,6 +23,7 @@ class Impression(Base):
     variant_id = Column(Integer, nullable=False)
     clicked = Column(Integer)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    segment = Column(Integer, nullable=True) 
 
 class Segment(Base):
     __tablename__ = "segments"

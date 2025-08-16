@@ -7,7 +7,7 @@ from typing import List, Optional
 import json
 
 from sqlite_models import Base, DataCampaign, Impression
-from mab import report_impression, serve_variant
+from mab import report_impression, serve_variant, serve_variant_segmented
 
 DATABASE_URL = "sqlite:///./mab.db"
 
@@ -131,10 +131,24 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
 # --- MAB Endpoints ---
 @app.post("/serve")
 def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
+    dc = db.query(DataCampaign).filter(DataCampaign.id == req.data_campaign_id).first()
+    if not dc:
+        raise HTTPException(status_code=404, detail="Data campaign not found")
+
     try:
-        return serve_variant(req.data_campaign_id, db)
+        # Route by campaign type
+        campaign_type = dc.campaign_type.lower()
+        if campaign_type == "mab":
+            return serve_variant(dc, db)  # original single MAB
+        elif campaign_type == "segmented_mab":
+            return serve_variant_segmented(dc, db)
+        else:
+            # fallback to random variant serving via normal /serve
+            # TODO: change this to route to its own function not in mab.py
+            return serve_variant(dc, db)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
     
 
 @app.post("/report")
