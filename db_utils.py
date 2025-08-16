@@ -76,20 +76,35 @@ def clear(
     name_or_alias: str = typer.Argument(
         None,
         help="Table name or alias. Leave empty to clear all tables."
+    ),
+    data_campaign_id: int = typer.Argument(
+        None,
+        help="If clearing impressions, only delete rows for this data campaign ID."
     )
 ):
-    """Delete all rows from a table. If no table is specified, clear all tables."""
+    """Delete all rows from a table. If no table is specified, clear all tables.
+    If 'impressions' table is specified, can optionally filter by data_campaign_id."""
+    
     if name_or_alias:
         table = get_table(name_or_alias)
-        session.query(table).delete()
-        session.commit()
-        typer.echo(f"Cleared table: {name_or_alias}")
+
+        if name_or_alias in ("imp", "impressions") and data_campaign_id is not None:
+            deleted = session.query(table).filter(
+                table.data_campaign_id == data_campaign_id
+            ).delete()
+            session.commit()
+            typer.echo(f"Cleared {deleted} rows from {name_or_alias} for data_campaign_id={data_campaign_id}")
+        else:
+            session.query(table).delete()
+            session.commit()
+            typer.echo(f"Cleared table: {name_or_alias}")
     else:
         for table_name, table_class in TABLES.items():
             session.query(table_class).delete()
             typer.echo(f"Cleared table: {table_name}")
         session.commit()
         typer.echo("All tables cleared.")
+
 
 # ------------------------
 # INSERT COMMAND

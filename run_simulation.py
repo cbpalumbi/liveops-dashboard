@@ -5,6 +5,7 @@ import random
 
 from local_simulation import run_mab_local, run_segmented_mab_local
 from simulation_utils import print_regret_summary, get_ctr_for_variant, load_static_campaigns
+from db_utils import clear
 
 API_BASE = "http://localhost:8000" 
 
@@ -25,6 +26,9 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
     if not static_campaign:
         print("Static campaign for data campaign not found")
         return
+    
+    # Clear any old impressions for this data campaign
+    clear("imp",data_campaign["id"])
 
     # Branch by campaign type
     campaign_type = data_campaign["campaign_type"].lower()
