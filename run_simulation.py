@@ -1,87 +1,17 @@
 import requests
 import time
 from datetime import datetime, timedelta
-import hashlib
-import json
 import random
-from collections import Counter, defaultdict
 
-from main import SessionLocal
-
-from mab import serve_variant, report_impression
+from local_simulation import run_mab_local, run_segmented_mab_local
+from simulation_utils import print_regret_summary, get_ctr_for_variant, load_static_campaigns
 
 API_BASE = "http://localhost:8000" 
 
 def get_static_campaign(data_campaign, static_campaigns):
     return next((c for c in static_campaigns if c["id"] == data_campaign["static_campaign_id"]), None)
 
-def get_ctr_for_variant(static_campaign, banner_id, variant_id, min_ctr=0.05, max_ctr=0.3):
-    for banner in static_campaign["banners"]:
-        if banner["id"] == banner_id:
-            for variant in banner["variants"]:
-                if variant["id"] == variant_id:
-                    variant_str = json.dumps({
-                        "campaign_id": static_campaign["id"],
-                        "banner_id": banner_id,
-                        "variant_id": variant_id,
-                        "color": variant.get("color")
-                    }, sort_keys=True)
-                    h = hashlib.sha256(variant_str.encode()).hexdigest()
-                    seed = int(h[:8], 16)
-                    rng = random.Random(seed)
-                    ctr = rng.uniform(min_ctr, max_ctr)
-                    return ctr
-    raise ValueError("Variant not found")
 
-def load_static_campaigns():
-    with open("src/data/campaigns.json", "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def print_regret_summary(impression_log, true_ctrs, campaign_type):
-    best_ctr = max(true_ctrs.values())
-    cumulative_regret_mab = 0.0
-    cumulative_regret_uniform = 0.0
-    total_impressions = len(impression_log)
-    uniform_prob = 1 / len(true_ctrs)
-
-    # For segmented campaigns
-    segment_logs = defaultdict(list) if campaign_type == "segmented_mab" else None
-
-    for i, impression in enumerate(impression_log, 1):
-        variant_id = impression["variant_id"]
-        segment_id = impression.get("segment_id")
-
-        # Overall regret
-        mab_regret = best_ctr - true_ctrs[variant_id]
-        cumulative_regret_mab += mab_regret
-        expected_click_uniform = sum(ctr * uniform_prob for ctr in true_ctrs.values())
-        cumulative_regret_uniform += best_ctr - expected_click_uniform
-
-        # Track per-segment impressions
-        if campaign_type == "segmented_mab" and segment_id is not None:
-            segment_logs[segment_id].append(impression)
-
-        if i % 10 == 0 or i == total_impressions:
-            print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
-
-    # Variant counts overall
-    variant_ids = [entry["variant_id"] for entry in impression_log]
-    counts = Counter(variant_ids)
-    print("\nImpression counts per variant:")
-    for variant_id, count in counts.items():
-        print(f"Variant ID {variant_id}: {count} impressions")
-
-    print(f"\nFinal cumulative regret after {total_impressions} impressions:")
-    print(f"  MAB policy: {cumulative_regret_mab:.3f}")
-    print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
-
-    # Additional per-segment regret summary for segmented MAB
-    if campaign_type == "segmented_mab":
-        print("\n--- Per-segment regret summary ---")
-        for segment_id, logs in segment_logs.items():
-            seg_cum_regret_mab = sum(best_ctr - true_ctrs[imp["variant_id"]] for imp in logs)
-            seg_cum_regret_uniform = sum(best_ctr - expected_click_uniform for _ in logs)
-            print(f"Segment {segment_id}: MAB regret = {seg_cum_regret_mab:.3f}, Uniform regret = {seg_cum_regret_uniform:.3f}, Impressions = {len(logs)}")
 def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
     # Get data campaign details
     r = requests.get(f"{API_BASE}/data_campaign/{data_campaign_id}")
@@ -102,7 +32,7 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
         if mode == "api":
             run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay)
         elif mode == "local":
-            run_segmented_mab_local(data_campaign, static_campaign, impressions, delay)
+            run_segmented_mab_local(data_campaign["id"], impressions, delay)
     else:
         # Original MAB / random campaign flow
 
@@ -117,51 +47,9 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
         }
 
         if mode == "api":
-            run_simulation_via_api(true_ctrs, [], impressions, delay)
+            run_simulation_via_api(data_campaign["id"], true_ctrs, [], impressions, delay)
         elif mode == "local":
-            run_simulation_local(true_ctrs, [], impressions, delay)
-
-def run_segmented_mab_local(data_campaign, static_campaign, impressions, delay):
-    from mab import serve_variant_segmented, report_impression
-    db = SessionLocal()
-    impression_log = []
-    timestamp = datetime.utcnow() - timedelta(weeks=1)
-
-    try:
-        for i in range(impressions):
-            serve_data = serve_variant_segmented(data_campaign["id"], db)
-            variant = serve_data["variant"]
-            segment_id = serve_data["segment_id"]
-
-            # Simulate click probability
-            banner_id = data_campaign["banner_id"]
-            ctr = get_ctr_for_variant(static_campaign, banner_id, variant["id"])
-            clicked = random.random() < ctr
-
-            timestamp += timedelta(minutes=1)
-
-            report_impression(
-                data_campaign["id"],
-                variant["id"],
-                clicked,
-                timestamp,
-                db,
-                segment_id=segment_id
-            )
-
-            impression_log.append({
-                "variant_id": variant["id"],
-                "clicked": int(clicked),
-                "segment_id": segment_id
-            })
-
-            print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), segment {segment_id}, clicked: {clicked} (CTR={ctr:.2%})")
-            time.sleep(delay)
-    finally:
-        db.close()
-
-    print_regret_summary(impression_log, {v["id"]: get_ctr_for_variant(static_campaign, data_campaign["banner_id"], v["id"]) for v in static_campaign["banners"][0]["variants"]}, "segmented_mab")
-
+            run_mab_local(data_campaign["id"], impressions, delay)
 
 def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay):
     impression_log = []
@@ -213,43 +101,7 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
     print_regret_summary(impression_log, true_ctrs, "segmented_mab")
 
 
-
-def run_simulation_local(true_ctrs, impression_log, impressions, delay):
-    timestamp = datetime.utcnow() - timedelta(weeks=1) # start one week ago - could be configurable
-    db = SessionLocal()
-    try:
-        for i in range(impressions):
-
-            # Serve a variant
-            serve_data = serve_variant(data_campaign_id, db)
-            variant = serve_data["variant"]
-
-            ctr = true_ctrs[variant["id"]]
-           
-            # Simulate click event with probability of success
-            clicked = random.random() < ctr
-
-            timestamp += timedelta(minutes=1)
-
-            report_impression(data_campaign_id, variant["id"], clicked, timestamp, db)
-
-            # Log impression for regret calculation (clicked as int 0/1)
-            impression_log.append({
-                "variant_id": variant["id"],
-                "clicked": int(clicked)
-            })
-
-            print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
-
-            time.sleep(delay)  # optional delay between impressions
-    finally:
-        db.close()
-
-    # After all impressions, print regret summary
-    print_regret_summary(impression_log, true_ctrs, "mab")
-
-
-def run_simulation_via_api(true_ctrs, impression_log, impressions, delay):
+def run_simulation_via_api(data_campaign_id, true_ctrs, impression_log, impressions, delay):
     current_time = datetime.utcnow()
     for i in range(impressions):
         # Serve a variant
@@ -295,7 +147,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 4:
-        print("Usage: python simulation.py --mode <api|local> <data_campaign_id> [impressions]")
+        print("Usage: python run_simulation.py --mode <api|local> <data_campaign_id> [impressions]")
         sys.exit(1)
 
     # Check mode flag

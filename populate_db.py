@@ -1,11 +1,11 @@
 # populate_db.py
+# Makes a segmented MAB campaign 
 from db_utils import insert, clear, print as print_tables
 
 clear("seg-mix")
 clear("seg")
 clear("seg-mix-entry")
 clear("seg-mab")
-clear("camp")
 
 # ---  Insert segment mix ---
 insert("seg-mix", {"name": "Platform Mix"})

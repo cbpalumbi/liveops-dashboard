@@ -185,7 +185,7 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
 
     # Get segmented MAB config
     smab = db.query(SegmentedMABCampaign).filter(
-        SegmentedMABCampaign.data_campaign_id == data_campaign_id
+        SegmentedMABCampaign.id == dc.segmented_mab_id
     ).first()
     if not smab:
         raise ValueError("Segmented MAB config not found for this campaign")
