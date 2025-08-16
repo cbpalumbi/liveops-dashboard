@@ -1,3 +1,4 @@
+# db_utils.py
 import typer
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -36,8 +37,16 @@ def get_table(name_or_alias):
         raise typer.BadParameter(f"Unknown table or alias: {name_or_alias}")
     return table_class
 
+# ------------------------
+# PRINT COMMAND
+# ------------------------
 @app.command()
-def print(name_or_alias: str = None):
+def print(
+    name_or_alias: str = typer.Argument(
+        None,
+        help="Table name or alias. Leave empty to print all tables."
+    )
+):
     """Pretty-print all rows in a table using tabulate. If no table is specified, print all tables."""
     tables_to_print = [name_or_alias] if name_or_alias else list(TABLES.keys())
 
@@ -59,43 +68,62 @@ def print(name_or_alias: str = None):
         table_data = [[getattr(row, col) for col in columns] for row in rows]
         typer.echo(tabulate(table_data, headers=columns, tablefmt="grid"))
 
+# ------------------------
+# CLEAR COMMAND
+# ------------------------
 @app.command()
-def clear(name_or_alias: str = None):
+def clear(
+    name_or_alias: str = typer.Argument(
+        None,
+        help="Table name or alias. Leave empty to clear all tables."
+    )
+):
     """Delete all rows from a table. If no table is specified, clear all tables."""
-    
     if name_or_alias:
-        # Clear a specific table
         table = get_table(name_or_alias)
         session.query(table).delete()
         session.commit()
         typer.echo(f"Cleared table: {name_or_alias}")
     else:
-        # Clear all tables
         for table_name, table_class in TABLES.items():
             session.query(table_class).delete()
             typer.echo(f"Cleared table: {table_name}")
         session.commit()
         typer.echo("All tables cleared.")
 
-
-import json
-from typing import Union
-
+# ------------------------
+# INSERT COMMAND
+# ------------------------
 @app.command()
-def insert(name_or_alias: str, col_values_json: Union[str, dict]):
+def insert(
+    name_or_alias: str = typer.Argument(..., help="Table name or alias."),
+    col_values_json: str = typer.Argument(
+        None,
+        help="JSON string of column values. Leave empty for interactive input."
+    )
+):
     """
     Insert a row into a table.
-    Accepts a JSON string (from CLI) or a Python dict (from Python script).
+    - CLI: pass a JSON string for col_values_json
+    - Python: pass a dict directly
     """
     table = get_table(name_or_alias)
 
-    # Convert input to dict if needed
-    if isinstance(col_values_json, str):
+    # Detect if called from Python with dict
+    if isinstance(col_values_json, dict):
+        col_values = col_values_json
+    elif isinstance(col_values_json, str) and col_values_json:
         col_values = json.loads(col_values_json)
     else:
-        col_values = col_values_json
+        # Interactive mode if no input provided
+        col_values = {}
+        for col in table.__table__.columns:
+            if col.primary_key:
+                continue
+            val = typer.prompt(f"Enter value for '{col.name}' (leave blank for NULL)", default="")
+            col_values[col.name] = None if val == "" else val
 
-    # Convert types automatically
+    # Type conversion
     for col in table.__table__.columns:
         if col.primary_key:
             continue
@@ -113,6 +141,8 @@ def insert(name_or_alias: str, col_values_json: Union[str, dict]):
     session.commit()
     typer.echo(f"Inserted row into '{name_or_alias}'")
 
-
+# ------------------------
+# ENTRY POINT
+# ------------------------
 if __name__ == "__main__":
     app()

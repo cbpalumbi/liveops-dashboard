@@ -33,5 +33,5 @@ insert(
 )
 
 # --- Print all tables to verify ---
-print_tables()
+print_tables(None)
 
