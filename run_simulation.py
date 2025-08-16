@@ -80,7 +80,8 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
             "data_campaign_id": data_campaign["id"],
             "variant_id": variant["id"],
             "clicked": clicked,
-            "segment_id": segment_id
+            "segment_id": segment_id,
+            "timestamp": datetime.utcnow().isoformat()
         }
         report_resp = requests.post(f"{API_BASE}/report", json=report_payload)
         if report_resp.status_code != 200:
@@ -121,7 +122,8 @@ def run_simulation_via_api(data_campaign_id, true_ctrs, impression_log, impressi
         report_payload = {
             "data_campaign_id": data_campaign_id,
             "variant_id": variant["id"],
-            "clicked": clicked
+            "clicked": clicked,
+            "timestamp": datetime.utcnow().isoformat()
         }
         report_resp = requests.post(f"{API_BASE}/report", json=report_payload)
         if report_resp.status_code != 200:

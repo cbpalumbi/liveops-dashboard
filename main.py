@@ -43,6 +43,7 @@ class ReportRequest(BaseModel):
     data_campaign_id: int
     variant_id: int
     clicked: bool
+    segment_id: Optional[int] = None
     timestamp: datetime
 
 class DataCampaignRequest(BaseModel):
