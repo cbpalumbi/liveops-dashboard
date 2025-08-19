@@ -1,6 +1,6 @@
 # populate_db.py
 # Makes a segmented MAB campaign 
-from db_utils import insert, clear, print as print_tables
+from ml_liveops_dashboard.db_utils import insert, clear, print as print_tables
 
 clear("seg-mix")
 clear("seg")

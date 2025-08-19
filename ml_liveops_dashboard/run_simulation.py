@@ -3,9 +3,9 @@ import time
 from datetime import datetime, timedelta
 import random
 
-from local_simulation import run_mab_local, run_segmented_mab_local
-from simulation_utils import print_regret_summary, get_ctr_for_variant, load_static_campaigns
-from db_utils import clear
+from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local
+from ml_liveops_dashboard.simulation_utils import print_regret_summary, get_ctr_for_variant, load_static_campaigns
+from ml_liveops_dashboard.db_utils import clear
 
 API_BASE = "http://localhost:8000" 
 

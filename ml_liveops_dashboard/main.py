@@ -6,8 +6,8 @@ from datetime import datetime
 from typing import List, Optional
 import json
 
-from sqlite_models import Base, DataCampaign, Impression
-from mab import report_impression, serve_variant, serve_variant_segmented
+from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
+from ml_liveops_dashboard.mab import report_impression, serve_variant, serve_variant_segmented
 
 DATABASE_URL = "sqlite:///./mab.db"
 
@@ -17,7 +17,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base.metadata.create_all(bind=engine)
 
 # --- Load static campaign JSON ---
-with open("src/data/campaigns.json", "r", encoding="utf-8") as f:
+with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
     static_campaigns = json.load(f)
 
 # --- App ---
@@ -100,7 +100,7 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
 @app.get("/data_campaigns")
 def get_data_campaigns(db: Session = Depends(get_db)):
     dcs = db.query(DataCampaign).all()
-    if not dcs:
+    if not dcs: #TODO: Add support for generic message when there are no dcs defined
         raise HTTPException(status_code=404, detail="Data campaign not found")
     return dcs
 

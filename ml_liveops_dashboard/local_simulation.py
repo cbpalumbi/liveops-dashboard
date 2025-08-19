@@ -4,8 +4,8 @@ import random
 import time
 from datetime import datetime, timedelta
 
-from main import SessionLocal
-from mab import (
+from ml_liveops_dashboard.main import SessionLocal
+from ml_liveops_dashboard.mab import (
     serve_variant,
     serve_variant_segmented,
     report_impression

@@ -24,5 +24,6 @@ dist-ssr
 *.sw?
 
 __pycache__/*
+tests/__pycache__/*
 
 mab.db

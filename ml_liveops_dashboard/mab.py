@@ -1,14 +1,13 @@
 # Multi Armed Bandit
-from sqlite_models import Impression
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from datetime import datetime
 import random, json
 
-from sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMix, SegmentMixEntry
+from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMix, SegmentMixEntry, Impression
 
 # --- Load static campaign JSON ---
-with open("src/data/campaigns.json", "r", encoding="utf-8") as f:
+with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
     static_campaigns = json.load(f)
 
 def get_static_banner_variants(static_campaign_id: int, banner_id: int) -> list[int]:
@@ -102,7 +101,6 @@ def report_impression(
     Store an impression in the database.
     If segment_id is provided, it will be recorded for segmented MAB campaigns.
     """
-    from sqlite_models import DataCampaign, Impression
 
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
