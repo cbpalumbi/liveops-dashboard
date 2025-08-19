@@ -1,8 +1,9 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
-from sqlite_models import Base
-import db_utils
+
+from ml_liveops_dashboard.sqlite_models import Base
+from ml_liveops_dashboard import db_utils
 
 @pytest.fixture(scope="function")
 def test_db_session(monkeypatch):
