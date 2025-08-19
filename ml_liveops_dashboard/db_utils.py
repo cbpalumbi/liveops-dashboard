@@ -2,9 +2,10 @@
 import typer
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlite_models import Base
 from tabulate import tabulate
 import json
+
+from ml_liveops_dashboard.sqlite_models import Base
 
 app = typer.Typer()
 
