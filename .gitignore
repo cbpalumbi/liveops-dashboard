@@ -23,7 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-__pycache__/*
-tests/__pycache__/*
+ml_liveops_dashboard/__pycache__/
+tests/__pycache__/
+
 
 mab.db
