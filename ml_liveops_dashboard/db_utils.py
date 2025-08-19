@@ -46,8 +46,11 @@ def print(
     name_or_alias: str = typer.Argument(
         None,
         help="Table name or alias. Leave empty to print all tables."
-    )
+    ),
+    db=None # optional session override for pytest
 ):
+    session_to_use = db or session
+
     """Pretty-print all rows in a table using tabulate. If no table is specified, print all tables."""
     tables_to_print = [name_or_alias] if name_or_alias else list(TABLES.keys())
 
@@ -58,7 +61,7 @@ def print(
             typer.echo(f"Unknown table or alias: {table_name}")
             continue
 
-        rows = session.query(table).all()
+        rows = session_to_use.query(table).all()
         typer.echo(f"\n=== Table: {table_name} ===")
 
         if not rows:
@@ -81,29 +84,32 @@ def clear(
     data_campaign_id: int = typer.Argument(
         None,
         help="If clearing impressions, only delete rows for this data campaign ID."
-    )
+    ),
+    db=None # optional session override for pytest
 ):
     """Delete all rows from a table. If no table is specified, clear all tables.
     If 'impressions' table is specified, can optionally filter by data_campaign_id."""
+    
+    session_to_use = db or session
     
     if name_or_alias:
         table = get_table(name_or_alias)
 
         if name_or_alias in ("imp", "impressions") and data_campaign_id is not None:
-            deleted = session.query(table).filter(
+            deleted = session_to_use.query(table).filter(
                 table.data_campaign_id == data_campaign_id
             ).delete()
-            session.commit()
+            session_to_use.commit()
             typer.echo(f"Cleared {deleted} rows from {name_or_alias} for data_campaign_id={data_campaign_id}")
         else:
-            session.query(table).delete()
-            session.commit()
+            session_to_use.query(table).delete()
+            session_to_use.commit()
             typer.echo(f"Cleared table: {name_or_alias}")
     else:
         for table_name, table_class in TABLES.items():
-            session.query(table_class).delete()
+            session_to_use.query(table_class).delete()
             typer.echo(f"Cleared table: {table_name}")
-        session.commit()
+        session_to_use.commit()
         typer.echo("All tables cleared.")
 
 
@@ -116,7 +122,8 @@ def insert(
     col_values_json: str = typer.Argument(
         None,
         help="JSON string of column values. Leave empty for interactive input."
-    )
+    ),
+    db=None # optional session override for pytest
 ):
     """
     Insert a row into a table.
@@ -124,6 +131,7 @@ def insert(
     - Python: pass a dict directly
     """
     table = get_table(name_or_alias)
+    session_to_use = db or session
 
     # Detect if called from Python with dict
     if isinstance(col_values_json, dict):
@@ -153,8 +161,8 @@ def insert(
                 col_values[col.name] = str(val)
 
     obj = table(**col_values)
-    session.add(obj)
-    session.commit()
+    session_to_use.add(obj)
+    session_to_use.commit()
     typer.echo(f"Inserted row into '{name_or_alias}'")
 
 # ------------------------
