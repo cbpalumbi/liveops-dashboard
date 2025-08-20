@@ -76,7 +76,11 @@ def test_insert_with_type_conversion(test_db_session):
     db_utils.insert("data_campaigns", data, db=test_db_session)
     row = test_db_session.query(DataCampaign).filter_by(static_campaign_id=2).first()
     assert isinstance(row.banner_id, int)
-
+    
+def test_insert_unknown_table(test_db_session):
+    data = {"foo": "bar"}
+    with pytest.raises(ValueError):
+        db_utils.insert("non_existent_table", data, db=test_db_session)
 
 # ---------- print ----------
 def test_print_empty_table(test_db_session):
@@ -91,6 +95,10 @@ def test_print_with_unknown_table(test_db_session):
     with pytest.raises(ValueError):
         db_utils.print("does_not_exist", db=test_db_session)
 
+#TODO: fix, i dont think this test is working as intended
+def test_print_unknown_table_again(test_db_session):
+    with pytest.raises(ValueError):
+        db_utils.print("non_existent_table", db=test_db_session)
 
 # ---------- clear ----------
 def test_clear_specific_table(test_db_session):
@@ -139,3 +147,5 @@ def test_clear_impressions_with_campaign_id(test_db_session):
     table_class = db_utils.get_table("impressions")
     rows = test_db_session.query(table_class).all()
     assert len(rows) == 0
+
+
