@@ -1,6 +1,6 @@
 import requests
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 
 from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local
@@ -85,7 +85,7 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
             "variant_id": variant["id"],
             "clicked": clicked,
             "segment_id": segment_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         report_resp = requests.post(f"{API_BASE}/report", json=report_payload)
         if report_resp.status_code != 200:
@@ -107,7 +107,7 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
 
 
 def run_simulation_via_api(data_campaign_id, true_ctrs, impression_log, impressions, delay):
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     for i in range(impressions):
         # Serve a variant
         serve_resp = requests.post(f"{API_BASE}/serve", json={"data_campaign_id": data_campaign_id})
@@ -127,7 +127,7 @@ def run_simulation_via_api(data_campaign_id, true_ctrs, impression_log, impressi
             "data_campaign_id": data_campaign_id,
             "variant_id": variant["id"],
             "clicked": clicked,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         report_resp = requests.post(f"{API_BASE}/report", json=report_payload)
         if report_resp.status_code != 200:

@@ -2,7 +2,7 @@
 
 import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ml_liveops_dashboard.main import SessionLocal
 from ml_liveops_dashboard.mab import (
@@ -10,8 +10,8 @@ from ml_liveops_dashboard.mab import (
     serve_variant_segmented,
     report_impression
 )
-from simulation_utils import print_regret_summary, get_ctr_for_variant, load_static_campaigns
-from sqlite_models import DataCampaign
+from ml_liveops_dashboard.simulation_utils import print_regret_summary, get_ctr_for_variant, load_static_campaigns
+from ml_liveops_dashboard.sqlite_models import DataCampaign
 
 def run_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0.02):
     """Run a standard MAB campaign locally."""
@@ -39,7 +39,7 @@ def run_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0
             for variant_id in static_banner_variants
         }
 
-        timestamp = datetime.utcnow() - timedelta(weeks=1)
+        timestamp = datetime.now(timezone.utc) - timedelta(weeks=1)
 
         for i in range(impressions):
             serve_data = serve_variant(dc, db)
@@ -91,7 +91,7 @@ def run_segmented_mab_local(data_campaign_id: int, impressions: int = 50, delay:
             for variant_id in static_banner_variants
         }
 
-        timestamp = datetime.utcnow() - timedelta(weeks=1)
+        timestamp = datetime.now(timezone.utc) - timedelta(weeks=1)
 
         for i in range(impressions):
             serve_data = serve_variant_segmented(dc, db)
