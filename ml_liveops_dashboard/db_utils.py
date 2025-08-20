@@ -16,8 +16,8 @@ session = SessionLocal()
 
 # --- Automatic table mapping ---
 TABLES = {
-    mapper.class_.__tablename__: mapper.class_
-    for mapper in Base.registry.mappers
+    cls.__tablename__: cls
+    for cls in Base.__subclasses__()  # iterate ORM classes
 }
 
 # --- Aliases for convenience ---
@@ -31,33 +31,53 @@ TABLE_ALIASES = {
 }
 
 def get_table(name_or_alias):
-    """Resolve alias or table name to SQLAlchemy model class."""
-    table_name = TABLE_ALIASES.get(name_or_alias, name_or_alias)
-    table_class = TABLES.get(table_name)
-    if not table_class:
-        raise typer.BadParameter(f"Unknown table or alias: {name_or_alias}")
-    return table_class
+    # If Typer passed an ArgumentInfo, extract the name
+    if not isinstance(name_or_alias, str):
+        if hasattr(name_or_alias, "name"):
+            name_or_alias = name_or_alias.name
+        else:
+            raise ValueError(f"Table name must be a string, got {type(name_or_alias)}")
+
+    name_or_alias_lower = name_or_alias.lower()
+
+    if name_or_alias_lower in TABLES:
+        return TABLES[name_or_alias_lower]
+    if name_or_alias_lower in TABLE_ALIASES:
+        return TABLES[TABLE_ALIASES[name_or_alias_lower]]
+
+    raise ValueError(f"Unknown table or alias: {name_or_alias}")
+
+
 
 # ------------------------
 # PRINT COMMAND
 # ------------------------
 @app.command()
 def print(
-    name_or_alias: str = typer.Argument(
+    name_or_alias = typer.Argument(
         None,
         help="Table name or alias. Leave empty to print all tables."
     ),
-    db=None # optional session override for pytest
+    db=None  # optional session override for pytest
 ):
+    """Pretty-print all rows in a table using tabulate. 
+    If no table is specified, print all tables."""
+    
     session_to_use = db or session
 
-    """Pretty-print all rows in a table using tabulate. If no table is specified, print all tables."""
+    # Handle Typer ArgumentInfo objects
+    if name_or_alias is not None and not isinstance(name_or_alias, str):
+        if hasattr(name_or_alias, "name"):
+            name_or_alias = name_or_alias.name
+        else:
+            raise ValueError(f"Table name must be a string, got {type(name_or_alias)}")
+
     tables_to_print = [name_or_alias] if name_or_alias else list(TABLES.keys())
 
     for table_name in tables_to_print:
         try:
             table = get_table(table_name)
-        except typer.BadParameter:
+        except ValueError:
             typer.echo(f"Unknown table or alias: {table_name}")
             continue
 
@@ -72,12 +92,13 @@ def print(
         table_data = [[getattr(row, col) for col in columns] for row in rows]
         typer.echo(tabulate(table_data, headers=columns, tablefmt="grid"))
 
+
 # ------------------------
 # CLEAR COMMAND
 # ------------------------
 @app.command()
 def clear(
-    name_or_alias: str = typer.Argument(
+    name_or_alias = typer.Argument(
         None,
         help="Table name or alias. Leave empty to clear all tables."
     ),
@@ -91,6 +112,15 @@ def clear(
     If 'impressions' table is specified, can optionally filter by data_campaign_id."""
     
     session_to_use = db or session
+
+    # Handle Typer passing ArgumentInfo objects
+    if name_or_alias is not None and not isinstance(name_or_alias, str):
+        if hasattr(name_or_alias, "name"):
+            name_or_alias = name_or_alias.name
+        else:
+            raise ValueError(f"Table name must be a string, got {type(name_or_alias)}")
+
+    table_class = get_table(name_or_alias) if name_or_alias else None
     
     if name_or_alias:
         table = get_table(name_or_alias)
