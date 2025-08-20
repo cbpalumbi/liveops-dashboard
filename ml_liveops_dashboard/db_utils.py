@@ -75,11 +75,8 @@ def print(
     tables_to_print = [name_or_alias] if name_or_alias else list(TABLES.keys())
 
     for table_name in tables_to_print:
-        try:
-            table = get_table(table_name)
-        except ValueError:
-            typer.echo(f"Unknown table or alias: {table_name}")
-            continue
+
+        table = get_table(table_name)
 
         rows = session_to_use.query(table).all()
         typer.echo(f"\n=== Table: {table_name} ===")
@@ -106,41 +103,42 @@ def clear(
         None,
         help="If clearing impressions, only delete rows for this data campaign ID."
     ),
-    db=None # optional session override for pytest
+    db=None  # optional session override for pytest
 ):
-    """Delete all rows from a table. If no table is specified, clear all tables.
-    If 'impressions' table is specified, can optionally filter by data_campaign_id."""
-    
+    from typer.models import ArgumentInfo
+    """Delete rows from a table, or all tables if none specified."""
     session_to_use = db or session
 
-    # Handle Typer passing ArgumentInfo objects
-    if name_or_alias is not None and not isinstance(name_or_alias, str):
-        if hasattr(name_or_alias, "name"):
-            name_or_alias = name_or_alias.name
-        else:
-            raise ValueError(f"Table name must be a string, got {type(name_or_alias)}")
+    # Normalize name_or_alias: Typer passes ArgumentInfo if called directly
+    if name_or_alias is None or isinstance(name_or_alias, ArgumentInfo):
+        tables_to_clear = list(TABLES.keys())
+    else:
+        tables_to_clear = [name_or_alias]
+    # Normalize data_campaign_id
+    if isinstance(data_campaign_id, ArgumentInfo):
+        data_campaign_id = None
 
-    table_class = get_table(name_or_alias) if name_or_alias else None
-    
-    if name_or_alias:
-        table = get_table(name_or_alias)
+    for table_name in tables_to_clear:
+        try:
+            table = get_table(table_name)
+        except ValueError:
+            typer.echo(f"Unknown table or alias: {table_name}")
+            continue
 
-        if name_or_alias in ("imp", "impressions") and data_campaign_id is not None:
+        if table_name in ("imp", "impressions") and data_campaign_id is not None:
             deleted = session_to_use.query(table).filter(
                 table.data_campaign_id == data_campaign_id
             ).delete()
             session_to_use.commit()
-            typer.echo(f"Cleared {deleted} rows from {name_or_alias} for data_campaign_id={data_campaign_id}")
+            typer.echo(f"Cleared {deleted} rows from {table_name} for data_campaign_id={data_campaign_id}")
         else:
             session_to_use.query(table).delete()
             session_to_use.commit()
-            typer.echo(f"Cleared table: {name_or_alias}")
-    else:
-        for table_name, table_class in TABLES.items():
-            session_to_use.query(table_class).delete()
             typer.echo(f"Cleared table: {table_name}")
-        session_to_use.commit()
+
+    if name_or_alias is None:
         typer.echo("All tables cleared.")
+
 
 
 # ------------------------
