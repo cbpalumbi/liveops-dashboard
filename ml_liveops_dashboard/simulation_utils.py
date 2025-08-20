@@ -22,7 +22,7 @@ def get_ctr_for_variant(static_campaign, banner_id, variant_id, min_ctr=0.05, ma
     raise ValueError("Variant not found")
 
 def load_static_campaigns():
-    with open("src/data/campaigns.json", "r", encoding="utf-8") as f:
+    with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
         return json.load(f)    
 
 def print_regret_summary(impression_log, true_ctrs, campaign_type):

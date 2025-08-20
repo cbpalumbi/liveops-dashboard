@@ -212,7 +212,7 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     variant_id = run_thompson_sampling_segmented(dc.id, dc.banner_id, selected_segment, db)
 
     # Get static campaign info for variant details
-    with open("src/data/campaigns.json", "r", encoding="utf-8") as f:
+    with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
         static_campaigns = json.load(f)
     static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
     if not static_campaign:
