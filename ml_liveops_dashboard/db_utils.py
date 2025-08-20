@@ -1,6 +1,6 @@
 # db_utils.py
 import typer
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from tabulate import tabulate
 import json
@@ -78,6 +78,11 @@ def print(
 
         table = get_table(table_name)
 
+        # Check if table actually exists in the DB
+        if not inspect(session_to_use.bind).has_table(table.__tablename__):
+            typer.echo(f"Table '{table_name}' does not exist in the database.")
+            continue
+
         rows = session_to_use.query(table).all()
         typer.echo(f"\n=== Table: {table_name} ===")
 
@@ -125,6 +130,11 @@ def clear(
             typer.echo(f"Unknown table or alias: {table_name}")
             continue
 
+        # Check if table actually exists in the DB
+        if not inspect(session_to_use.bind).has_table(table.__tablename__):
+            typer.echo(f"Table '{table_name}' does not exist in the database.")
+            continue
+
         if table_name in ("imp", "impressions") and data_campaign_id is not None:
             deleted = session_to_use.query(table).filter(
                 table.data_campaign_id == data_campaign_id
@@ -160,6 +170,11 @@ def insert(
     """
     table = get_table(name_or_alias)
     session_to_use = db or session
+
+    # --- Check that the table exists in the DB ---
+    if not inspect(session_to_use.bind).has_table(table.__tablename__):
+        typer.echo(f"Error: Table '{name_or_alias}' does not exist in the database.")
+        raise ValueError(f"Table '{name_or_alias}' does not exist in the database.")
 
     # Detect if called from Python with dict
     if isinstance(col_values_json, dict):

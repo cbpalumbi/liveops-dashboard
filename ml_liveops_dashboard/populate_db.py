@@ -1,37 +1,53 @@
 # populate_db.py
-# Makes a segmented MAB campaign 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from ml_liveops_dashboard.sqlite_models import Base
 from ml_liveops_dashboard.db_utils import insert, clear, print as print_tables
 
-clear("seg-mix")
-clear("seg")
-clear("seg-mix-entry")
-clear("seg-mab")
+# --- Create a SQLite database (in-memory or file) ---
+engine = create_engine("sqlite:///mab.db", echo=False)  
+SessionLocal = sessionmaker(bind=engine)
+session = SessionLocal()
 
-# ---  Insert segment mix ---
-insert("seg-mix", {"name": "Platform Mix"})
+# --- Create all tables from Base ---
+Base.metadata.create_all(engine)
 
-# ---  Insert segments ---
-insert("seg", {"name": "Mobile Users", "description": "", "rules_json": ""})
-insert("seg", {"name": "Other Users", "description": "", "rules_json": ""})
+# --- Patch db_utils to use this session ---
+import ml_liveops_dashboard.db_utils as db_utils
+db_utils.session = session
 
-# ---  Insert segment mix entries ---
-insert("seg-mix-entry", {"segment_mix_id": 1, "segment_id": 1, "percentage": 40})
-insert("seg-mix-entry", {"segment_mix_id": 1, "segment_id": 2, "percentage": 60})
+# --- Clear tables first ---
+clear("segment_mixes", db=session)
+clear("segments", db=session)
+clear("segment_mix_entries", db=session)
+clear("segmented_mab_campaigns", db=session)
+clear("data_campaigns", db=session)
+
+# --- Insert segment mix ---
+insert("segment_mixes", {"name": "Platform Mix"}, db=session)
+
+# --- Insert segments ---
+insert("segments", {"name": "Mobile Users", "description": "", "rules_json": ""}, db=session)
+insert("segments", {"name": "Other Users", "description": "", "rules_json": ""}, db=session)
+
+# --- Insert segment mix entries ---
+insert("segment_mix_entries", {"segment_mix_id": 1, "segment_id": 1, "percentage": 40}, db=session)
+insert("segment_mix_entries", {"segment_mix_id": 1, "segment_id": 2, "percentage": 60}, db=session)
 
 # --- Insert segmented MAB campaign ---
-insert("seg-mab", {"segment_mix_id": 1})
+insert("segmented_mab_campaigns", {"segment_mix_id": 1}, db=session)
 
 # --- Insert data campaign ---
 insert(
-    "camp",
+    "data_campaigns",
     {
         "static_campaign_id": 1,
         "banner_id": 1,
         "campaign_type": "SEGMENTED_MAB",
         "segmented_mab_id": 1,
     },
+    db=session,
 )
 
 # --- Print all tables to verify ---
-print_tables(None)
-
+print_tables(None, db=session)

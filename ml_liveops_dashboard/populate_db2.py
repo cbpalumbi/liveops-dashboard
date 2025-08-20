@@ -1,9 +1,20 @@
-# populate_mab_db.py
-# Makes a MAB campaign 
-from ml_liveops_dashboard.db_utils import insert, clear, print as print_tables
+# populate_db2.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from ml_liveops_dashboard.sqlite_models import Base
+from ml_liveops_dashboard.db_utils import insert, print as print_tables
 
-# --- Insert a regular MAB campaign ---
-# No segments needed, so we skip seg-mix, seg, seg-mix-entry, seg-mab
+# --- Create a SQLite database (in-memory or file) ---
+engine = create_engine("sqlite:///mab.db", echo=False)  
+SessionLocal = sessionmaker(bind=engine)
+session = SessionLocal()
+
+# --- Create all tables from Base ---
+Base.metadata.create_all(engine)
+
+# --- Patch db_utils to use this session ---
+import ml_liveops_dashboard.db_utils as db_utils
+db_utils.session = session
 
 # --- Insert data campaign ---
 insert(
