@@ -1,0 +1,72 @@
+[
+  {
+    "player_id": 1,
+    "age": 35,
+    "region": "EU",
+    "device_type": "iOS",
+    "sessions_per_day": 2,
+    "avg_session_length": 22,
+    "lifetime_spend": 1.62,
+    "playstyle_vector": [
+      0.008,
+      0.168,
+      0.824
+    ]
+  },
+  {
+    "player_id": 2,
+    "age": 27,
+    "region": "LATAM",
+    "device_type": "iOS",
+    "sessions_per_day": 2,
+    "avg_session_length": 25,
+    "lifetime_spend": 0.14,
+    "playstyle_vector": [
+      0.321,
+      0.652,
+      0.027
+    ]
+  },
+  {
+    "player_id": 3,
+    "age": 44,
+    "region": "ASIA",
+    "device_type": "Tablet",
+    "sessions_per_day": 2,
+    "avg_session_length": 14,
+    "lifetime_spend": 1.01,
+    "playstyle_vector": [
+      0.058,
+      0.84,
+      0.102
+    ]
+  },
+  {
+    "player_id": 4,
+    "age": 15,
+    "region": "LATAM",
+    "device_type": "iOS",
+    "sessions_per_day": 3,
+    "avg_session_length": 7,
+    "lifetime_spend": 4.48,
+    "playstyle_vector": [
+      0.658,
+      0.0,
+      0.342
+    ]
+  },
+  {
+    "player_id": 5,
+    "age": 25,
+    "region": "NA",
+    "device_type": "Tablet",
+    "sessions_per_day": 1,
+    "avg_session_length": 23,
+    "lifetime_spend": 10.15,
+    "playstyle_vector": [
+      0.14,
+      0.241,
+      0.619
+    ]
+  }
+]
