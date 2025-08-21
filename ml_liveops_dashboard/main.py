@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 import json
@@ -36,8 +36,20 @@ class CreateDataCampaignRequest(BaseModel):
     banner_id: int
     campaign_type: str
 
+class PlayerContext(BaseModel): # Used for contextual MAB campaigns
+    player_id: int
+    age: int = Field(..., ge=0, le=120)
+    region: str
+    device_type: str
+    sessions_per_day: int = Field(..., ge=0)
+    avg_session_length: int = Field(..., ge=0)  # minutes
+    lifetime_spend: float = Field(..., ge=0.0)
+    playstyle_vector: List[float] = Field(..., min_length=3, max_length=3)
+
 class ServeRequest(BaseModel):
     data_campaign_id: int
+    timestamp: datetime
+    player_context: Optional[PlayerContext] = None
 
 class ReportRequest(BaseModel):
     data_campaign_id: int
@@ -45,7 +57,7 @@ class ReportRequest(BaseModel):
     clicked: bool
     segment_id: Optional[int] = None
     timestamp: datetime
-    player_context: Optional[dict] = None
+    player_context: Optional[PlayerContext] = None
 
 class DataCampaignRequest(BaseModel):
     id: int
@@ -142,10 +154,18 @@ def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
         campaign_type = dc.campaign_type.lower()
         if campaign_type == "mab":
             return serve_variant(dc, db)  # original single MAB
+        
         elif campaign_type == "segmented_mab":
             return serve_variant_segmented(dc, db)
+        
         elif campaign_type == "contextual_mab":
-            return serve_variant_contextual(dc, db)
+            if req.player_context:
+                # Convert PlayerContext to JSON string for storage
+                player_context_json = req.player_context.model_dump_json()
+            else:
+                player_context_json = None  # Ensure it's None if not provided
+            return serve_variant_contextual(dc, db, player_context=player_context_json)
+            
         else:
             # fallback to random variant serving via normal /serve
             # TODO: change this to route to its own function not in mab.py
@@ -153,12 +173,17 @@ def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-    
 
 @app.post("/report")
 def report_impression_api(req: ReportRequest, db: Session = Depends(get_db)):
     try:
-        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, req.timestamp, db, player_context=req.player_context)
+        if req.player_context:
+            # Convert PlayerContext to JSON string for storage
+            player_context_json = req.player_context.model_dump_json()
+        else:
+            player_context_json = None  # Ensure it's None if not provided
+
+        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, req.timestamp, db, player_context=player_context_json)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

@@ -2,6 +2,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from datetime import datetime
+from typing import Optional
 import random, json
 
 from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMix, SegmentMixEntry, Impression
@@ -96,11 +97,12 @@ def report_impression(
     timestamp: datetime,
     db: Session,
     segment_id: int = None,
-    player_context: dict = None
+    player_context: Optional[str] = None # in json form
 ):
     """
     Store an impression in the database.
     If segment_id is provided, it will be recorded for segmented MAB campaigns.
+    If player_context vector is provided, it will be stored as a JSON string. 
     """
 
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
@@ -233,8 +235,9 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
         "variant": chosen_variant
     }
 
-def serve_variant_contextual(dc: DataCampaign, db: Session):
+def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Optional[str] = None):
     """
     Serve a variant for a campaign using Contextual MAB.
     """
     return serve_variant(dc, db)
+
