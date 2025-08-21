@@ -28,3 +28,4 @@ tests/__pycache__/
 
 
 mab.db
+*.joblib
