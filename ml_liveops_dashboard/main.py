@@ -7,7 +7,7 @@ from typing import List, Optional
 import json
 
 from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
-from ml_liveops_dashboard.mab import report_impression, serve_variant, serve_variant_segmented
+from ml_liveops_dashboard.mab import report_impression, serve_variant, serve_variant_segmented, serve_variant_contextual
 
 DATABASE_URL = "sqlite:///./mab.db"
 
@@ -45,6 +45,7 @@ class ReportRequest(BaseModel):
     clicked: bool
     segment_id: Optional[int] = None
     timestamp: datetime
+    player_context: Optional[dict] = None
 
 class DataCampaignRequest(BaseModel):
     id: int
@@ -143,6 +144,8 @@ def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
             return serve_variant(dc, db)  # original single MAB
         elif campaign_type == "segmented_mab":
             return serve_variant_segmented(dc, db)
+        elif campaign_type == "contextual_mab":
+            return serve_variant_contextual(dc, db)
         else:
             # fallback to random variant serving via normal /serve
             # TODO: change this to route to its own function not in mab.py
@@ -155,7 +158,7 @@ def serve_variant_api(req: ServeRequest, db: Session = Depends(get_db)):
 @app.post("/report")
 def report_impression_api(req: ReportRequest, db: Session = Depends(get_db)):
     try:
-        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, req.timestamp, db)
+        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, req.timestamp, db, player_context=req.player_context)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

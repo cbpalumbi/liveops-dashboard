@@ -95,7 +95,8 @@ def report_impression(
     clicked: bool,
     timestamp: datetime,
     db: Session,
-    segment_id: int = None 
+    segment_id: int = None,
+    player_context: dict = None
 ):
     """
     Store an impression in the database.
@@ -231,3 +232,9 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
         "segment_id": selected_segment,
         "variant": chosen_variant
     }
+
+def serve_variant_contextual(dc: DataCampaign, db: Session):
+    """
+    Serve a variant for a campaign using Contextual MAB.
+    """
+    return serve_variant(dc, db)

@@ -24,6 +24,7 @@ class Impression(Base):
     clicked = Column(Integer)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     segment = Column(Integer, nullable=True) 
+    player_context = Column(String, nullable=True)  # JSON string for player context if needed
 
 class Segment(Base):
     __tablename__ = "segments"
