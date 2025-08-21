@@ -37,7 +37,7 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
             run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay)
         elif mode == "local":
             run_segmented_mab_local(data_campaign["id"], impressions, delay)
-    else:
+    elif campaign_type == "mab":
         # Original MAB / random campaign flow
 
         # Hash once to find true CTRs for banner variants
@@ -54,6 +54,28 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
             run_simulation_via_api(data_campaign["id"], true_ctrs, [], impressions, delay)
         elif mode == "local":
             run_mab_local(data_campaign["id"], impressions, delay)
+    elif campaign_type == "contextual_mab":
+        serve_resp = requests.post(
+            f"{API_BASE}/serve",
+            json={
+                "data_campaign_id": data_campaign["id"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "player_context": {
+                    "player_id": 3,
+                    "age": 27,
+                    "region": "NA",
+                    "device_type": "Android",
+                    "sessions_per_day": 3,
+                    "avg_session_length": 13,
+                    "lifetime_spend": 2.83,
+                    "playstyle_vector": [0.622, 0.235, 0.143],
+                },
+            },
+        )
+
+    
+    else:
+        print("No simulation running")
 
 def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay):
     impression_log = []

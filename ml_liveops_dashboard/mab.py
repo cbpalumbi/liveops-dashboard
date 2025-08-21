@@ -4,6 +4,7 @@ from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional
 import random, json
+import numpy as np
 
 from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMix, SegmentMixEntry, Impression
 
@@ -235,9 +236,27 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
         "variant": chosen_variant
     }
 
+def player_context_json_to_vector(ctx_json: str) -> np.ndarray:
+    """
+    Convert a JSON string of PlayerContext into a numeric feature vector for KMeans.
+    Expected keys: age, sessions_per_day, avg_session_length, lifetime_spend, playstyle_vector (3 floats)
+    """
+    ctx = json.loads(ctx_json)
+
+    vector = [
+        ctx["age"],
+        ctx["sessions_per_day"],
+        ctx["avg_session_length"],
+        ctx["lifetime_spend"],
+    ] + ctx["playstyle_vector"]
+
+    return np.array(vector, dtype=float)
+
 def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Optional[str] = None):
     """
     Serve a variant for a campaign using Contextual MAB.
     """
-    return serve_variant(dc, db)
+    player_vector = player_context_json_to_vector(player_context)
+    print(player_vector)
+     
 
