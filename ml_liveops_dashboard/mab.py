@@ -2,11 +2,12 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import random, json
 import numpy as np
 
 from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMix, SegmentMixEntry, Impression
+from ml_liveops_dashboard.contextual_mab import get_cluster_id
 
 # --- Load static campaign JSON ---
 with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
@@ -236,7 +237,7 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
         "variant": chosen_variant
     }
 
-def player_context_json_to_vector(ctx_json: str) -> np.ndarray:
+def player_context_json_to_vector(ctx_json: str) -> List[float]:
     """
     Convert a JSON string of PlayerContext into a numeric feature vector for KMeans.
     Expected keys: age, sessions_per_day, avg_session_length, lifetime_spend, playstyle_vector (3 floats)
@@ -250,7 +251,7 @@ def player_context_json_to_vector(ctx_json: str) -> np.ndarray:
         ctx["lifetime_spend"],
     ] + ctx["playstyle_vector"]
 
-    return np.array(vector, dtype=float)
+    return vector
 
 def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Optional[str] = None):
     """
@@ -258,5 +259,8 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
     """
     player_vector = player_context_json_to_vector(player_context)
     print(player_vector)
+    assigned_cluster = get_cluster_id(player_vector)
+    print("Assigned cluster: ", assigned_cluster)
+    
      
 

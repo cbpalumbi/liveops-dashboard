@@ -73,6 +73,42 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
             },
         )
 
+        serve_resp = requests.post(
+            f"{API_BASE}/serve",
+            json={
+                "data_campaign_id": data_campaign["id"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "player_context": {
+                    "player_id": 4,
+                    "age": 27,
+                    "region": "NA",
+                    "device_type": "Android",
+                    "sessions_per_day": 3,
+                    "avg_session_length": 13,
+                    "lifetime_spend": 2.83,
+                    "playstyle_vector": [0.622, 0.235, 0.143],
+                },
+            },
+        )
+
+        serve_resp = requests.post(
+            f"{API_BASE}/serve",
+            json={
+                "data_campaign_id": data_campaign["id"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "player_context": {
+                    "player_id": 5,
+                    "age": 15,
+                    "region": "EU",
+                    "device_type": "Tablet",
+                    "sessions_per_day": 1,
+                    "avg_session_length": 31,
+                    "lifetime_spend": 8.01,
+                    "playstyle_vector": [0.122, 0.535, 0.643],
+                },
+            },
+        )
+
     
     else:
         print("No simulation running")
