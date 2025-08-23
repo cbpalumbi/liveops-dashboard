@@ -1,6 +1,7 @@
 import hashlib
 import json
 import random
+from typing import Optional, Dict, List
 from collections import Counter, defaultdict
 
 #TODO: Will be replaced by CTRs defined in data
@@ -31,7 +32,29 @@ def load_static_campaigns():
     with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
         return json.load(f)    
 
-def print_regret_summary(impression_log, true_ctrs, campaign_type):
+class SimulationResult:
+    def __init__(
+        self,
+        campaign_type: str,
+        cumulative_regret_mab: float = 0.0,
+        cumulative_regret_uniform: float = 0.0,
+        total_impressions: int = 0,
+        variant_counts: Optional[Dict[int, int]] = None,
+        per_segment_regret: Optional[Dict[int, Dict]] = None,
+    ):
+        self.campaign_type = campaign_type
+        self.cumulative_regret_mab = cumulative_regret_mab
+        self.cumulative_regret_uniform = cumulative_regret_uniform
+        self.total_impressions = total_impressions
+        self.variant_counts = variant_counts or {}
+        self.per_segment_regret = per_segment_regret or {}
+
+def generate_regret_summary(
+    impression_log: List[dict],
+    true_ctrs: Dict[int, float],
+    campaign_type: str
+) -> SimulationResult:
+    
     best_ctr = max(true_ctrs.values())
     cumulative_regret_mab = 0.0
     cumulative_regret_uniform = 0.0
@@ -69,7 +92,8 @@ def print_regret_summary(impression_log, true_ctrs, campaign_type):
     print(f"  MAB policy: {cumulative_regret_mab:.3f}")
     print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
 
-    # Additional per-segment regret summary for segmented MAB
+    # Build per-segment results
+    per_segment_regret = {}
     if campaign_type == "segmented_mab":
         print("\n--- Per-segment regret summary ---")
         for segment_id, logs in segment_logs.items():
@@ -77,10 +101,7 @@ def print_regret_summary(impression_log, true_ctrs, campaign_type):
             seg_cum_regret_uniform = sum(best_ctr - expected_click_uniform for _ in logs)
 
             # Count how many times each variant was shown for this segment
-            variant_counts = {}
-            for imp in logs:
-                vid = imp["variant_id"]
-                variant_counts[vid] = variant_counts.get(vid, 0) + 1
+            variant_counts = Counter([imp["variant_id"] for imp in logs])
 
             # Print regret + impressions
             print(
@@ -93,3 +114,19 @@ def print_regret_summary(impression_log, true_ctrs, campaign_type):
             for vid, count in variant_counts.items():
                 pct = (count / len(logs)) * 100
                 print(f"  Variant {vid}: {count} impressions ({pct:.1f}%)")
+
+            per_segment_regret[segment_id] = {
+                "mab_regret": seg_cum_regret_mab,
+                "uniform_regret": seg_cum_regret_uniform,
+                "impressions": len(logs),
+                "variant_counts": dict(variant_counts),
+            }
+
+    return SimulationResult(
+        campaign_type=campaign_type,
+        cumulative_regret_mab=cumulative_regret_mab,
+        cumulative_regret_uniform=cumulative_regret_uniform,
+        total_impressions=total_impressions,
+        variant_counts=dict(counts),
+        per_segment_regret=per_segment_regret,
+    )
