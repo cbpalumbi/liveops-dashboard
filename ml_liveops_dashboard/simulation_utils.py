@@ -75,4 +75,21 @@ def print_regret_summary(impression_log, true_ctrs, campaign_type):
         for segment_id, logs in segment_logs.items():
             seg_cum_regret_mab = sum(best_ctr - true_ctrs[imp["variant_id"]] for imp in logs)
             seg_cum_regret_uniform = sum(best_ctr - expected_click_uniform for _ in logs)
-            print(f"Segment {segment_id}: MAB regret = {seg_cum_regret_mab:.3f}, Uniform regret = {seg_cum_regret_uniform:.3f}, Impressions = {len(logs)}")
+
+            # Count how many times each variant was shown for this segment
+            variant_counts = {}
+            for imp in logs:
+                vid = imp["variant_id"]
+                variant_counts[vid] = variant_counts.get(vid, 0) + 1
+
+            # Print regret + impressions
+            print(
+                f"Segment {segment_id}: MAB regret = {seg_cum_regret_mab:.3f}, "
+                f"Uniform regret = {seg_cum_regret_uniform:.3f}, "
+                f"Impressions = {len(logs)}"
+            )
+
+            # Print per-variant allocation
+            for vid, count in variant_counts.items():
+                pct = (count / len(logs)) * 100
+                print(f"  Variant {vid}: {count} impressions ({pct:.1f}%)")

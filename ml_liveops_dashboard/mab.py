@@ -123,6 +123,30 @@ def report_impression(
     db.add(impression)
     db.commit()
 
+    if dc.campaign_type.lower() == "segmented_mab":
+        # temporary unique logic for segmented mab to use the new thompson sampling class 
+        if segment_id is None:
+            raise ValueError("Segment ID required for segmented MAB campaigns")
+
+        # Ensure segmented bandits are initialized
+        if not segmented_bandits: # <-- should never happen
+            init_segmented_bandits()
+
+        # # Lookup this campaign’s bandits
+        # campaign_bandits = segmented_bandits.get(data_campaign_id)
+        # if campaign_bandits is None:
+        #     raise ValueError(f"No bandits initialized for campaign {data_campaign_id}")
+
+        # Lookup the correct segment’s bandit
+        bandit = segmented_bandits.get(segment_id)
+        if bandit is None:
+            raise ValueError(f"No bandit found for segment {segment_id} in campaign {data_campaign_id}")
+
+        # Update Thompson sampler with reward
+        reward = 1 if clicked else 0
+        bandit.update(variant_id, reward)
+
+
     return {"status": "logged"}
 
 
@@ -204,6 +228,7 @@ def run_thompson_sampling_segmented(data_campaign_id: int, banner_id: int, segme
     best_variant = max(variant_scores, key=lambda x: x[1])[0]
     return best_variant
 
+# TODO: Needs to be stored per data campaign, not globally
 segmented_bandits = {}
 def init_segmented_bandits(segment_ids, variant_ids):
     for seg in segment_ids:
