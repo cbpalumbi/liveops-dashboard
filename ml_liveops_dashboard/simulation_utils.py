@@ -3,23 +3,29 @@ import json
 import random
 from collections import Counter, defaultdict
 
-def get_ctr_for_variant(static_campaign, banner_id, variant_id, min_ctr=0.05, max_ctr=0.3):
+#TODO: Will be replaced by CTRs defined in data
+def get_ctr_for_variant(static_campaign, banner_id, variant_id, segment_id=None,
+                        min_ctr=0.05, max_ctr=0.4):
     for banner in static_campaign["banners"]:
         if banner["id"] == banner_id:
             for variant in banner["variants"]:
                 if variant["id"] == variant_id:
+                    # Base string includes segment_id if provided
                     variant_str = json.dumps({
                         "campaign_id": static_campaign["id"],
                         "banner_id": banner_id,
                         "variant_id": variant_id,
+                        "segment_id": segment_id,   # <--- key change
                         "color": variant.get("color")
                     }, sort_keys=True)
+                    
                     h = hashlib.sha256(variant_str.encode()).hexdigest()
                     seed = int(h[:8], 16)
                     rng = random.Random(seed)
                     ctr = rng.uniform(min_ctr, max_ctr)
                     return ctr
     raise ValueError("Variant not found")
+
 
 def load_static_campaigns():
     with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:

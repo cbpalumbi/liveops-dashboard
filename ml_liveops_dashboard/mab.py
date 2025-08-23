@@ -126,6 +126,32 @@ def report_impression(
     return {"status": "logged"}
 
 
+import random
+
+class ThompsonBandit:
+    def __init__(self, variant_ids):
+        # priors: start with Beta(1, 1) for each variant
+        self.state = {
+            vid: {"alpha": 1, "beta": 1}
+            for vid in variant_ids
+        }
+
+    def select_variant(self):
+        """Sample from each variant’s Beta and return the winner."""
+        scores = {
+            vid: random.betavariate(s["alpha"], s["beta"])
+            for vid, s in self.state.items()
+        }
+        return max(scores, key=scores.get)
+
+    def update(self, variant_id: int, clicked: bool):
+        """Update counts after an impression result."""
+        if clicked:
+            self.state[variant_id]["alpha"] += 1
+        else:
+            self.state[variant_id]["beta"] += 1
+
+
 def run_thompson_sampling_segmented(data_campaign_id: int, banner_id: int, segment_id: int, db: Session):
     """
     Run Thompson Sampling for a specific segment.
@@ -178,6 +204,11 @@ def run_thompson_sampling_segmented(data_campaign_id: int, banner_id: int, segme
     best_variant = max(variant_scores, key=lambda x: x[1])[0]
     return best_variant
 
+segmented_bandits = {}
+def init_segmented_bandits(segment_ids, variant_ids):
+    for seg in segment_ids:
+        segmented_bandits[seg] = ThompsonBandit(variant_ids)
+
 def serve_variant_segmented(dc: DataCampaign, db: Session):
     """
     Serve a variant for a campaign using Segmented MAB.
@@ -185,7 +216,6 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     then runs Thompson Sampling for that segment.
     Returns chosen variant and segment info.
     """
-
     # Get segmented MAB config
     smab = db.query(SegmentedMABCampaign).filter(
         SegmentedMABCampaign.id == dc.segmented_mab_id
@@ -194,15 +224,25 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
         raise ValueError("Segmented MAB config not found for this campaign")
 
     # Load segment mix and entries
-    segment_mix = db.query(SegmentMix).filter(SegmentMix.id == smab.segment_mix_id).first()
+    segment_mix = db.query(SegmentMix).filter(
+        SegmentMix.id == smab.segment_mix_id
+    ).first()
     if not segment_mix:
         raise ValueError("Segment mix not found")
 
-    entries = db.query(SegmentMixEntry).filter(SegmentMixEntry.segment_mix_id == segment_mix.id).all()
+    entries = db.query(SegmentMixEntry).filter(
+        SegmentMixEntry.segment_mix_id == segment_mix.id
+    ).all()
     if not entries:
         raise ValueError("No entries found for segment mix")
 
-    # Randomly assign segment based on percentages
+    # Initialize bandits if needed
+    if segmented_bandits == {}:
+        segment_ids = [e.segment_id for e in entries]
+        variant_ids = get_static_banner_variants(dc.static_campaign_id, dc.banner_id)
+        init_segmented_bandits(segment_ids, variant_ids)
+
+    # weighted random segment choice
     total_weight = sum(e.percentage for e in entries)
     rnd = random.uniform(0, total_weight)
     cumulative = 0
@@ -213,10 +253,11 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
             selected_segment = entry.segment_id
             break
 
-    # Run Thompson Sampling for the selected segment
-    variant_id = run_thompson_sampling_segmented(dc.id, dc.banner_id, selected_segment, db)
+    # Retrieve this segment's bandit and run Thompson sampling
+    bandit = segmented_bandits[selected_segment]
+    variant_id = bandit.select_variant()
 
-    # Get static campaign info for variant details
+    # Get static campaign info for variant details TODO: cache this at startup
     with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
         static_campaigns = json.load(f)
     static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
