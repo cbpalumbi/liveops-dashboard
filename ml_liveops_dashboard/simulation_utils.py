@@ -1,8 +1,9 @@
 import hashlib
 import json
 import random
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from collections import Counter, defaultdict
+from dataclasses import dataclass, field
 
 #TODO: Will be replaced by CTRs defined in data
 def get_ctr_for_variant(static_campaign, banner_id, variant_id, segment_id=None,
@@ -32,22 +33,18 @@ def load_static_campaigns():
     with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
         return json.load(f)    
 
+@dataclass
 class SimulationResult:
-    def __init__(
-        self,
-        campaign_type: str,
-        cumulative_regret_mab: float = 0.0,
-        cumulative_regret_uniform: float = 0.0,
-        total_impressions: int = 0,
-        variant_counts: Optional[Dict[int, int]] = None,
-        per_segment_regret: Optional[Dict[int, Dict]] = None,
-    ):
-        self.campaign_type = campaign_type
-        self.cumulative_regret_mab = cumulative_regret_mab
-        self.cumulative_regret_uniform = cumulative_regret_uniform
-        self.total_impressions = total_impressions
-        self.variant_counts = variant_counts or {}
-        self.per_segment_regret = per_segment_regret or {}
+    campaign_type: str
+    total_impressions: int
+    cumulative_regret_mab: float
+    cumulative_regret_uniform: float
+    variant_counts: Dict[int, int]
+
+    # Optional / campaign-specific fields
+    per_segment_regret: Optional[Dict[int, Dict[str, Any]]] = field(default=None)
+    impression_log: Optional[List[Dict[str, Any]]] = field(default=None)
+    true_ctrs: Optional[Dict[int, float]] = field(default=None)
 
 def generate_regret_summary(
     impression_log: List[dict],
@@ -124,9 +121,11 @@ def generate_regret_summary(
 
     return SimulationResult(
         campaign_type=campaign_type,
+        total_impressions=total_impressions,
         cumulative_regret_mab=cumulative_regret_mab,
         cumulative_regret_uniform=cumulative_regret_uniform,
-        total_impressions=total_impressions,
         variant_counts=dict(counts),
         per_segment_regret=per_segment_regret,
+        impression_log=impression_log,
+        true_ctrs=true_ctrs,
     )

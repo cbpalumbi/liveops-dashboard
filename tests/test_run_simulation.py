@@ -76,7 +76,7 @@ def test_simulate_data_campaign_segmented_api(monkeypatch):
         "banners": [{"id": 11, "variants": [{"id": 2, "name": "B"}]}]
     }])
     monkeypatch.setattr(run_simulation, "clear", lambda *_, **__: None)
-    monkeypatch.setattr(run_simulation, "print_regret_summary", lambda *_, **__: None)
+    monkeypatch.setattr(run_simulation, "generate_regret_summary", lambda *_, **__: None)
     monkeypatch.setattr(run_simulation, "get_ctr_for_variant", lambda *_: 0.5)
     run_simulation.simulate_data_campaign(2, "api", impressions=2, delay=0)
 
@@ -109,3 +109,4 @@ def test_get_static_campaign_not_found():
     data_campaign = {"static_campaign_id": 2}
     result = run_simulation.get_static_campaign(data_campaign, static_campaigns)
     assert result is None
+

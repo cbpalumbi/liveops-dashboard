@@ -1,0 +1,58 @@
+import pytest
+from ml_liveops_dashboard.run_simulation import simulate_data_campaign
+from ml_liveops_dashboard.db_utils import clear, insert
+from ml_liveops_dashboard.simulation_utils import SimulationResult
+from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMixEntry, Segment
+
+@pytest.fixture(autouse=True)
+def setup_and_teardown():
+    clear()
+    yield
+    clear()
+
+
+def test_mab_simulation_flow():
+    exec(open("ml_liveops_dashboard/populate_db2.py").read())
+    result = simulate_data_campaign(1, mode="local", impressions=100)
+    assert isinstance(result, SimulationResult)
+    assert result.cumulative_regret_mab < 2 * result.cumulative_regret_uniform, \
+        "MAB regret should no more than half of uniform random regret"
+    assert len(result.impression_log) == 100
+    assert set(result.variant_counts.keys()) == {1, 2}
+'''
+def test_segmented_mab_simulation_flow(test_db_session):
+    session = test_db_session
+
+    # populate DB
+    exec(open("ml_liveops_dashboard/populate_db.py").read())
+
+    # fetch data campaign
+    dc = session.query(DataCampaign).filter(DataCampaign.id == 1).first()
+    assert dc is not None
+
+    # get segments
+    smab = session.query(SegmentedMABCampaign).filter(
+        SegmentedMABCampaign.id == dc.segmented_mab_id
+    ).first()
+    entries = session.query(SegmentMixEntry).filter(
+        SegmentMixEntry.segment_mix_id == smab.segment_mix_id
+    ).all()
+    segments = [
+        session.query(Segment).filter(Segment.id == e.segment_id).first().name
+        for e in entries
+    ]
+
+    # run simulation
+    result = simulate_data_campaign(dc.id, mode="local")
+
+    # assertions
+    assert isinstance(result, SimulationResult)
+    assert result.cumulative_regret["segmented_mab"] < result.cumulative_regret["uniform"]
+
+    for seg in segments:
+        assert seg in result.segment_results
+        seg_result = result.segment_results[seg]
+        assert seg_result.cumulative_regret["segmented_mab"] < seg_result.cumulative_regret["uniform"]
+        assert sum(seg_result.impressions.values()) > 0
+        assert set(seg_result.variant_counts.keys()) == {"A", "B"}
+'''

@@ -2,12 +2,13 @@ import requests
 import time
 from datetime import datetime, timedelta, timezone
 import random
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 
 from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local, run_contextual_mab_local
 from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns
 from ml_liveops_dashboard.db_utils import clear
+from ml_liveops_dashboard.sqlite_models import DataCampaign, Base
 
 API_BASE = "http://localhost:8000" 
 
@@ -15,12 +16,32 @@ def get_static_campaign(data_campaign, static_campaigns):
     return next((c for c in static_campaigns if c["id"] == data_campaign["static_campaign_id"]), None)
 
 def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02) -> SimulationResult:
+    
+    DATABASE_URL = "sqlite:///./mab.db"
+
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+    Base.metadata.create_all(bind=engine)
+    
     # Get data campaign details
-    r = requests.get(f"{API_BASE}/data_campaign/{data_campaign_id}")
-    if r.status_code != 200:
-        print("Data campaign not found:", r.text)
-        return None
-    data_campaign = r.json()
+    if mode == "api":
+        # --- Fetch via HTTP ---
+        r = requests.get(f"{API_BASE}/data_campaign/{data_campaign_id}")
+        if r.status_code != 200:
+            print("Data campaign not found:", r.text)
+            return None
+        data_campaign = r.json()
+    elif mode == "local":
+        # --- Fetch from local DB ---
+        session = SessionLocal()
+        query_result = session.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
+        if not query_result:
+            print(f"DataCampaign {data_campaign_id} not found in local DB")
+            return None
+        data_campaign = query_result.as_dict()
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
 
     static_campaigns = load_static_campaigns()
     static_campaign = get_static_campaign(data_campaign, static_campaigns)

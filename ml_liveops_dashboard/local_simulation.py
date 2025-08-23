@@ -59,7 +59,7 @@ def run_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0
             print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
             time.sleep(delay)
 
-        generate_regret_summary(impression_log, true_ctrs, campaign_type="mab")
+        return generate_regret_summary(impression_log, true_ctrs, campaign_type="mab")
 
     finally:
         db.close()
@@ -115,7 +115,7 @@ def run_segmented_mab_local(data_campaign_id: int, impressions: int = 50, delay:
                   f"segment {segment_id}, clicked: {clicked} (CTR={ctr:.2%})")
             time.sleep(delay)
 
-        generate_regret_summary(impression_log, true_ctrs, campaign_type="segmented_mab")
+        return generate_regret_summary(impression_log, true_ctrs, campaign_type="segmented_mab")
 
     finally:
         db.close()

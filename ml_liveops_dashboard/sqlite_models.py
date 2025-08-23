@@ -14,6 +14,9 @@ class DataCampaign(Base):
     segmented_mab_id = Column(Integer, nullable=True)     # NULL unless segmented MAB
     start_time = Column(DateTime, server_default=func.now())
     end_time = Column(DateTime, nullable=True)
+    
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class Impression(Base):
     __tablename__ = "impressions"
