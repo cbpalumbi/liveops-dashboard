@@ -118,3 +118,26 @@ def run_segmented_mab_local(data_campaign_id: int, impressions: int = 50, delay:
 
     finally:
         db.close()
+
+def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
+    
+    # need to generate new players - can use same script as before maybe? 
+
+    player1={
+        "data_campaign_id": data_campaign_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "player_context": {
+            "player_id": 3,
+            "age": 27,
+            "region": "NA",
+            "device_type": "Android",
+            "sessions_per_day": 3,
+            "avg_session_length": 13,
+            "lifetime_spend": 2.83,
+            "playstyle_vector": [0.622, 0.235, 0.143],
+        }
+    }
+
+    
+
+    return

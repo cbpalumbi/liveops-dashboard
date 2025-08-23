@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta, timezone
 import random
 
-from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local
+from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local, run_contextual_mab_local
 from ml_liveops_dashboard.simulation_utils import print_regret_summary, get_ctr_for_variant, load_static_campaigns
 from ml_liveops_dashboard.db_utils import clear
 
@@ -54,64 +54,71 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02):
             run_simulation_via_api(data_campaign["id"], true_ctrs, [], impressions, delay)
         elif mode == "local":
             run_mab_local(data_campaign["id"], impressions, delay)
+
     elif campaign_type == "contextual_mab":
-        serve_resp = requests.post(
-            f"{API_BASE}/serve",
-            json={
-                "data_campaign_id": data_campaign["id"],
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "player_context": {
-                    "player_id": 3,
-                    "age": 27,
-                    "region": "NA",
-                    "device_type": "Android",
-                    "sessions_per_day": 3,
-                    "avg_session_length": 13,
-                    "lifetime_spend": 2.83,
-                    "playstyle_vector": [0.622, 0.235, 0.143],
-                },
-            },
-        )
-
-        serve_resp = requests.post(
-            f"{API_BASE}/serve",
-            json={
-                "data_campaign_id": data_campaign["id"],
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "player_context": {
-                    "player_id": 4,
-                    "age": 27,
-                    "region": "NA",
-                    "device_type": "Android",
-                    "sessions_per_day": 3,
-                    "avg_session_length": 13,
-                    "lifetime_spend": 2.83,
-                    "playstyle_vector": [0.622, 0.235, 0.143],
-                },
-            },
-        )
-
-        serve_resp = requests.post(
-            f"{API_BASE}/serve",
-            json={
-                "data_campaign_id": data_campaign["id"],
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "player_context": {
-                    "player_id": 5,
-                    "age": 15,
-                    "region": "EU",
-                    "device_type": "Tablet",
-                    "sessions_per_day": 1,
-                    "avg_session_length": 31,
-                    "lifetime_spend": 8.01,
-                    "playstyle_vector": [0.122, 0.535, 0.643],
-                },
-            },
-        )
-
-    
+        if mode == "api":
+            run_contextual_mab_via_api(data_campaign["id"], impressions)
+        elif mode == "local":
+            run_contextual_mab_local(data_campaign["id"], impressions)
+            
     else:
         print("No simulation running")
+
+def run_contextual_mab_via_api(data_campaign_id: int, impressions: int):
+    serve_resp = requests.post(
+        f"{API_BASE}/serve",
+        json={
+            "data_campaign_id": data_campaign_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "player_context": {
+                "player_id": 3,
+                "age": 27,
+                "region": "NA",
+                "device_type": "Android",
+                "sessions_per_day": 3,
+                "avg_session_length": 13,
+                "lifetime_spend": 2.83,
+                "playstyle_vector": [0.622, 0.235, 0.143],
+            },
+        },
+    )
+
+    serve_resp = requests.post(
+        f"{API_BASE}/serve",
+        json={
+            "data_campaign_id": data_campaign_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "player_context": {
+                "player_id": 4,
+                "age": 27,
+                "region": "NA",
+                "device_type": "Android",
+                "sessions_per_day": 3,
+                "avg_session_length": 13,
+                "lifetime_spend": 2.83,
+                "playstyle_vector": [0.622, 0.235, 0.143],
+            },
+        },
+    )
+
+    serve_resp = requests.post(
+        f"{API_BASE}/serve",
+        json={
+            "data_campaign_id": data_campaign_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "player_context": {
+                "player_id": 5,
+                "age": 15,
+                "region": "EU",
+                "device_type": "Tablet",
+                "sessions_per_day": 1,
+                "avg_session_length": 31,
+                "lifetime_spend": 8.01,
+                "playstyle_vector": [0.122, 0.535, 0.643],
+            },
+        },
+    )
+    return
 
 def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay):
     impression_log = []

@@ -68,7 +68,7 @@ class DataCampaignRequest(BaseModel):
     end_time: Optional[datetime]
     model_config = {
         "from_attributes": True
-    }
+}
 
 class ImpressionRequest(BaseModel):
     data_campaign_id: int
@@ -78,7 +78,7 @@ class ImpressionRequest(BaseModel):
     timestamp: datetime
     model_config = {
         "from_attributes": True
-    }
+}
 
 
 # --- Helpers ---

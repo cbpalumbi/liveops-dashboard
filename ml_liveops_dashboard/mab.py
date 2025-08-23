@@ -261,6 +261,8 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
     print(player_vector)
     assigned_cluster = get_cluster_id(player_vector)
     print("Assigned cluster: ", assigned_cluster)
+
+    # 
     
      
 
