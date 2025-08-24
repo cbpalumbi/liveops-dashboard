@@ -25,6 +25,7 @@ dist-ssr
 
 ml_liveops_dashboard/__pycache__/
 tests/__pycache__/
+tests/integration/__pycache__/
 
 
 mab.db
