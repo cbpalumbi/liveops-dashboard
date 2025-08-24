@@ -5,7 +5,7 @@ from ml_liveops_dashboard.sqlite_models import Base
 from ml_liveops_dashboard.db_utils import insert, print as print_tables
 
 # --- Create a SQLite database (in-memory or file) ---
-engine = create_engine("sqlite:///mab.db", echo=False)  
+engine = create_engine("sqlite:///./mab.db", echo=False)  
 SessionLocal = sessionmaker(bind=engine)
 session = SessionLocal()
 

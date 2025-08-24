@@ -1,15 +1,15 @@
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, configure_mappers
+from ml_liveops_dashboard import db_utils
+from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
+
 from ml_liveops_dashboard.run_simulation import simulate_data_campaign
 from ml_liveops_dashboard.db_utils import clear, insert
 from ml_liveops_dashboard.simulation_utils import SimulationResult
 from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMixEntry, Segment
 
-@pytest.fixture(autouse=True)
-def setup_and_teardown():
-    clear()
-    yield
-    clear()
-
+from conftest import test_db_session
 
 def test_mab_simulation_flow():
     exec(open("ml_liveops_dashboard/populate_db2.py").read())
@@ -19,7 +19,7 @@ def test_mab_simulation_flow():
         "MAB regret should no more than half of uniform random regret"
     assert len(result.impression_log) == 100
     assert set(result.variant_counts.keys()) == {1, 2}
-'''
+
 def test_segmented_mab_simulation_flow(test_db_session):
     session = test_db_session
 
@@ -38,21 +38,28 @@ def test_segmented_mab_simulation_flow(test_db_session):
         SegmentMixEntry.segment_mix_id == smab.segment_mix_id
     ).all()
     segments = [
-        session.query(Segment).filter(Segment.id == e.segment_id).first().name
+        session.query(Segment).filter(Segment.id == e.segment_id).first()
         for e in entries
     ]
 
     # run simulation
-    result = simulate_data_campaign(dc.id, mode="local")
+    result = simulate_data_campaign(dc.id, mode="local", impressions=100)
 
     # assertions
     assert isinstance(result, SimulationResult)
-    assert result.cumulative_regret["segmented_mab"] < result.cumulative_regret["uniform"]
+
+    # from generate_regret:
+    #per_segment_regret[segment_id] = {
+    #            "mab_regret": seg_cum_regret_mab,
+    #            "uniform_regret": seg_cum_regret_uniform,
+    #            "impressions": len(logs),
+    #            "variant_counts": dict(variant_counts),
+    #        }
 
     for seg in segments:
-        assert seg in result.segment_results
-        seg_result = result.segment_results[seg]
-        assert seg_result.cumulative_regret["segmented_mab"] < seg_result.cumulative_regret["uniform"]
-        assert sum(seg_result.impressions.values()) > 0
-        assert set(seg_result.variant_counts.keys()) == {"A", "B"}
-'''
+        assert seg.id in result.per_segment_regret.keys()
+
+        seg_result = result.per_segment_regret[seg.id]
+        assert seg_result["mab_regret"] < seg_result["uniform_regret"]
+        assert seg_result["impressions"] > 0
+

@@ -10,7 +10,11 @@ from ml_liveops_dashboard.sqlite_models import Base
 app = typer.Typer()
 
 # --- DB setup ---
-engine = create_engine("sqlite:///mab.db", echo=False)
+import os
+
+# TODO: Is this needed here? need to be more thoughtful about db setup
+db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "mab.db"))
+engine = create_engine(f"sqlite:///{db_path}", echo=False)
 SessionLocal = sessionmaker(bind=engine)
 session = SessionLocal()
 

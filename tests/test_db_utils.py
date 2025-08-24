@@ -1,33 +1,9 @@
 import pytest
 from click.testing import CliRunner
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, configure_mappers
 from ml_liveops_dashboard import db_utils
-from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
+from ml_liveops_dashboard.sqlite_models import DataCampaign, Impression
 
 runner = CliRunner()
-
-# ---------- Fixture ----------
-@pytest.fixture(scope="function")
-def test_db_session(monkeypatch):
-    # 1. Ensure mappers are configured
-    configure_mappers()
-
-    # 2. Create fresh in-memory DB
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    TestingSessionLocal = sessionmaker(bind=engine)
-    session = TestingSessionLocal()
-
-    # 3. Patch db_utils to use this session and rebuild TABLES
-    monkeypatch.setattr(db_utils, "session", session)
-    db_utils.TABLES = {mapper.class_.__tablename__: mapper.class_ for mapper in Base.registry.mappers}
-
-    yield session
-
-    # 4. Cleanup
-    session.close()
-
 
 # ---------- get_table ----------
 def test_get_table_valid_name():
