@@ -1,6 +1,6 @@
-Full-stack, liveops dashboard that uses machine learning techniques like Multi-Armed Bandit (MAB) algorithm to automate and optimize A/B testing of in-game content like ad banners. 
+Full-stack live-ops dashboard that uses machine learning techniques like Multi-Armed Bandit (MAB) to automate and optimize A/B testing of in-game content like ad banners. 
 
-The tool allows a user to upload multiple banner versions, create a new campaign, and then run simulations of various machine learning algorithms on metrics like click through rate. The app also allows for the configuration of user segments and true CTRs. 
+The tool allows a user to upload multiple banner variants, create a new campaign, and then run simulations of various machine learning algorithms on metrics like click through rate. The app also allows for the configuration of user segments and true CTRs. 
 
 Frontend: React, Vite, Tailwind CSS, Recharts
 Backend: Python, FastAPI, SQLite
