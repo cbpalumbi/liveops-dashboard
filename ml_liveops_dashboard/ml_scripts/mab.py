@@ -7,7 +7,7 @@ import random, json
 import numpy as np
 
 from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMix, SegmentMixEntry, Impression
-from ml_liveops_dashboard.contextual_mab import get_cluster_id
+from ml_liveops_dashboard.ml_scripts.contextual_mab import get_cluster_id
 
 # --- Load static campaign JSON ---
 with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:

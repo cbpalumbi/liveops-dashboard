@@ -5,7 +5,7 @@ import random
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local, run_contextual_mab_local
+from ml_liveops_dashboard.ml_scripts.local_simulation import run_mab_local, run_segmented_mab_local, run_contextual_mab_local
 from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns
 from ml_liveops_dashboard.db_utils import clear
 from ml_liveops_dashboard.sqlite_models import DataCampaign, Base

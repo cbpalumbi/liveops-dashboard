@@ -1,18 +1,11 @@
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, configure_mappers
-from ml_liveops_dashboard import db_utils
-from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
+from ml_liveops_dashboard.sqlite_models import DataCampaign
 
 from ml_liveops_dashboard.run_simulation import simulate_data_campaign
-from ml_liveops_dashboard.db_utils import clear, insert
 from ml_liveops_dashboard.simulation_utils import SimulationResult
 from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMixEntry, Segment
 
-from conftest import test_db_session
-
 def test_mab_simulation_flow():
-    exec(open("ml_liveops_dashboard/populate_db2.py").read())
+    exec(open("ml_liveops_dashboard/populate_db_scripts/populate_db2.py").read())
     result = simulate_data_campaign(1, mode="local", impressions=100)
     assert isinstance(result, SimulationResult)
     assert result.cumulative_regret_mab < 2 * result.cumulative_regret_uniform, \
@@ -24,7 +17,7 @@ def test_segmented_mab_simulation_flow(test_db_session):
     session = test_db_session
 
     # populate DB
-    exec(open("ml_liveops_dashboard/populate_db.py").read())
+    exec(open("ml_liveops_dashboard/populate_db_scripts/populate_db.py").read())
 
     # fetch data campaign
     dc = session.query(DataCampaign).filter(DataCampaign.id == 1).first()

@@ -7,7 +7,7 @@ from typing import List, Optional
 import json
 
 from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
-from ml_liveops_dashboard.mab import report_impression, serve_variant, serve_variant_segmented, serve_variant_contextual
+from ml_liveops_dashboard.ml_scripts.mab import report_impression, serve_variant, serve_variant_segmented, serve_variant_contextual
 
 DATABASE_URL = "sqlite:///./mab.db"
 

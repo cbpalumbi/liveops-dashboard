@@ -24,9 +24,12 @@ dist-ssr
 *.sw?
 
 ml_liveops_dashboard/__pycache__/
+ml_liveops_dashboard/ml_scripts/__pycache__/
+ml_liveops_dashboard/populate_db_scripts/__pycache__/
+ml_liveops_dashboard/.pytest_cache/
 tests/__pycache__/
 tests/integration/__pycache__/
-
+.pytest_cache
 
 mab.db
 *.joblib

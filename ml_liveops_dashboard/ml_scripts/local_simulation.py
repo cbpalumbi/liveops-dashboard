@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from ml_liveops_dashboard.main import SessionLocal
-from ml_liveops_dashboard.mab import (
+from ml_liveops_dashboard.ml_scripts.mab import (
     serve_variant,
     serve_variant_segmented,
     report_impression
