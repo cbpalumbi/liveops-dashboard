@@ -183,7 +183,7 @@ def report_impression_api(req: ReportRequest, db: Session = Depends(get_db)):
         else:
             player_context_json = None  # Ensure it's None if not provided
 
-        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, req.timestamp, db, player_context=player_context_json)
+        return report_impression(req.data_campaign_id, req.variant_id, req.clicked, req.timestamp, db, segment_id=req.segment_id, player_context=player_context_json)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

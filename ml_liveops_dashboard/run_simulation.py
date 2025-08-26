@@ -5,7 +5,7 @@ import random
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from ml_liveops_dashboard.ml_scripts.local_simulation import run_mab_local, run_segmented_mab_local, run_contextual_mab_local
+from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local, run_contextual_mab_local
 from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns
 from ml_liveops_dashboard.db_utils import clear
 from ml_liveops_dashboard.sqlite_models import DataCampaign, Base
@@ -155,9 +155,9 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
         variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
         for variant_id in static_banner_variants
     }
-
+    current_time = datetime.now(timezone.utc)
     for i in range(impressions):
-        serve_resp = requests.post(f"{API_BASE}/serve", json={"data_campaign_id": data_campaign["id"]})
+        serve_resp = requests.post(f"{API_BASE}/serve", json={"data_campaign_id": data_campaign["id"], "timestamp": current_time.isoformat()})
         if serve_resp.status_code != 200:
             print("Serve error:", serve_resp.text)
             break
@@ -167,13 +167,13 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
 
         ctr = true_ctrs[variant["id"]]
         clicked = random.random() < ctr
-
+        current_time += timedelta(seconds=30)
         report_payload = {
             "data_campaign_id": data_campaign["id"],
             "variant_id": variant["id"],
             "clicked": clicked,
             "segment_id": segment_id,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": current_time.isoformat()
         }
         report_resp = requests.post(f"{API_BASE}/report", json=report_payload)
         if report_resp.status_code != 200:
@@ -188,6 +188,7 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
         })
 
         print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), segment {segment_id}, clicked: {clicked} (CTR={ctr:.2%})")
+        current_time += timedelta(seconds=30)
         time.sleep(delay)
 
     # Print regret summary after all impressions
@@ -198,7 +199,7 @@ def run_simulation_via_api(data_campaign_id, true_ctrs, impression_log, impressi
     current_time = datetime.now(timezone.utc)
     for i in range(impressions):
         # Serve a variant
-        serve_resp = requests.post(f"{API_BASE}/serve", json={"data_campaign_id": data_campaign_id})
+        serve_resp = requests.post(f"{API_BASE}/serve", json={"data_campaign_id": data_campaign_id, "timestamp": current_time.isoformat()})
         if serve_resp.status_code != 200:
             print("Serve error:", serve_resp.text)
             break
@@ -209,13 +210,14 @@ def run_simulation_via_api(data_campaign_id, true_ctrs, impression_log, impressi
 
         # Simulate click event with probability of success
         clicked = random.random() < ctr
-
+        current_time += timedelta(seconds=30)
+        
         # Report event 
         report_payload = {
             "data_campaign_id": data_campaign_id,
             "variant_id": variant["id"],
             "clicked": clicked,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": current_time.isoformat()
         }
         report_resp = requests.post(f"{API_BASE}/report", json=report_payload)
         if report_resp.status_code != 200:
@@ -230,7 +232,7 @@ def run_simulation_via_api(data_campaign_id, true_ctrs, impression_log, impressi
 
         print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
 
-        current_time += timedelta(minutes=1)
+        current_time += timedelta(seconds=30)
 
         time.sleep(delay)  # optional delay between impressions
 
