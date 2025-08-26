@@ -17,7 +17,7 @@ def get_static_campaign(data_campaign, static_campaigns):
 
 def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02) -> SimulationResult:
     
-    DATABASE_URL = "sqlite:///./mab.db"
+    DATABASE_URL = "sqlite:///../mab.db"
 
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)

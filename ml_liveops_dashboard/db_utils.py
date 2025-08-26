@@ -13,8 +13,7 @@ app = typer.Typer()
 import os
 
 # TODO: Is this needed here? need to be more thoughtful about db setup
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "mab.db"))
-engine = create_engine(f"sqlite:///{db_path}", echo=False)
+engine = create_engine(f"sqlite:///../mab.db", echo=False)
 SessionLocal = sessionmaker(bind=engine)
 session = SessionLocal()
 

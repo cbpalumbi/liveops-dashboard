@@ -9,7 +9,7 @@ def test_db_session(monkeypatch):
     from ml_liveops_dashboard.db_utils import clear
 
     # 1. Connect to local db
-    engine = create_engine("sqlite:///./mab.db")
+    engine = create_engine("sqlite:///../mab.db")
     Base.metadata.create_all(engine)
     TestingSessionLocal = sessionmaker(bind=engine)
     session = TestingSessionLocal()
