@@ -3,14 +3,17 @@
 import random
 import time
 from datetime import datetime, timedelta, timezone
+import numpy as np
+import json
 
 from ml_liveops_dashboard.main import SessionLocal
 from ml_liveops_dashboard.ml_scripts.mab import (
     serve_variant,
     serve_variant_segmented,
-    report_impression
+    report_impression,
+    player_context_json_to_vector
 )
-from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns, get_ctr_vector_for_variant
+from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns, get_true_params_for_variant, calculate_true_ctr_logistic
 from ml_liveops_dashboard.sqlite_models import DataCampaign
 
 def run_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
@@ -144,14 +147,16 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
         static_banner_variants_ids = [
             v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]
         ]
-        
-        # instead of determining true ctrs per variant here, i need to determine a linear expression for each variant
-        for variant in static_banner_variants_ids:
-            print("HELLO: ", get_ctr_vector_for_variant(static_campaign, banner_id, variant))
+
+        # instead of determining true ctrs per variant here, i need to determine a 'true param vector' for each variant
+        true_param_vectors = {
+            variant_id: np.array(get_true_params_for_variant(static_campaign, banner_id, variant_id))
+            for variant_id in static_banner_variants_ids
+        }
 
     
         # need to generate new players - can use same script as before maybe? 
-        player1={
+        exampleplayer1={
             "data_campaign_id": data_campaign_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "player_context": {
@@ -166,14 +171,54 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
             }
         }
 
+        player1={
+            "data_campaign_id": data_campaign_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "player_context": {
+                "player_id": 4,
+                "age": 27,
+                "region": "NA",
+                "device_type": "Android",
+                "sessions_per_day": 3,
+                "avg_session_length": 13,
+                "lifetime_spend": 2.83,
+                "playstyle_vector": [0.622, 0.235, 0.143],
+            },
+        }
+
+        exampleplayer3={
+            "data_campaign_id": data_campaign_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "player_context": {
+                "player_id": 5,
+                "age": 15,
+                "region": "EU",
+                "device_type": "Tablet",
+                "sessions_per_day": 1,
+                "avg_session_length": 31,
+                "lifetime_spend": 8.01,
+                "playstyle_vector": [0.122, 0.535, 0.643],
+            },
+        }
+
+        player1_context = player_context_json_to_vector(json.dumps(player1["player_context"])) # TODO: Make variation on this function to accept json dict 
+
         #for i in range(impressions):
 
-            # serve
+        # serve
+        served_variant_id = 1
 
-            # report
+        # report
+        # for each impressions calculate the probability of click based on the true_ctr_vector for the served variant 
+            # and the context vector via a logistic function
+        true_ctr = calculate_true_ctr_logistic(np.array(player1_context), true_param_vectors[served_variant_id])
+        print("calculated true ctr: ", true_ctr)
+        # simulate click event
+        clicked = random.random() < true_ctr
+        print("clicked: ", clicked)
+            
         
     finally:
-
         db.close()
 
 

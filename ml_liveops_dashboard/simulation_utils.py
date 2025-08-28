@@ -1,6 +1,7 @@
 import hashlib
 import json
 import random
+import numpy as np
 from typing import Optional, Dict, List, Any
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -28,7 +29,7 @@ def get_ctr_for_variant(static_campaign, banner_id, variant_id, segment_id=None,
                     return ctr
     raise ValueError("Variant not found")
 
-def get_ctr_vector_for_variant(static_campaign, banner_id, variant_id):
+def get_true_params_for_variant(static_campaign, banner_id, variant_id):
 
     '''
     "player_context": {
@@ -43,9 +44,9 @@ def get_ctr_vector_for_variant(static_campaign, banner_id, variant_id):
         },
 
     '''
-    # 9 features
+    # 7 features
 
-    # determine a 9 item array for each variant 
+    # determine a 7 item array for each variant 
 
     for banner in static_campaign["banners"]:
         if banner["id"] == banner_id:
@@ -64,13 +65,34 @@ def get_ctr_vector_for_variant(static_campaign, banner_id, variant_id):
                     
 
                     variant_vector = []
-                    for i in range(9):
+                    for i in range(7):
                         rng = random.Random(seed)
                         variant_vector.append(rng.uniform(0.05, 0.8))
                         seed += 1
 
                     return variant_vector
     raise ValueError("Variant not found")
+
+def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: np.ndarray):
+    """
+    Calculates the true click-through rate (CTR) using a logistic function.
+    
+    Args:
+        context_vector: A NumPy array representing the player's features.
+        true_param_vector: A NumPy array representing the "true" parameters for a specific banner variant.
+        
+    Returns:
+        The simulated true CTR, a value between 0 and 1.
+    """
+    print("context vector: ", context_vector)
+    print("true_param_vector: ", true_param_vector)
+    # Calculate the dot product of the two vectors
+    dot_product = np.dot(true_param_vector, context_vector)
+    
+    # Apply the logistic (sigmoid) function to map the result to a probability
+    true_ctr = 1 / (1 + np.exp(-dot_product))
+    
+    return true_ctr
 
 
 
