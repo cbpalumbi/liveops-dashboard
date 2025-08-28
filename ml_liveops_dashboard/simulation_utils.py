@@ -28,6 +28,51 @@ def get_ctr_for_variant(static_campaign, banner_id, variant_id, segment_id=None,
                     return ctr
     raise ValueError("Variant not found")
 
+def get_ctr_vector_for_variant(static_campaign, banner_id, variant_id):
+
+    '''
+    "player_context": {
+            "player_id": 4,
+            "age": 27,
+            "region": "NA",
+            "device_type": "Android",
+            "sessions_per_day": 3,
+            "avg_session_length": 13,
+            "lifetime_spend": 2.83,
+            "playstyle_vector": [0.622, 0.235, 0.143],
+        },
+
+    '''
+    # 9 features
+
+    # determine a 9 item array for each variant 
+
+    for banner in static_campaign["banners"]:
+        if banner["id"] == banner_id:
+            for variant in banner["variants"]:
+                if variant["id"] == variant_id:
+                    # Base string includes segment_id if provided
+                    variant_str = json.dumps({
+                        "campaign_id": static_campaign["id"],
+                        "banner_id": banner_id,
+                        "variant_id": variant_id,
+                        "color": variant.get("color")
+                    }, sort_keys=True)
+                    
+                    h = hashlib.sha256(variant_str.encode()).hexdigest()
+                    seed = int(h[:8], 16)
+                    
+
+                    variant_vector = []
+                    for i in range(9):
+                        rng = random.Random(seed)
+                        variant_vector.append(rng.uniform(0.05, 0.8))
+                        seed += 1
+
+                    return variant_vector
+    raise ValueError("Variant not found")
+
+
 
 def load_static_campaigns():
     with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:

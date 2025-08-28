@@ -312,6 +312,8 @@ def player_context_json_to_vector(ctx_json: str) -> List[float]:
 
     vector = [
         ctx["age"],
+        ctx["region"],
+        ctx["device_type"],
         ctx["sessions_per_day"],
         ctx["avg_session_length"],
         ctx["lifetime_spend"],
