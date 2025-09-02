@@ -145,6 +145,18 @@ def report_impression(
         # Update Thompson sampler with reward
         reward = 1 if clicked else 0
         bandit.update(variant_id, reward)
+    elif dc.campaign_type.lower() == "contextual_mab":
+        # temporary unique logic for segmented mab to use the lin ucb class
+        global linucb_model
+
+        # Convert the player context back to a vector
+        context_vector = player_context_json_to_vector(player_context)
+
+        # Update the model
+        if linucb_model is not None:
+            reward = 1 if clicked else 0
+            linucb_model.update(variant_id - 1, reward, context_vector)
+            print(f"Updated LinUCB model for arm {variant_id} with reward {reward}")
 
 
     return {"status": "logged"}
@@ -320,16 +332,63 @@ def player_context_json_to_vector(ctx_json: str) -> List[float]:
 
     return vector
 
+class LinUCB:
+    def __init__(self, n_arms, n_features, alpha=0.1):
+        self.n_arms = n_arms
+        self.n_features = n_features
+        self.alpha = alpha
+        self.A = [np.identity(n_features) for _ in range(n_arms)]  # A_i: DxD matrix for each arm
+        self.b = [np.zeros(n_features) for _ in range(n_arms)]  # b_i: Dx1 vector for each arm
+
+    def choose_arm(self, context_vector):
+        np_context_vector = np.array(context_vector)
+        p_t = np.zeros(self.n_arms)
+        for i in range(self.n_arms):
+            A_i_inv = np.linalg.inv(self.A[i])
+            theta_i = np.dot(A_i_inv, self.b[i])
+            
+            # The LinUCB formula: E[r] + exploration term
+            # E[r] = theta_i^T * x
+            # exploration = alpha * sqrt(x^T * A_i_inv * x)
+            p_t[i] = np.dot(theta_i.T, np_context_vector) + self.alpha * np.sqrt(np.dot(np_context_vector.T, np.dot(A_i_inv, np_context_vector)))
+        
+        return np.argmax(p_t)
+
+    def update(self, chosen_arm, reward, context_vector):
+        np_context_vector = np.array(context_vector)
+        self.A[chosen_arm] += np.outer(np_context_vector, np_context_vector)
+        self.b[chosen_arm] += reward * np_context_vector
+
+linucb_model = None #TODO: persist
+
 def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Optional[str] = None):
     """
-    Serve a variant for a campaign using Contextual MAB.
+    Serve a variant for a campaign using LinUCB.
     """
-    player_vector = player_context_json_to_vector(player_context)
-    print(player_vector)
-    assigned_cluster = get_cluster_id(player_vector)
-    print("Assigned cluster: ", assigned_cluster)
+    global linucb_model
 
-    # 
+    banner_variant_ids = get_static_banner_variants(dc.static_campaign_id, dc.banner_id)
+
+    player_vector = player_context_json_to_vector(player_context)
+    n_arms = len(banner_variant_ids)
+    n_features = len(player_vector)
+
+    # Initialize the model on the first call
+    if linucb_model is None:
+        linucb_model = LinUCB(n_arms, n_features)
+
+    # Choose the best variant based on the context vector
+    chosen_arm_index = linucb_model.choose_arm(player_vector)
+    chosen_variant = banner_variant_ids[chosen_arm_index]
+
+    #print("Serving banner:", chosen_variant)
     
+    return {
+        "data_campaign_id": dc.id,
+        "static_campaign_id": dc.static_campaign_id,
+        "banner_id": dc.banner_id,
+        "variant": chosen_variant
+    }
+
      
 

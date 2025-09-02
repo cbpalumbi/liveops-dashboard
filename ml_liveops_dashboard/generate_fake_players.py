@@ -1,7 +1,6 @@
 import argparse
 import json
 import random
-import uuid
 import numpy as np
 
 REGIONS = ["NA", "EU", "ASIA", "LATAM"]

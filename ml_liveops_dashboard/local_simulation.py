@@ -11,10 +11,20 @@ from ml_liveops_dashboard.ml_scripts.mab import (
     serve_variant,
     serve_variant_segmented,
     report_impression,
-    player_context_json_to_vector
+    player_context_json_to_vector,
+    serve_variant_contextual
 )
-from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns, get_true_params_for_variant, calculate_true_ctr_logistic
+from ml_liveops_dashboard.simulation_utils import (
+    SimulationResult, 
+    generate_regret_summary, 
+    generate_regret_summary_contextual,
+    get_ctr_for_variant, 
+    load_static_campaigns, 
+    get_true_params_for_variant, 
+    calculate_true_ctr_logistic
+)
 from ml_liveops_dashboard.sqlite_models import DataCampaign
+from ml_liveops_dashboard.generate_fake_players import generate_player
 
 def run_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
     """Run a standard MAB campaign locally."""
@@ -154,69 +164,37 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
             for variant_id in static_banner_variants_ids
         }
 
-    
-        # need to generate new players - can use same script as before maybe? 
-        player1={ # click is true
-            "data_campaign_id": data_campaign_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "player_context": {
-                "player_id": 3,
-                "age": 27,
-                "region": "NA",
-                "device_type": "Android",
-                "sessions_per_day": 3,
-                "avg_session_length": 13,
-                "lifetime_spend": 2.83,
-                "playstyle_vector": [0.622, 0.235, 0.143],
-            }
-        }
+        timestamp = datetime.now(timezone.utc) - timedelta(weeks=1)
 
-        exampleplayer2={ # click is false
-            "data_campaign_id": data_campaign_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "player_context": {
-                "player_id": 4,
-                "age": 27,
-                "region": "NA",
-                "device_type": "Android",
-                "sessions_per_day": 3,
-                "avg_session_length": 13,
-                "lifetime_spend": 2.83,
-                "playstyle_vector": [0.622, 0.235, 0.143],
-            },
-        }
+        for i in range(impressions):
+            simulated_player_context = generate_player(i)
+            simulated_player_context_string = json.dumps(simulated_player_context)
 
-        exampleplayer3={ #click is true
-            "data_campaign_id": data_campaign_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "player_context": {
-                "player_id": 5,
-                "age": 15,
-                "region": "EU",
-                "device_type": "Tablet",
-                "sessions_per_day": 1,
-                "avg_session_length": 31,
-                "lifetime_spend": 8.01,
-                "playstyle_vector": [0.122, 0.535, 0.643],
-            },
-        }
+            # serve
+            serve_data = serve_variant_contextual(dc, db, simulated_player_context_string)
+            served_variant_id = serve_data["variant"]
+            #print("served variant id: ", served_variant_id)
 
-        player1_context = player_context_json_to_vector(json.dumps(player1["player_context"])) # TODO: Make variation on this function to accept json dict 
-
-        #for i in range(impressions):
-
-        # serve
-        served_variant_id = 1
-
-        # report
-        # for each impressions calculate the probability of click based on the true_ctr_vector for the served variant 
-            # and the context vector via a logistic function
-        true_ctr = calculate_true_ctr_logistic(np.array(player1_context), true_param_vectors[served_variant_id])
-        print("calculated true ctr: ", true_ctr)
-        # simulate click event
-        clicked = random.random() < true_ctr
-        print("clicked: ", clicked)
+            # report
+            player_context = player_context_json_to_vector(simulated_player_context_string) # TODO: Make variation on this function to accept json dict 
             
+            # for each impressions calculate the probability of click based on the true_ctr_vector for the served variant 
+                # and the context vector via a logistic function
+            true_ctr = calculate_true_ctr_logistic(np.array(player_context), true_param_vectors[served_variant_id])
+            #print("calculated true ctr: ", true_ctr)
+            # simulate click event
+            clicked = random.random() < true_ctr
+            #print("clicked: ", clicked)
+            timestamp += timedelta(minutes=1)
+            report_impression(dc.id, served_variant_id, clicked, timestamp, db, None, simulated_player_context_string)
+            
+            impression_log.append({
+                "variant_id": served_variant_id,
+                "clicked": int(clicked),
+                "player_context_vector": player_context,
+            })
+
+        return generate_regret_summary_contextual(impression_log, true_param_vectors)
         
     finally:
         db.close()

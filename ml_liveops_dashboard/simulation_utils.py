@@ -85,8 +85,8 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
         The simulated true CTR, a value between 0 and 1.
     """
     
-    print("context vector: ", context_vector)
-    print("true_param_vector: ", true_param_vector)
+    #print("context vector: ", context_vector)
+    #print("true_param_vector: ", true_param_vector)
 
     # Normalize context_vector with L2 norm
     norm_context = np.linalg.norm(context_vector)
@@ -96,12 +96,12 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
     norm_param = np.linalg.norm(true_param_vector)
     normalized_param = true_param_vector / norm_param if norm_param != 0 else np.zeros_like(true_param_vector)
 
-    print("normalized context vector: ", normalized_context)
-    print("normalized true_param_vector: ", normalized_param)
+    #print("normalized context vector: ", normalized_context)
+    #print("normalized true_param_vector: ", normalized_param)
     
     # Calculate the dot product of the normalized vectors
     dot_product = np.dot(normalized_param, normalized_context)
-    print("dot product (x) in logistic function is ", dot_product)
+    #print("dot product (x) in logistic function is ", dot_product)
     
     # Apply the logistic function to map the result to a probability
     true_ctr = 1 / (1 + np.exp(-dot_product))
@@ -209,4 +209,92 @@ def generate_regret_summary(
         per_segment_regret=per_segment_regret,
         impression_log=impression_log,
         true_ctrs=true_ctrs,
+    )
+
+def generate_regret_summary_contextual(
+    impression_log: List[dict],
+    true_param_vectors: Dict[int, np.ndarray]
+) -> SimulationResult:
+    """
+    Generate a summary of the simulation results for a Contextual MAB campaign.
+    
+    Args:
+        impression_log: A list of dictionaries, where each dict represents a served impression.
+                        It must include 'variant_id' and 'player_context_vector'.
+        true_param_vectors: A dictionary mapping variant_id to its true parameter vector.
+        
+    Returns:
+        A SimulationResult object containing the summary data.
+    """
+    cumulative_regret_mab = 0.0
+    cumulative_regret_uniform = 0.0
+    total_impressions = len(impression_log)
+    
+    num_banners = len(true_param_vectors)
+    uniform_prob = 1 / num_banners
+
+    for i, impression in enumerate(impression_log, 1):
+        variant_id = impression["variant_id"]
+        player_context = impression["player_context_vector"]
+        
+        # --- 1. Calculate the true CTR for the chosen banner and this context ---
+        chosen_banner_params = true_param_vectors[variant_id]
+        true_ctr_mab = calculate_true_ctr_logistic(player_context, chosen_banner_params)
+
+        # --- 2. Find the best possible CTR for this specific impression ---
+        # This is what a perfect (oracle) model would have done
+        optimal_ctr = 0.0
+        for params in true_param_vectors.values():
+            ctr = calculate_true_ctr_logistic(player_context, params)
+            if ctr > optimal_ctr:
+                optimal_ctr = ctr
+        
+        # --- 3. Calculate the average CTR for a uniform random policy ---
+        # The uniform policy's expected CTR is the average of all possible CTRs
+        # for this specific impression.
+        expected_uniform_ctr = sum(
+            calculate_true_ctr_logistic(player_context, params) * uniform_prob
+            for params in true_param_vectors.values()
+        )
+
+        # --- 4. Calculate regrets ---
+        # The regret for the MAB policy is the difference between the optimal
+        # CTR and the CTR of the banner it actually chose.
+        mab_regret = optimal_ctr - true_ctr_mab
+        cumulative_regret_mab += mab_regret
+        
+        # The regret for the uniform policy is the difference between the optimal
+        # CTR and the expected CTR of a random choice.
+        uniform_regret = optimal_ctr - expected_uniform_ctr
+        cumulative_regret_uniform += uniform_regret
+
+        if i % 10 == 0 or i == total_impressions:
+            print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
+
+    # --- 5. Generate final summary metrics ---
+    variant_ids = [entry["variant_id"] for entry in impression_log]
+    counts = Counter(variant_ids)
+    print("\nImpression counts per variant:")
+    for variant_id, count in counts.items():
+        print(f"Variant ID {variant_id}: {count} impressions")
+
+    print(f"\nFinal cumulative regret after {total_impressions} impressions:")
+    print(f"  Contextual MAB policy: {cumulative_regret_mab:.3f}")
+    print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
+
+    true_ctrs_summary = {}
+    for vid, params in true_param_vectors.items():
+        # For display purposes, calculate an average CTR across the whole log
+        avg_ctr = np.mean([calculate_true_ctr_logistic(imp["player_context_vector"], params) for imp in impression_log])
+        true_ctrs_summary[vid] = avg_ctr
+
+    return SimulationResult(
+        campaign_type="contextual_mab",
+        total_impressions=total_impressions,
+        cumulative_regret_mab=cumulative_regret_mab,
+        cumulative_regret_uniform=cumulative_regret_uniform,
+        variant_counts=dict(counts),
+        per_segment_regret={}, # no segmented for contextual mab
+        impression_log=impression_log,
+        true_ctrs=true_ctrs_summary,
     )
