@@ -156,7 +156,7 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
 
     
         # need to generate new players - can use same script as before maybe? 
-        exampleplayer1={
+        player1={ # click is true
             "data_campaign_id": data_campaign_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "player_context": {
@@ -171,7 +171,7 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
             }
         }
 
-        player1={
+        exampleplayer2={ # click is false
             "data_campaign_id": data_campaign_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "player_context": {
@@ -186,7 +186,7 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
             },
         }
 
-        exampleplayer3={
+        exampleplayer3={ #click is true
             "data_campaign_id": data_campaign_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "player_context": {
