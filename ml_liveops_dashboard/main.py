@@ -113,8 +113,6 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
 @app.get("/data_campaigns")
 def get_data_campaigns(db: Session = Depends(get_db)):
     dcs = db.query(DataCampaign).all()
-    if not dcs: #TODO: Add support for generic message when there are no dcs defined
-        raise HTTPException(status_code=404, detail="Data campaign not found")
     return dcs
 
 @app.get("/campaigns")
