@@ -84,10 +84,6 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
     Returns:
         The simulated true CTR, a value between 0 and 1.
     """
-    
-    #print("context vector: ", context_vector)
-    #print("true_param_vector: ", true_param_vector)
-
     # Normalize context_vector with L2 norm
     norm_context = np.linalg.norm(context_vector)
     normalized_context = context_vector / norm_context if norm_context != 0 else np.zeros_like(context_vector)
@@ -95,20 +91,14 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
     # Normalize true_param_vector with L2 norm
     norm_param = np.linalg.norm(true_param_vector)
     normalized_param = true_param_vector / norm_param if norm_param != 0 else np.zeros_like(true_param_vector)
-
-    #print("normalized context vector: ", normalized_context)
-    #print("normalized true_param_vector: ", normalized_param)
     
     # Calculate the dot product of the normalized vectors
     dot_product = np.dot(normalized_param, normalized_context)
-    #print("dot product (x) in logistic function is ", dot_product)
     
     # Apply the logistic function to map the result to a probability
     true_ctr = 1 / (1 + np.exp(-dot_product))
     
     return true_ctr
-
-
 
 def load_static_campaigns():
     with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:

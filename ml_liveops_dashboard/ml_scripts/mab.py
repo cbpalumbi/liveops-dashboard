@@ -132,11 +132,6 @@ def report_impression(
         if not segmented_bandits: # <-- should never happen
             init_segmented_bandits()
 
-        # # Lookup this campaign’s bandits
-        # campaign_bandits = segmented_bandits.get(data_campaign_id)
-        # if campaign_bandits is None:
-        #     raise ValueError(f"No bandits initialized for campaign {data_campaign_id}")
-
         # Lookup the correct segment’s bandit
         bandit = segmented_bandits.get(segment_id)
         if bandit is None:
@@ -156,7 +151,7 @@ def report_impression(
         if linucb_model is not None:
             reward = 1 if clicked else 0
             linucb_model.update(variant_id - 1, reward, context_vector)
-            print(f"Updated LinUCB model for arm {variant_id} with reward {reward}")
+            #print(f"Updated LinUCB model for arm {variant_id} with reward {reward}")
 
 
     return {"status": "logged"}
@@ -332,8 +327,8 @@ def player_context_json_to_vector(ctx_json: str) -> List[float]:
 
     return vector
 
-class LinUCB:
-    def __init__(self, n_arms, n_features, alpha=0.1):
+class LinUCB: 
+    def __init__(self, n_arms, n_features, alpha=0.05): # alpha controls prioritization of exploration vs exploitation
         self.n_arms = n_arms
         self.n_features = n_features
         self.alpha = alpha
@@ -380,8 +375,6 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
     # Choose the best variant based on the context vector
     chosen_arm_index = linucb_model.choose_arm(player_vector)
     chosen_variant = banner_variant_ids[chosen_arm_index]
-
-    #print("Serving banner:", chosen_variant)
     
     return {
         "data_campaign_id": dc.id,

@@ -173,7 +173,6 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
             # serve
             serve_data = serve_variant_contextual(dc, db, simulated_player_context_string)
             served_variant_id = serve_data["variant"]
-            #print("served variant id: ", served_variant_id)
 
             # report
             player_context = player_context_json_to_vector(simulated_player_context_string) # TODO: Make variation on this function to accept json dict 
@@ -181,10 +180,9 @@ def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
             # for each impressions calculate the probability of click based on the true_ctr_vector for the served variant 
                 # and the context vector via a logistic function
             true_ctr = calculate_true_ctr_logistic(np.array(player_context), true_param_vectors[served_variant_id])
-            #print("calculated true ctr: ", true_ctr)
+            
             # simulate click event
             clicked = random.random() < true_ctr
-            #print("clicked: ", clicked)
             timestamp += timedelta(minutes=1)
             report_impression(dc.id, served_variant_id, clicked, timestamp, db, None, simulated_player_context_string)
             
