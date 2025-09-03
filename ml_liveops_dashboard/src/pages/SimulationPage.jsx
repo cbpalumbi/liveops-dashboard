@@ -75,10 +75,13 @@ export default function SimulationPage() {
 
 	return (
 		<div className="p-6">
-			<h1 className="text-2xl font-bold">Simulation {id}</h1>
+			<h1 className="text-2xl font-bold mb-5">Simulation {id}</h1>
 			{error && <p className="text-red-500">{error}</p>}
 			{/*campaign && <pre>{JSON.stringify(campaign, null, 2)}</pre>*/}
+            {campaign && <p className="text-3xl font-bold">{campaign["campaign_type"]}</p>}
 			{/*impressions.length > 0 && <pre>{JSON.stringify(impressions, null, 2)}</pre>*/}
+            <br></br>
+            <hr></hr>
             <br></br>
             <ServesPerVariantChart
                 impressions={impressions}

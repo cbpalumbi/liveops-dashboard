@@ -137,7 +137,7 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
         raise HTTPException(status_code=404, detail="Data campaign not found")
-    print(dc)
+    #print(dc)
     return dc
 
 # --- MAB Endpoints ---

@@ -28,7 +28,7 @@ export default function ServesPerVariantChart({ impressions }) {
     
     return (
         <div>
-            <h3 className="text-lg text-center">Variants Served Over Time</h3>
+            <h3 className="text-xl font-semibold mb-3">Variants Served Over Time</h3>
             <ScatterChart
                 width={600}
                 height={400}
