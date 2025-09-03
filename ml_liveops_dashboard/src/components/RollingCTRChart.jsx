@@ -38,42 +38,42 @@ export default function RollingCTRChart({ rollingCTRData }) {
 
     return (
         <div>
-        <h3 className="text-xl font-semibold text-center mb-3">Rolling CTR</h3>
+            <h3 className="text-xl font-semibold text-center mb-3">Rolling CTR</h3>
 
-        <button
-            onClick={onPlayClick}
-            className="px-4 py-2 bg-blue-600 text-black rounded mb-2"
-        >
-            {playing ? "Pause" : "Play"}
-        </button>
+            <button
+                onClick={onPlayClick}
+                className="px-4 py-2 bg-blue-600 text-black rounded mb-2"
+            >
+                {playing ? "Pause" : "Play"}
+            </button>
 
-        <input
-            type="range"
-            min={0}
-            max={rollingCTRData.length - 1}
-            value={frame}
-            onChange={onSliderChange}
-            className="w-full mb-4"
-        />
-
-        <LineChart
-            width={700}
-            height={300}
-            data={rollingCTRData.slice(0, frame + 1)}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-        >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis domain={[0, 1]} />
-            <Tooltip />
-            <Line
-            type="monotone"
-            dataKey="ctr"
-            stroke="#82ca9d"
-            dot={false}
-            strokeWidth={2}
+            <input
+                type="range"
+                min={0}
+                max={rollingCTRData.length - 1}
+                value={frame}
+                onChange={onSliderChange}
+                className="w-full mb-4"
             />
-        </LineChart>
+
+            <LineChart
+                width={700}
+                height={300}
+                data={rollingCTRData.slice(0, frame + 1)}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" />
+                <YAxis domain={[0, 1]} />
+                <Tooltip />
+                <Line
+                type="monotone"
+                dataKey="ctr"
+                stroke="#82ca9d"
+                dot={false}
+                strokeWidth={2}
+                />
+            </LineChart>
         </div>
     );
 }
