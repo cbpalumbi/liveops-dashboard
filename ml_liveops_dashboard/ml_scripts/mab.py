@@ -141,7 +141,7 @@ def report_impression(
         reward = 1 if clicked else 0
         bandit.update(variant_id, reward)
     elif dc.campaign_type.lower() == "contextual_mab":
-        # temporary unique logic for segmented mab to use the lin ucb class
+        # temporary unique logic for contextual mab to use the lin ucb class
         global linucb_model
 
         # Convert the player context back to a vector

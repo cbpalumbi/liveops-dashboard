@@ -10,22 +10,6 @@ export default function SimulationPage() {
 	const [impressions, setImpressions] = useState([]);
 	const [error, setError] = useState(null);
 
-    // Preprocessing for the line chart
-    // Map each variant to a numeric Y value so they plot on separate lines
-    const variantMap = {};
-    let nextY = 1;
-
-    const scatterData = impressions.map(imp => {
-        if (!(imp.variant_id in variantMap)) {
-            variantMap[imp.variant_id] = nextY++;
-        }
-        return {
-            x: new Date(imp.timestamp).getTime(), // milliseconds for Recharts
-            y: variantMap[imp.variant_id],
-            variant: imp.variant_id
-        };
-    });
-
     const rollingCTRData = useMemo(() => {
         if (!impressions.length) return [];
 
@@ -97,8 +81,7 @@ export default function SimulationPage() {
 			{/*impressions.length > 0 && <pre>{JSON.stringify(impressions, null, 2)}</pre>*/}
             <br></br>
             <ServesPerVariantChart
-                variantMap={variantMap}
-                scatterData={scatterData}
+                impressions={impressions}
             />
             
             <hr></hr>

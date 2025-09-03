@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   ScatterChart,
   Scatter,
@@ -6,12 +5,27 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
-  LineChart,
-  Line
+  Legend
 } from "recharts";
 
-export default function ServesPerVariantChart({ variantMap, scatterData }) {
+export default function ServesPerVariantChart({ impressions }) {
+
+    // Preprocessing for the line chart
+    // Map each variant to a numeric Y value so they plot on separate lines
+    const variantMap = {};
+    let nextY = 1;
+
+    const scatterData = impressions.map(imp => {
+        if (!(imp.variant_id in variantMap)) {
+            variantMap[imp.variant_id] = nextY++;
+        }
+        return {
+            x: new Date(imp.timestamp).getTime(), // milliseconds for Recharts
+            y: variantMap[imp.variant_id],
+            variant: imp.variant_id
+        };
+    });
+    
     return (
         <div>
             <h3 className="text-lg text-center">Variants Served Over Time</h3>
