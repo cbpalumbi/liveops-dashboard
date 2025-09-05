@@ -8,13 +8,14 @@ import {
   Legend
 } from "recharts";
 
-export default function ServesPerVariantChart({ impressions }) {
+export default function ServesPerVariantChart({ impressions, campaignType }) {
 
     // Preprocessing for the line chart
     // Map each variant to a numeric Y value so they plot on separate lines
     const variantMap = {};
     let nextY = 1;
 
+    // if impression.segment is not null, this is from a segmented MAB. we want to also track the segm
     const scatterData = impressions.map(imp => {
         if (!(imp.variant_id in variantMap)) {
             variantMap[imp.variant_id] = nextY++;
@@ -22,9 +23,17 @@ export default function ServesPerVariantChart({ impressions }) {
         return {
             x: new Date(imp.timestamp).getTime(), // milliseconds for Recharts
             y: variantMap[imp.variant_id],
-            variant: imp.variant_id
+            variant: imp.variant_id,
+            segment: imp.segment
         };
     });
+
+    let isSegmented = campaignType === "segmented_mab";
+
+    const variantColors = ['#BE2525', '#028A0F', '#0047AB'];
+    const redShades = ['#f5a4a4', '#BE2525', '#500101'];
+    const greenShades = ['#77cc80', '#028A0F', '#004900'];
+    const blueShades = ['#8370db', '#0f58be', '#00004C'];
     
     return (
         <div>
@@ -74,7 +83,25 @@ export default function ServesPerVariantChart({ impressions }) {
                     name="Serves"
                     data={scatterData}
                     shape={(props) => {
-                        const color = props.payload.variant === 1 ? '#8884d8' : '#82ca9d';
+                        // base colors for the variants
+                        let color;
+
+                        if (isSegmented && props.payload.segment !== null) {
+                            // Use shades based on the variant_id and segment_id
+                            const segmentIndex = props.payload.segment - 1; // segment id is 1-indexed
+                            if (props.payload.variant === 1) {
+                                color = redShades[segmentIndex];
+                            } else if (props.payload.variant === 2) {
+                                color = greenShades[segmentIndex];
+                            } else if (props.payload.variant === 3) {
+                                color = blueShades[segmentIndex];
+                            } else {
+                                color = '#000000';
+                            }
+                        } else {
+                            color = variantColors[props.payload.variant - 1];
+                        }
+
                         return <circle cx={props.cx} cy={props.cy} r={3} fill={color} />;
                     }}
                 />

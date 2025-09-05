@@ -75,6 +75,8 @@ class ImpressionRequest(BaseModel):
     banner_id: int
     variant_id: int
     clicked: bool
+    segment: Optional[int] = None
+    player_context: Optional[str] = None
     timestamp: datetime
     model_config = {
         "from_attributes": True

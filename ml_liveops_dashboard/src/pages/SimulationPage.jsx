@@ -78,9 +78,9 @@ export default function SimulationPage() {
             <div>Could not fetch simulation from db.</div>
         );
     }
-    let campaignName = campaign["campaign_type"].toLowerCase();
-    //console.log("hello" + campaignName);
-    if (campaignName === "mab") {
+
+    let campaignType = campaign["campaign_type"].toLowerCase();
+    if (campaignType === "mab") {
         return (
             <div className="p-6">
                 <SimulationHeader id={id} campaign={campaign} error={error} />
@@ -89,6 +89,7 @@ export default function SimulationPage() {
                 <br></br>
                 <ServesPerVariantChart
                     impressions={impressions}
+                    campaignType={campaignType}
                 />
                 <hr></hr>
                 <br></br>
@@ -99,13 +100,20 @@ export default function SimulationPage() {
             </div>
         );
     }
-    else if (campaignName === "segmented_mab") {
+    else if (campaignType === "segmented_mab") {
         return (
             <div>
                 <SimulationHeader id={id} campaign={campaign} error={error} />
+                <ServesPerVariantChart
+                    impressions={impressions}
+                    campaignType={campaignType}
+                />
+                <RollingCTRChart 
+                    rollingCTRData={rollingCTRData}
+                />
             </div>
         );
-    } else if (campaignName === "contextual_mab") {
+    } else if (campaignType === "contextual_mab") {
         return (
             <div>
                 <SimulationHeader id={id} campaign={campaign} error={error} />
