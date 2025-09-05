@@ -73,11 +73,18 @@ export default function SimulationPage() {
         return () => clearInterval(intervalId);
     }, [id]);
 
-	return (
-		<div className="p-6">
+    if (!campaign) {
+        return (
+            <div>Could not fetch simulation from db.</div>
+        );
+    }
+    let campaignName = campaign["campaign_type"].toLowerCase();
+    //console.log("hello" + campaignName);
+    if (campaignName === "mab") {
+        return (
+            <div className="p-6">
 			<h1 className="text-2xl font-bold mb-5">Simulation {id}</h1>
 			{error && <p className="text-red-500">{error}</p>}
-			{/*campaign && <pre>{JSON.stringify(campaign, null, 2)}</pre>*/}
             {campaign && <p className="text-3xl font-bold">{campaign["campaign_type"]}</p>}
 			{/*impressions.length > 0 && <pre>{JSON.stringify(impressions, null, 2)}</pre>*/}
             <br></br>
@@ -86,16 +93,26 @@ export default function SimulationPage() {
             <ServesPerVariantChart
                 impressions={impressions}
             />
-            
             <hr></hr>
             <br></br>
             <br></br>
-            
             <RollingCTRChart 
                 rollingCTRData={rollingCTRData}
             />
-
-
 		</div>
-	);
+        );
+    }
+    else if (campaignName === "segmented_mab") {
+        return (
+            <div>segmented MAB</div>
+        );
+    } else if (campaignName === "contextual_mab") {
+        return (
+            <div>contextual MAB</div>
+        );
+    } else {
+        return (
+            <div>Unrecognized simulation type.</div>
+        );
+    }
 }
