@@ -16,12 +16,11 @@ Base.metadata.create_all(engine)
 import ml_liveops_dashboard.db_utils as db_utils
 db_utils.session = session
 
-# --- Clear tables first ---
+# --- Clear segment-related tables first ---
 clear("segment_mixes", db=session)
 clear("segments", db=session)
 clear("segment_mix_entries", db=session)
 clear("segmented_mab_campaigns", db=session)
-clear("data_campaigns", db=session)
 
 # --- Insert segment mix ---
 insert("segment_mixes", {"name": "Platform Mix"}, db=session)

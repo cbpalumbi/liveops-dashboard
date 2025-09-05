@@ -83,36 +83,47 @@ export default function SimulationPage() {
     if (campaignName === "mab") {
         return (
             <div className="p-6">
-			<h1 className="text-2xl font-bold mb-5">Simulation {id}</h1>
-			{error && <p className="text-red-500">{error}</p>}
-            {campaign && <p className="text-3xl font-bold">{campaign["campaign_type"]}</p>}
-			{/*impressions.length > 0 && <pre>{JSON.stringify(impressions, null, 2)}</pre>*/}
-            <br></br>
-            <hr></hr>
-            <br></br>
-            <ServesPerVariantChart
-                impressions={impressions}
-            />
-            <hr></hr>
-            <br></br>
-            <br></br>
-            <RollingCTRChart 
-                rollingCTRData={rollingCTRData}
-            />
-		</div>
+                <SimulationHeader id={id} campaign={campaign} error={error} />
+                <br></br>
+                <hr></hr>
+                <br></br>
+                <ServesPerVariantChart
+                    impressions={impressions}
+                />
+                <hr></hr>
+                <br></br>
+                <br></br>
+                <RollingCTRChart 
+                    rollingCTRData={rollingCTRData}
+                />
+            </div>
         );
     }
     else if (campaignName === "segmented_mab") {
         return (
-            <div>segmented MAB</div>
+            <div>
+                <SimulationHeader id={id} campaign={campaign} error={error} />
+            </div>
         );
     } else if (campaignName === "contextual_mab") {
         return (
-            <div>contextual MAB</div>
+            <div>
+                <SimulationHeader id={id} campaign={campaign} error={error} />
+            </div>
         );
     } else {
         return (
             <div>Unrecognized simulation type.</div>
         );
     }
+}
+
+function SimulationHeader({ id, campaign, error }) {
+    return (
+        <div>
+            <h1 className="text-2xl font-bold mb-5">Simulation {id}</h1>
+            {error && <p className="text-red-500">{error}</p>}
+            {campaign && <p className="text-3xl font-bold">{campaign["campaign_type"]}</p>}
+        </div>
+    )
 }
