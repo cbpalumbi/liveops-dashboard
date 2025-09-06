@@ -6,8 +6,13 @@ from datetime import datetime
 from typing import List, Optional
 import json
 
-from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
-from ml_liveops_dashboard.ml_scripts.mab import report_impression, serve_variant, serve_variant_segmented, serve_variant_contextual
+from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression, SegmentMix, SegmentMixEntry, Segment
+from ml_liveops_dashboard.ml_scripts.mab import (
+    report_impression, 
+    serve_variant, 
+    serve_variant_segmented, 
+    serve_variant_contextual
+)
 from constants import DB_PATH
 
 engine = create_engine(DB_PATH, connect_args={"check_same_thread": False})
@@ -67,7 +72,7 @@ class DataCampaignRequest(BaseModel):
     end_time: Optional[datetime]
     model_config = {
         "from_attributes": True
-}
+    }
 
 class ImpressionRequest(BaseModel):
     data_campaign_id: int
@@ -79,8 +84,21 @@ class ImpressionRequest(BaseModel):
     timestamp: datetime
     model_config = {
         "from_attributes": True
-}
+    }
+    
+class SegmentMixRequest(BaseModel):
+    id: int
+    name: str
 
+class SegmentMixEntryRequest(BaseModel):
+    id: int
+    segment_mix_id: int
+    segment_id: int
+    percentage: float
+
+class SegmentRequest(BaseModel):
+    id: int
+    name: str
 
 # --- Helpers ---
 def validate_static_campaign(campaign_id: int, banner_id: int):
@@ -130,7 +148,6 @@ def get_campaign(campaign_id: int):
 @app.get("/impressions/{data_campaign_id}", response_model=List[ImpressionRequest])
 def get_impressions(data_campaign_id: int, db: Session = Depends(get_db)):
     imps = db.query(Impression).filter(Impression.data_campaign_id == data_campaign_id).all()
-    #print("imps ",imps)
     return imps
 
 @app.get("/data_campaign/{data_campaign_id}", response_model=DataCampaignRequest)
@@ -138,8 +155,26 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
         raise HTTPException(status_code=404, detail="Data campaign not found")
-    #print(dc)
     return dc
+
+@app.get("/segment_mix/{segment_mix_id}", response_model=SegmentMixRequest)
+def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
+    sm = db.query(SegmentMix).filter(SegmentMix.id == segment_mix_id).first()
+    if not sm:
+        raise HTTPException(status_code=404, detail="SegmentMix not found")
+    return sm
+
+@app.get("/segment_mix_entries/{segment_mix_id}", response_model=List[SegmentMixEntryRequest])
+def get_segment_mix_entries(segment_mix_id: int, db: Session = Depends(get_db)):
+    entries = db.query(SegmentMixEntry).filter(SegmentMixEntry.segment_mix_id == segment_mix_id).all()
+    return entries
+
+@app.get("/segment/{segment_id}", response_model=SegmentRequest)
+def get_segment_mix(segment_id: int, db: Session = Depends(get_db)):
+    segment = db.query(Segment).filter(Segment.id == segment_id).first()
+    if not segment:
+        raise HTTPException(status_code=404, detail="Segment not found")
+    return segment
 
 # --- MAB Endpoints ---
 @app.post("/serve")
