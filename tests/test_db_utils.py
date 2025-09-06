@@ -29,7 +29,7 @@ def test_insert_with_json(test_db_session):
         "static_campaign_id": 1,
         "banner_id": 123,
         "campaign_type": "MAB",
-        "segmented_mab_id": None
+        "segment_mix_id": None
     }
     db_utils.insert("data_campaigns", data, db=test_db_session)
 
@@ -39,7 +39,7 @@ def test_insert_with_json(test_db_session):
     assert row.static_campaign_id == 1
     assert row.banner_id == 123
     assert row.campaign_type == "MAB"
-    assert row.segmented_mab_id is None
+    assert row.segment_mix_id is None
 
 
 def test_insert_with_type_conversion(test_db_session):
@@ -47,7 +47,7 @@ def test_insert_with_type_conversion(test_db_session):
         "static_campaign_id": 2,
         "banner_id": "789",  # should cast to int
         "campaign_type": "MAB",
-        "segmented_mab_id": None
+        "segment_mix_id": None
     }
     db_utils.insert("data_campaigns", data, db=test_db_session)
     row = test_db_session.query(DataCampaign).filter_by(static_campaign_id=2).first()
@@ -82,7 +82,7 @@ def test_clear_specific_table(test_db_session):
         "static_campaign_id": 3,
         "banner_id": 1,
         "campaign_type": "MAB",
-        "segmented_mab_id": None
+        "segment_mix_id": None
     }
     db_utils.insert("data_campaigns", data, db=test_db_session)
     db_utils.clear("data_campaigns", db=test_db_session)
@@ -97,7 +97,7 @@ def test_clear_all_tables(test_db_session):
         "static_campaign_id": 4,
         "banner_id": 2,
         "campaign_type": "MAB",
-        "segmented_mab_id": None
+        "segment_mix_id": None
     }
     db_utils.insert("data_campaigns", data, db=test_db_session)
     db_utils.clear(db=test_db_session)  # clear all tables

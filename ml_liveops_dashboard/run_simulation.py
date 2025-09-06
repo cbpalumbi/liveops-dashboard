@@ -9,17 +9,16 @@ from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_m
 from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns
 from ml_liveops_dashboard.db_utils import clear
 from ml_liveops_dashboard.sqlite_models import DataCampaign, Base
+from constants import DB_PATH
 
 API_BASE = "http://localhost:8000" 
 
 def get_static_campaign(data_campaign, static_campaigns):
     return next((c for c in static_campaigns if c["id"] == data_campaign["static_campaign_id"]), None)
 
-def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02) -> SimulationResult:
-    
-    DATABASE_URL = "sqlite:///../mab.db"
+def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, db_path=DB_PATH) -> SimulationResult:
 
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    engine = create_engine(db_path, connect_args={"check_same_thread": False})
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
     Base.metadata.create_all(bind=engine)
@@ -58,7 +57,7 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02) -
         if mode == "api":
             return run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay)
         elif mode == "local":
-            return run_segmented_mab_local(data_campaign["id"], impressions, delay)
+            return run_segmented_mab_local(data_campaign["id"], SessionLocal(), impressions, delay)
     elif campaign_type == "mab":
         # Original MAB / random campaign flow
 
@@ -75,14 +74,14 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02) -
         if mode == "api":
             return run_simulation_via_api(data_campaign["id"], true_ctrs, [], impressions, delay)
         elif mode == "local":
-            return run_mab_local(data_campaign["id"], impressions, delay)
+            return run_mab_local(data_campaign["id"], SessionLocal(), impressions, delay)
 
     elif campaign_type == "contextual_mab":
         if mode == "api":
             run_contextual_mab_via_api(data_campaign["id"], impressions)
             return None
         elif mode == "local":
-            run_contextual_mab_local(data_campaign["id"], impressions)
+            run_contextual_mab_local(data_campaign["id"], SessionLocal(), impressions)
             return None 
     else:
         print("Unsupported campaign type")

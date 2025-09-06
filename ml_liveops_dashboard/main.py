@@ -8,10 +8,9 @@ import json
 
 from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression
 from ml_liveops_dashboard.ml_scripts.mab import report_impression, serve_variant, serve_variant_segmented, serve_variant_contextual
+from constants import DB_PATH
 
-DATABASE_URL = "sqlite:///../mab.db"
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(DB_PATH, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 Base.metadata.create_all(bind=engine)

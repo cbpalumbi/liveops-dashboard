@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import json
 
-from ml_liveops_dashboard.main import SessionLocal
 from ml_liveops_dashboard.ml_scripts.mab import (
     serve_variant,
     serve_variant_segmented,
@@ -26,9 +25,8 @@ from ml_liveops_dashboard.simulation_utils import (
 from ml_liveops_dashboard.sqlite_models import DataCampaign
 from ml_liveops_dashboard.generate_fake_players import generate_player
 
-def run_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
+def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
     """Run a standard MAB campaign locally."""
-    db = SessionLocal()
     try:
         dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
         if not dc:
@@ -79,9 +77,8 @@ def run_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0
 
 
 
-def run_segmented_mab_local(data_campaign_id: int, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
+def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
     """Run a segmented MAB campaign locally."""
-    db = SessionLocal()
     try:
         dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
         if not dc:
@@ -133,10 +130,8 @@ def run_segmented_mab_local(data_campaign_id: int, impressions: int = 50, delay:
     finally:
         db.close()
 
-def run_contextual_mab_local(data_campaign_id: int, impressions: int = 5):
+def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5):
     print("RUNNING CONTEXTUAL MAB LOCAL")
-
-    db = SessionLocal()
 
     try:
         

@@ -15,7 +15,6 @@ export default function ServesPerVariantChart({ impressions, campaignType }) {
     const variantMap = {};
     let nextY = 1;
 
-    // if impression.segment is not null, this is from a segmented MAB. we want to also track the segm
     const scatterData = impressions.map(imp => {
         if (!(imp.variant_id in variantMap)) {
             variantMap[imp.variant_id] = nextY++;
@@ -29,7 +28,7 @@ export default function ServesPerVariantChart({ impressions, campaignType }) {
     });
 
     let isSegmented = campaignType === "segmented_mab";
-
+    
     const variantColors = ['#BE2525', '#028A0F', '#0047AB'];
     const redShades = ['#f5a4a4', '#BE2525', '#500101'];
     const greenShades = ['#77cc80', '#028A0F', '#004900'];

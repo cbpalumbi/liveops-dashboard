@@ -6,8 +6,7 @@ from typing import Optional, List
 import random, json
 import numpy as np
 
-from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentedMABCampaign, SegmentMix, SegmentMixEntry, Impression
-from ml_liveops_dashboard.ml_scripts.contextual_mab import get_cluster_id
+from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentMix, SegmentMixEntry, Impression
 
 # --- Load static campaign JSON ---
 with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
@@ -248,16 +247,9 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     then runs Thompson Sampling for that segment.
     Returns chosen variant and segment info.
     """
-    # Get segmented MAB config
-    smab = db.query(SegmentedMABCampaign).filter(
-        SegmentedMABCampaign.id == dc.segmented_mab_id
-    ).first()
-    if not smab:
-        raise ValueError("Segmented MAB config not found for this campaign")
-
     # Load segment mix and entries
     segment_mix = db.query(SegmentMix).filter(
-        SegmentMix.id == smab.segment_mix_id
+        SegmentMix.id == dc.segment_mix_id
     ).first()
     if not segment_mix:
         raise ValueError("Segment mix not found")

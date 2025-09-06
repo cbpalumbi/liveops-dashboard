@@ -6,14 +6,11 @@ from tabulate import tabulate
 import json
 
 from ml_liveops_dashboard.sqlite_models import Base
+from constants import DB_PATH 
 
 app = typer.Typer()
 
-# --- DB setup ---
-import os
-
-# TODO: Is this needed here? need to be more thoughtful about db setup
-engine = create_engine(f"sqlite:///../mab.db", echo=False)
+engine = create_engine(DB_PATH, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 session = SessionLocal()
 
@@ -29,7 +26,6 @@ TABLE_ALIASES = {
     "camp": "data_campaigns",
     "seg": "segments",
     "seg-mix": "segment_mixes",
-    "seg-mab": "segmented_mab_campaigns",
     "seg-mix-entry": "segment_mix_entries"
 }
 
