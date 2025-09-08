@@ -68,6 +68,7 @@ class DataCampaignRequest(BaseModel):
     static_campaign_id: int
     banner_id: int
     campaign_type: str
+    segment_mix_id: Optional[int] = None
     start_time: datetime
     end_time: Optional[datetime]
     model_config = {

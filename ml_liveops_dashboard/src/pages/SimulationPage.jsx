@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 
 import RollingCTRChart from "../components/RollingCTRChart";
 import ServesPerVariantChart from "../components/ServesPerVariantChart";
+import SegmentedMABComponent from "../components/SegmentedMABComponent";
 
 export default function SimulationPage() {
 	const { id } = useParams();
@@ -104,9 +105,9 @@ export default function SimulationPage() {
         return (
             <div>
                 <SimulationHeader id={id} campaign={campaign} error={error} />
-                <ServesPerVariantChart
+                <SegmentedMABComponent
+                    campaign={campaign}
                     impressions={impressions}
-                    campaignType={campaignType}
                 />
                 <RollingCTRChart 
                     rollingCTRData={rollingCTRData}
