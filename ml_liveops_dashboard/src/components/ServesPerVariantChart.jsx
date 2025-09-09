@@ -6,7 +6,6 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  Label
 } from "recharts";
 
 export default function ServesPerVariantChart({ impressions, campaignType, segments = []}) {

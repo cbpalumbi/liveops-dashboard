@@ -127,12 +127,18 @@ export default function SimulationPage() {
     }
 }
 
+const campaignFriendlyNames = {
+  mab: "MAB Campaign",
+  segmented_mab: "Segmented MAB Campaign",
+  contextual_mab: "Contextual MAB Campaign"
+};
+
 function SimulationHeader({ id, campaign, error }) {
     return (
         <div>
             <h1 className="text-2xl font-bold mb-5">Simulation {id}</h1>
             {error && <p className="text-red-500">{error}</p>}
-            {campaign && <p className="text-3xl font-bold">{campaign["campaign_type"]}</p>}
+            {campaign && <p className="text-3xl font-bold">{campaignFriendlyNames[campaign["campaign_type"].toLowerCase()]}</p>}
         </div>
     )
 }
