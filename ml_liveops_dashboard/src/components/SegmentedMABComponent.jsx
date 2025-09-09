@@ -1,5 +1,6 @@
 
 import { useEffect, useState} from "react";
+import ServesPerVariantChart from "./ServesPerVariantChart";
 
 export default function SegmentedMABComponent({ impressions, campaign }) {
     const [segmentMix, setSegmentMix] = useState(null);
@@ -87,7 +88,11 @@ export default function SegmentedMABComponent({ impressions, campaign }) {
 
     return (
         <div>
-            hi
+            <ServesPerVariantChart
+                campaignType={campaign["campaign_type"].toLowerCase()}
+                impressions={impressions}
+                segments={segments}
+            />
         </div>
     )
 }

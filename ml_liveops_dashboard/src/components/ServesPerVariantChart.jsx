@@ -5,34 +5,64 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend
+  Legend,
+  Label
 } from "recharts";
 
-export default function ServesPerVariantChart({ impressions, campaignType }) {
+export default function ServesPerVariantChart({ impressions, campaignType, segments = []}) {
 
     // Preprocessing for the line chart
     // Map each variant to a numeric Y value so they plot on separate lines
     const variantMap = {};
     let nextY = 1;
+    let isSegmented = campaignType === "segmented_mab";
 
-    const scatterData = impressions.map(imp => {
+    //const variantColors = ['#BE2525', '#028A0F', '#0047AB'];
+    const redShades = ['#f5a4a4', '#BE2525', '#500101'];
+    //const greenShades = ['#77cc80', '#028A0F', '#004900'];
+    //const blueShades = ['#8370db', '#0f58be', '#00004C'];
+    
+    function getColorForImpression(segmentId = null) {
+        let color = '#000000';
+        if (isSegmented && segmentId !== null) {
+            const segmentIndex = segmentId - 1; // segment id is 1-indexed
+            color = redShades[segmentIndex];
+        } else {
+            color = '#BE2525';
+        }
+        return color;
+    }
+
+    function getNameForScatterDataSubset(segmentId) {
+        if (segmentId == null) {
+            // no segment data
+            return "Impressions";
+        } else {
+            if (segments.length == 0) {
+                return "Impressions";
+            }
+            return segments[segmentId - 1]["name"];
+        }
+    }
+
+    const scatterData = impressions.reduce((acc, imp) => {
+        if (!acc[imp.segment]) {
+            acc[imp.segment] = [];
+        }
         if (!(imp.variant_id in variantMap)) {
             variantMap[imp.variant_id] = nextY++;
         }
-        return {
+
+        // map the impression data to the right format and push it into the correct segment array
+        acc[imp.segment].push({
             x: new Date(imp.timestamp).getTime(), // milliseconds for Recharts
-            y: variantMap[imp.variant_id],
+            y: variantMap[imp.variant_id], 
             variant: imp.variant_id,
             segment: imp.segment
-        };
-    });
+        });
 
-    let isSegmented = campaignType === "segmented_mab";
-    
-    const variantColors = ['#BE2525', '#028A0F', '#0047AB'];
-    const redShades = ['#f5a4a4', '#BE2525', '#500101'];
-    const greenShades = ['#77cc80', '#028A0F', '#004900'];
-    const blueShades = ['#8370db', '#0f58be', '#00004C'];
+        return acc;
+    }, {});
     
     return (
         <div>
@@ -78,32 +108,21 @@ export default function ServesPerVariantChart({ impressions, campaignType }) {
 
                 <Legend />
                 
-                <Scatter
-                    name="Serves"
-                    data={scatterData}
-                    shape={(props) => {
-                        // base colors for the variants
-                        let color;
-
-                        if (isSegmented && props.payload.segment !== null) {
-                            // Use shades based on the variant_id and segment_id
-                            const segmentIndex = props.payload.segment - 1; // segment id is 1-indexed
-                            if (props.payload.variant === 1) {
-                                color = redShades[segmentIndex];
-                            } else if (props.payload.variant === 2) {
-                                color = greenShades[segmentIndex];
-                            } else if (props.payload.variant === 3) {
-                                color = blueShades[segmentIndex];
-                            } else {
-                                color = '#000000';
-                            }
-                        } else {
-                            color = variantColors[props.payload.variant - 1];
-                        }
-
-                        return <circle cx={props.cx} cy={props.cy} r={3} fill={color} />;
-                    }}
-                />
+                {Object.keys(scatterData).map((segmentId) => {
+                    return (
+                        <Scatter
+                            key={segmentId}
+                            name={getNameForScatterDataSubset(segmentId)}
+                            fill={getColorForImpression(segmentId)}
+                            data={scatterData[segmentId]}
+                            shape={(props) => {
+                                let color = getColorForImpression(segmentId);
+                                return <circle cx={props.cx} cy={props.cy} r={3} fill={color} />;
+                            }}
+                        />
+                    );
+                })}
+                
             </ScatterChart>     
         </div>
     )
