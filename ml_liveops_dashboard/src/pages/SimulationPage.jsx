@@ -34,6 +34,8 @@ export default function SimulationPage() {
 
 
 	useEffect(() => {
+        let intervalId; 
+
         async function fetchData() {
             try {
                 const [campaignRes, impressionsRes] = await Promise.allSettled([
@@ -41,38 +43,54 @@ export default function SimulationPage() {
                     fetch(`http://localhost:8000/impressions/${id}`)
                 ]);
 
-                if (campaignRes.status === "fulfilled") {
-                    const res = campaignRes.value;
-                    if (!res.ok) throw new Error(`Campaign fetch failed: ${res.status}`);
-                    if (!res.headers.get("content-type")?.includes("application/json")) throw new Error("Campaign response is not JSON");
-                    setCampaign(await res.json());
+                // Process campaign data first to get the end_time
+                if (campaignRes.status === "fulfilled" && campaignRes.value.ok) {
+                    const campaignData = await campaignRes.value.json();
+                    setCampaign(campaignData);
+
+                    // Check end_time for polling logic
+                    if (campaignData.end_time && new Date(campaignData.end_time) > new Date()) {
+                        // Campaign is active, continue or start polling
+                    } else {
+                        // Campaign is over, clear the interval
+                        if (intervalId) {
+                            clearInterval(intervalId);
+                        }
+                    }
                 } else {
                     throw new Error("Failed to load campaign");
                 }
 
-                if (impressionsRes.status === "fulfilled") {
-                    const res = impressionsRes.value;
-                    if (!res.ok) throw new Error(`Impressions fetch failed: ${res.status}`);
-                    if (!res.headers.get("content-type")?.includes("application/json")) throw new Error("Impressions response is not JSON");
-                    setImpressions(await res.json());
+                // Process impressions data
+                if (impressionsRes.status === "fulfilled" && impressionsRes.value.ok) {
+                    const impressionsData = await impressionsRes.value.json();
+                    setImpressions(impressionsData);
                 } else {
                     throw new Error("Failed to load impressions");
                 }
+
             } catch (err) {
                 console.error(err);
                 setError(err.message || "An unexpected error occurred");
+                if (intervalId) {
+                    clearInterval(intervalId);
+                }
             }
         }
 
         // Initial fetch
         fetchData();
 
-        // Polling every 3 seconds
-        const intervalId = setInterval(fetchData, 3000);
+        // interval is cleared conditionally inside fetchData
+        intervalId = setInterval(fetchData, 3000);
 
-        // Cleanup function to clear the interval
-        return () => clearInterval(intervalId);
-    }, [id]);
+        // Cleanup function
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [id]); 
 
     if (!campaign) {
         return (
