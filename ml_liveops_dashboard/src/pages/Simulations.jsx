@@ -1,16 +1,34 @@
 import { useState, useEffect } from "react";
 import DataCampaignList from "../components/DataCampaignList";
+import SegmentMixCreator from "../components/SegmentMixCreator";
+
+const MOCK_SEGMENTS = [
+  { id: 301, name: "High-Value Shoppers" },
+  { id: 302, name: "New Subscribers" },
+  { id: 303, name: "Loyalty Members" },
+];
+
+const MOCK_SEGMENT_MIXES = [
+  { id: 401, name: "Core Audiences" },
+  { id: 402, name: "Engaged Users" },
+];
 
 export default function Simulations() {
   const [campaigns, setCampaigns] = useState([]);
-  const [selectedCampaignIndex, setSelectedCampaignIndex] = useState(0);
+  const [segments, setSegments] = useState(MOCK_SEGMENTS);
+  const [segmentMixes, setSegmentMixes] = useState(MOCK_SEGMENT_MIXES);
+  
   const [showForm, setShowForm] = useState(false);
+  const [showMixCreator, setShowMixCreator] = useState(false);
 
   // Form state
   const [formCampaignIndex, setFormCampaignIndex] = useState(0);
   const [formBannerId, setFormBannerId] = useState(null);
   const [formCampaignType, setFormCampaignType] = useState("MAB");
-
+  const [formStartTime, setFormStartTime] = useState("");
+  const [formEndTime, setFormEndTime] = useState("");
+  const [formSegmentMixId, setFormSegmentMixId] = useState("");
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
@@ -23,11 +41,11 @@ export default function Simulations() {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setCampaigns(data);
-        setSelectedCampaignIndex(0);
-        setFormCampaignIndex(0);
-        // Set default bannerId for form (if available)
-        if (data.length > 0 && data[0].banners.length > 0) {
-          setFormBannerId(data[0].banners[0].id);
+        if (data.length > 0) {
+          setFormCampaignIndex(0);
+          if (data[0].banners.length > 0) {
+            setFormBannerId(data[0].banners[0].id);
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -57,9 +75,8 @@ export default function Simulations() {
         setDataCampaignsLoading(false);
       }
     }
-
     fetchDataCampaigns();
-  }, [submitSuccess]); // Reload list after successful creation
+  }, [submitSuccess]);
 
   // Update banner dropdown when campaign changes in form
   useEffect(() => {
@@ -69,21 +86,47 @@ export default function Simulations() {
     }
   }, [formCampaignIndex, campaigns]);
 
+  function handleNewMixCreated() {
+
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitError(null);
     setSubmitSuccess(null);
 
+    // Basic validation
     if (formBannerId == null) {
       setSubmitError("Please select a banner");
       return;
+    }
+
+    if (formStartTime && formEndTime) {
+      const startTime = new Date(formStartTime);
+      const endTime = new Date(formEndTime);
+      if (endTime <= startTime) {
+        setSubmitError("End time must be after the start time.");
+        return;
+      }
     }
 
     const body = {
       campaign_id: campaigns[formCampaignIndex].id,
       banner_id: formBannerId,
       campaign_type: formCampaignType,
+      start_time: formStartTime || null,
+      end_time: formEndTime || null,
+      segment_mix_id: formCampaignType === 'SEGMENTED_MAB' ? formSegmentMixId : null,
     };
+
+    if (formCampaignType === "SEGMENTED_MAB" && isAddingNewMix) {
+      // NOTE: In a real-world app, you would handle creating the new segment mix
+      // via an API call here and then use the returned ID in the main body.
+      console.log("Creating new segment mix with name:", newMixName);
+      // For this example, we'll just use a mock ID.
+      body.segment_mix_id = 999;
+    }
+
 
     try {
       const res = await fetch("http://localhost:8000/data_campaign", {
@@ -113,7 +156,7 @@ export default function Simulations() {
       {/* New Simulation Button */}
       <button
         onClick={() => setShowForm(!showForm)}
-        className="inline-flex items-center px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 focus:outline-none mb-4"
+        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none mb-4"
       >
         <svg
           className="w-5 h-5 mr-2"
@@ -126,75 +169,142 @@ export default function Simulations() {
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
-        New Simulation
+        <label className="mb-1 font-semibold text-black">New Simulation</label>
       </button>
 
       {/* Form */}
-      {showForm && (
-        <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded shadow-md">
-          <div>
-            <label className="block mb-1 font-semibold" htmlFor="campaign-select">
-              Campaign
-            </label>
-            <select
-              id="campaign-select"
-              className="w-full p-2 border rounded"
-              value={formCampaignIndex}
-              onChange={(e) => setFormCampaignIndex(Number(e.target.value))}
+      {showMixCreator ? (
+        <SegmentMixCreator
+            segments={segments}
+            onSave={handleNewMixCreated}
+            onCancel={() => setShowMixCreator(false)}
+        />  
+      ) : (
+        showForm && (
+          <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded shadow-md">
+            <div>
+              <label className="block mb-1 font-semibold" htmlFor="campaign-select">
+                  Campaign
+              </label>
+              <select
+                id="campaign-select"
+                className="w-full p-2 border rounded"
+                value={formCampaignIndex}
+                onChange={(e) => setFormCampaignIndex(Number(e.target.value))}
+              >
+                {campaigns.map((c, i) => (
+                  <option key={c.id} value={i}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-semibold" htmlFor="banner-select">
+                Banner
+              </label>
+              <select
+                id="banner-select"
+                className="w-full p-2 border rounded"
+                value={formBannerId || ""}
+                onChange={(e) => setFormBannerId(Number(e.target.value))}
+                disabled={!campaigns[formCampaignIndex]?.banners.length}
+              >
+                {campaigns[formCampaignIndex]?.banners.map((b) => (
+                  <option key={b.id} value={b.id}>
+                      {b.title || `Banner ${b.id}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-semibold" htmlFor="campaign-type-select">
+                Simulation Type
+              </label>
+              <select
+                id="campaign-type-select"
+                className="w-full p-2 border rounded"
+                value={formCampaignType}
+                onChange={(e) => setFormCampaignType(e.target.value)}
+              >
+                <option value="MAB">MAB</option>
+                <option value="Random">Random</option>
+                <option value="SEGMENTED_MAB">SEGMENTED_MAB</option>
+              </select>
+            </div>
+
+            {/* Start and End Time Pickers */}
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <label className="block mb-1 font-semibold" htmlFor="start-time">
+                  Start Time
+                </label>
+                <input
+                  id="start-time"
+                  type="datetime-local"
+                  className="w-full p-2 border rounded"
+                  value={formStartTime}
+                  onChange={(e) => setFormStartTime(e.target.value)}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block mb-1 font-semibold" htmlFor="end-time">
+                  End Time
+                </label>
+                <input
+                  id="end-time"
+                  type="datetime-local"
+                  className="w-full p-2 border rounded"
+                  value={formEndTime}
+                  onChange={(e) => setFormEndTime(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            {/* Conditional Fields for SEGMENTED_MAB */}
+            {formCampaignType === "SEGMENTED_MAB" && (
+              <div className="p-4 border-t border-dashed">
+                <h3 className="text-lg font-semibold mb-2">Segmented MAB Options</h3>
+                <label className="block mb-1 font-semibold" htmlFor="segment-mix-select">
+                  Segment Mix
+                </label>
+                <select
+                  id="segment-mix-select"
+                  className="w-full p-2 border rounded"
+                  value={formSegmentMixId}
+                  onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === 'new') {
+                          setShowMixCreator(true);
+                          setShowForm(false);
+                      } else {
+                          setFormSegmentMixId(value);
+                      }
+                  }}
+                >
+                  <option value="" disabled>Select a mix or create new</option>
+                  {segmentMixes.map((mix) => (
+                      <option key={mix.id} value={mix.id}>{mix.name}</option>
+                  ))}
+                  <option value="new">-- Add New Mix --</option>
+                </select>
+              </div>
+            )}
+
+            {/* Submit button and messages */}
+            <button
+              type="submit"
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
-              {campaigns.map((c, i) => (
-                <option key={c.id} value={i}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              Create Simulation
+            </button>
 
-          <div>
-            <label className="block mb-1 font-semibold" htmlFor="banner-select">
-              Banner
-            </label>
-            <select
-              id="banner-select"
-              className="w-full p-2 border rounded"
-              value={formBannerId || ""}
-              onChange={(e) => setFormBannerId(Number(e.target.value))}
-              disabled={!campaigns[formCampaignIndex]?.banners.length}
-            >
-              {campaigns[formCampaignIndex]?.banners.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.title || `Banner ${b.id}`}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block mb-1 font-semibold" htmlFor="campaign-type-select">
-              Simulation Type
-            </label>
-            <select
-              id="campaign-type-select"
-              className="w-full p-2 border rounded"
-              value={formCampaignType}
-              onChange={(e) => setFormCampaignType(e.target.value)}
-            >
-              <option value="MAB">MAB</option>
-              <option value="Random">Random</option>
-              {/* Add other types if you have them */}
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="px-4 py-2 bg-green-600 text-black rounded hover:bg-green-700"
-          >
-            Create Simulation
-          </button>
-
-          {submitError && <p className="text-red-600 mt-2">{submitError}</p>}
-          {submitSuccess && <p className="text-green-600 mt-2">{submitSuccess}</p>}
-        </form>
+            {submitError && <p className="text-red-600 mt-2">{submitError}</p>}
+            {submitSuccess && <p className="text-green-600 mt-2">{submitSuccess}</p>}
+          </form>
+        )
       )}
 
       {/* Existing data campaigns list */}
@@ -205,7 +315,6 @@ export default function Simulations() {
       {!dataCampaignsLoading && !dataCampaignsError && (
         <DataCampaignList dataCampaigns={dataCampaigns} />
       )}
-
     </div>
   );
 }
