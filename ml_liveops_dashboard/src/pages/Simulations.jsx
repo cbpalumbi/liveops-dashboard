@@ -120,10 +120,7 @@ export default function Simulations() {
     };
 
     if (formCampaignType === "SEGMENTED_MAB" && isAddingNewMix) {
-      // NOTE: In a real-world app, you would handle creating the new segment mix
-      // via an API call here and then use the returned ID in the main body.
       console.log("Creating new segment mix with name:", newMixName);
-      // For this example, we'll just use a mock ID.
       body.segment_mix_id = 999;
     }
 
@@ -243,7 +240,7 @@ export default function Simulations() {
                 </label>
                 <input
                   id="start-time"
-                  type="datetime-local"
+                  type="date"
                   className="w-full p-2 border rounded"
                   value={formStartTime}
                   onChange={(e) => setFormStartTime(e.target.value)}
@@ -255,7 +252,7 @@ export default function Simulations() {
                 </label>
                 <input
                   id="end-time"
-                  type="datetime-local"
+                  type="date"
                   className="w-full p-2 border rounded"
                   value={formEndTime}
                   onChange={(e) => setFormEndTime(e.target.value)}

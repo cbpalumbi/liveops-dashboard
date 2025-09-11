@@ -39,6 +39,9 @@ class CreateDataCampaignRequest(BaseModel):
     campaign_id: int
     banner_id: int
     campaign_type: str
+    segment_mix_id: Optional[int] = None
+    start_time: datetime
+    end_time: datetime
 
 class PlayerContext(BaseModel): # Used for contextual MAB campaigns
     player_id: int
@@ -121,7 +124,10 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
     new_campaign = DataCampaign(
         static_campaign_id=req.campaign_id,
         banner_id=req.banner_id,
-        campaign_type=req.campaign_type
+        campaign_type=req.campaign_type,
+        segment_mix_id=req.segment_mix_id,
+        start_time=req.start_time,
+        end_time=req.end_time
     )
     db.add(new_campaign)
     db.commit()
