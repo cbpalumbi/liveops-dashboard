@@ -108,6 +108,11 @@ export default function Simulations() {
         setSubmitError("End time must be after the start time.");
         return;
       }
+    } 
+    else 
+    {
+      setSubmitError("Please select a start and end time.");
+      return;
     }
 
     const body = {
@@ -153,7 +158,7 @@ export default function Simulations() {
       {/* New Simulation Button */}
       <button
         onClick={() => setShowForm(!showForm)}
-        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none mb-4"
+        className="inline-flex items-center px-4 py-2 text-black rounded focus:outline-none mb-4"
       >
         <svg
           className="w-5 h-5 mr-2"
@@ -227,8 +232,9 @@ export default function Simulations() {
                 onChange={(e) => setFormCampaignType(e.target.value)}
               >
                 <option value="MAB">MAB</option>
+                <option value="SEGMENTED_MAB">Segmented MAB</option>
+                <option value="CONTEXTUAL_MAB">Contextual MAB</option>
                 <option value="Random">Random</option>
-                <option value="SEGMENTED_MAB">SEGMENTED_MAB</option>
               </select>
             </div>
 
@@ -293,7 +299,7 @@ export default function Simulations() {
             {/* Submit button and messages */}
             <button
               type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="px-4 py-2 bg-green-600 text-black rounded hover:bg-green-700"
             >
               Create Simulation
             </button>
