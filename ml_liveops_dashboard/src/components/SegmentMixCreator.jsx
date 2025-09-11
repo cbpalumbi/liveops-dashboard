@@ -2,12 +2,35 @@ import { useState } from 'react';
 
 // This component handles the creation of a new segment mix with entries.
 // It receives a list of available segments as a prop and a callback function to handle save.
-export default function SegmentMixCreator({ segments, onSave, onCancel }) {
+export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNewSegment }) {
     const [newMixName, setNewMixName] = useState('');
     const [newEntries, setNewEntries] = useState([]);
     const [selectedSegmentId, setSelectedSegmentId] = useState('');
     const [percentage, setPercentage] = useState('');
     const [error, setError] = useState(null);
+    const [newSegmentName, setNewSegmentName] = useState('');
+    const [showNewSegmentInput, setShowNewSegmentInput] = useState(false);
+
+    const handleAddNewSegment = (e) => {
+        e.preventDefault();
+        setError(null);
+        if (newSegmentName.trim() === '') {
+            setError('Please enter a name for the new segment.');
+            return;
+        }
+
+        const newId = Date.now(); 
+        const newSegment = { id: newId, name: newSegmentName.trim() };
+        
+        // Pass the new segment up to the parent component via the new prop
+        onAddNewSegment(newSegment);
+        
+        // Clear the input and hide the field
+        setNewSegmentName('');
+        setShowNewSegmentInput(false);
+        // Automatically select the new segment so the user can add it to the mix
+        setSelectedSegmentId(newId.toString()); 
+    };
 
     const handleAddEntry = (e) => {
         e.preventDefault();
@@ -113,6 +136,36 @@ export default function SegmentMixCreator({ segments, onSave, onCancel }) {
                         Add
                     </button>
                 </div>
+                
+                {/* New section for creating a segment */}
+                {!showNewSegmentInput ? (
+                    <div className="mt-2 text-center">
+                        <button
+                            type="button"
+                            onClick={() => setShowNewSegmentInput(true)}
+                            className="text-sm text-black hover:underline"
+                        >
+                            + Add a new segment
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex space-x-2 mt-2">
+                        <input
+                            type="text"
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter new segment name"
+                            value={newSegmentName}
+                            onChange={(e) => setNewSegmentName(e.target.value)}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAddNewSegment}
+                            className="px-4 py-2 text-black rounded"
+                        >
+                            Save
+                        </button>
+                    </div>
+                )}
 
                 <div className="mt-4">
                     <h5 className="font-semibold">Entries:</h5>

@@ -86,8 +86,12 @@ export default function Simulations() {
     }
   }, [formCampaignIndex, campaigns]);
 
-  function handleNewMixCreated() {
+  const handleNewMixCreated = (newMix) => {
 
+  }
+  
+  const handleAddNewSegment = (newSegment) => {
+    setSegments(prevSegments => [...prevSegments, newSegment]);
   }
 
   async function handleSubmit(e) {
@@ -180,6 +184,7 @@ export default function Simulations() {
             segments={segments}
             onSave={handleNewMixCreated}
             onCancel={() => setShowMixCreator(false)}
+            onAddNewSegment={handleAddNewSegment}
         />  
       ) : (
         showForm && (
