@@ -43,6 +43,19 @@ class CreateDataCampaignRequest(BaseModel):
     start_time: datetime
     end_time: datetime
 
+class CreateSegmentMixRequest(BaseModel):
+    name: str
+
+class CreateSegmentMixEntryRequest(BaseModel):
+    segment_mix_id: int
+    segment_id: int
+    percentage: float
+
+class CreateSegmentRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    rules_json: Optional[str] = None
+
 class PlayerContext(BaseModel): # Used for contextual MAB campaigns
     player_id: int
     age: int = Field(..., ge=0, le=120)
@@ -171,10 +184,34 @@ def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="SegmentMix not found")
     return sm
 
+@app.post("/segment_mix")
+def create_data_campaign(req: CreateSegmentMixRequest, db: Session = Depends(get_db)):
+    new_seg_mix = SegmentMix(
+        name=req.name
+    )
+    db.add(new_seg_mix)
+    db.commit()
+    db.refresh(new_seg_mix)
+
+    return {"status": "created", "segment_mix_id": new_seg_mix.id}
+
 @app.get("/segment_mix_entries/{segment_mix_id}", response_model=List[SegmentMixEntryRequest])
 def get_segment_mix_entries(segment_mix_id: int, db: Session = Depends(get_db)):
     entries = db.query(SegmentMixEntry).filter(SegmentMixEntry.segment_mix_id == segment_mix_id).all()
     return entries
+
+@app.post("/segment_mix_entry")
+def create_data_campaign(req: CreateSegmentMixEntryRequest, db: Session = Depends(get_db)):
+    new_seg_mix_entry = SegmentMixEntry(
+        segment_mix_id=req.segment_mix_id,
+        segment_id=req.segment_id,
+        percentage=req.percentage
+    )
+    db.add(new_seg_mix_entry)
+    db.commit()
+    db.refresh(new_seg_mix_entry)
+
+    return {"status": "created", "segment_mix_entry_id": new_seg_mix_entry.id}
 
 @app.get("/segment/{segment_id}", response_model=SegmentRequest)
 def get_segment_mix(segment_id: int, db: Session = Depends(get_db)):
@@ -182,6 +219,19 @@ def get_segment_mix(segment_id: int, db: Session = Depends(get_db)):
     if not segment:
         raise HTTPException(status_code=404, detail="Segment not found")
     return segment
+
+@app.post("/segment")
+def create_data_campaign(req: CreateSegmentRequest, db: Session = Depends(get_db)):
+    new_seg = Segment(
+        name=req.name,
+        description=req.description,
+        rules_json=req.rules_json
+    )
+    db.add(new_seg)
+    db.commit()
+    db.refresh(new_seg)
+
+    return {"status": "created", "segment_id": new_seg.id}
 
 # --- MAB Endpoints ---
 @app.post("/serve")

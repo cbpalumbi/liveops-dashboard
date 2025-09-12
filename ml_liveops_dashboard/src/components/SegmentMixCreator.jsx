@@ -11,20 +11,19 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
     const [newSegmentName, setNewSegmentName] = useState('');
     const [showNewSegmentInput, setShowNewSegmentInput] = useState(false);
 
-    const handleAddNewSegment = (e) => {
+    const handleAddNewSegment = async (e) => {
         e.preventDefault();
         setError(null);
         if (newSegmentName.trim() === '') {
             setError('Please enter a name for the new segment.');
             return;
         }
+         
+        const newSegment = {name: newSegmentName.trim() };
+        
+        // the new id should be the id returned from adding this segment via api
+        const newId = await onAddNewSegment(newSegment);
 
-        const newId = Date.now(); 
-        const newSegment = { id: newId, name: newSegmentName.trim() };
-        
-        // Pass the new segment up to the parent component via the new prop
-        onAddNewSegment(newSegment);
-        
         // Clear the input and hide the field
         setNewSegmentName('');
         setShowNewSegmentInput(false);

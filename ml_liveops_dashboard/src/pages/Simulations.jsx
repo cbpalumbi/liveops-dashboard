@@ -86,12 +86,82 @@ export default function Simulations() {
     }
   }, [formCampaignIndex, campaigns]);
 
-  const handleNewMixCreated = (newMix) => {
+  async function handleNewMixCreated (newMix) {
+    // add new segment mix and get back the segment mix id
+    // then add the correct segment mix entries and pass in that segment mix id
+    const body = {
+      name: newMix.name
+    };
+
+    let create_segment_mix_res = null;
+    let create_seg_mix_res_json = null;
+    try {
+      create_segment_mix_res = await fetch("http://localhost:8000/segment_mix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      create_seg_mix_res_json = await create_segment_mix_res.json();
+      if (!create_segment_mix_res.ok) {
+        throw new Error(create_seg_mix_res_json.detail || `HTTP error ${create_segment_mix_res.status}`);
+      }
+      setShowMixCreator(false);
+    } catch (err) {
+      setSubmitError("Could not create new segment mix.");
+    }
+    newMix.entries.forEach(entry => {
+      const segMixEntryBody = {
+        segment_mix_id: create_seg_mix_res_json["segment_mix_id"],
+        segment_id: entry.segment.id,
+        percentage: entry.percentage
+      }
+      postSegMixEntry(segMixEntryBody);
+    });
 
   }
+
+  async function postSegMixEntry(body) {
+    try {
+        const res = await fetch("http://localhost:8000/segment_mix_entry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || `HTTP error ${res.status}`);
+        }
+      } catch (err) {
+        setSubmitError("Could not create new segment mix entry.");
+      }
+  }
   
-  const handleAddNewSegment = (newSegment) => {
-    setSegments(prevSegments => [...prevSegments, newSegment]);
+  async function handleAddNewSegment (newSegment) {
+    const body = {
+      name: newSegment.name
+    };
+
+    try {
+        const res = await fetch("http://localhost:8000/segment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || `HTTP error ${res.status}`);
+        }
+        const resJson = await res.json();
+        const newSegmentWithId = {
+          name: newSegment.name,
+          id: resJson.segment_id
+        }
+        setSegments(prevSegments => [...prevSegments, newSegmentWithId]);
+        return resJson.segment_id;
+      } catch (err) {
+        setSubmitError("Could not create new segment.");
+        return null;
+      }
   }
 
   async function handleSubmit(e) {
@@ -128,11 +198,10 @@ export default function Simulations() {
       segment_mix_id: formCampaignType === 'SEGMENTED_MAB' ? formSegmentMixId : null,
     };
 
-    if (formCampaignType === "SEGMENTED_MAB" && isAddingNewMix) {
-      console.log("Creating new segment mix with name:", newMixName);
-      body.segment_mix_id = 999;
-    }
-
+    // if (formCampaignType === "SEGMENTED_MAB" && isAddingNewMix) {
+    //   console.log("Creating new segment mix with name:", newMixName);
+    //   body.segment_mix_id = 999; // TODO: Change this 
+    // }
 
     try {
       const res = await fetch("http://localhost:8000/data_campaign", {
