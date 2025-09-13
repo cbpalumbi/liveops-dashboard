@@ -168,6 +168,8 @@ def get_campaign(campaign_id: int):
 @app.get("/impressions/{data_campaign_id}", response_model=List[ImpressionRequest])
 def get_impressions(data_campaign_id: int, db: Session = Depends(get_db)):
     imps = db.query(Impression).filter(Impression.data_campaign_id == data_campaign_id).all()
+    if not imps:
+        raise HTTPException(status_code=404, detail="Could not retrieve impressions")
     return imps
 
 @app.get("/data_campaign/{data_campaign_id}", response_model=DataCampaignRequest)
@@ -183,6 +185,13 @@ def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
     if not sm:
         raise HTTPException(status_code=404, detail="SegmentMix not found")
     return sm
+
+@app.get("/segment_mixes", response_model=List[SegmentMixRequest])
+def get_segment_mixes(db: Session = Depends(get_db)):
+    sms = db.query(SegmentMix).all()
+    if not sms:
+        raise HTTPException(status_code=404, detail="Could not retrieve segment mixes")
+    return sms
 
 @app.post("/segment_mix")
 def create_data_campaign(req: CreateSegmentMixRequest, db: Session = Depends(get_db)):
@@ -219,6 +228,13 @@ def get_segment_mix(segment_id: int, db: Session = Depends(get_db)):
     if not segment:
         raise HTTPException(status_code=404, detail="Segment not found")
     return segment
+
+@app.get("/segments", response_model=List[SegmentRequest])
+def get_segments(db: Session = Depends(get_db)):
+    segments = db.query(Segment).all()
+    if not segments:
+        raise HTTPException(status_code=404, detail="Could not retrieve segments")
+    return segments
 
 @app.post("/segment")
 def create_data_campaign(req: CreateSegmentRequest, db: Session = Depends(get_db)):

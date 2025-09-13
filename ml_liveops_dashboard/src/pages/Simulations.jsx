@@ -2,21 +2,17 @@ import { useState, useEffect } from "react";
 import DataCampaignList from "../components/DataCampaignList";
 import SegmentMixCreator from "../components/SegmentMixCreator";
 
-const MOCK_SEGMENTS = [
-  { id: 301, name: "High-Value Shoppers" },
-  { id: 302, name: "New Subscribers" },
-  { id: 303, name: "Loyalty Members" },
-];
-
-const MOCK_SEGMENT_MIXES = [
-  { id: 401, name: "Core Audiences" },
-  { id: 402, name: "Engaged Users" },
-];
-
 export default function Simulations() {
   const [campaigns, setCampaigns] = useState([]);
-  const [segments, setSegments] = useState(MOCK_SEGMENTS);
-  const [segmentMixes, setSegmentMixes] = useState(MOCK_SEGMENT_MIXES);
+
+  // Data campaigns
+  const [dataCampaigns, setDataCampaigns] = useState([]);
+  const [dataCampaignsLoading, setDataCampaignsLoading] = useState(true);
+  const [dataCampaignsError, setDataCampaignsError] = useState(null);
+  const [segmentMixes, setSegmentMixes] = useState([]);
+  const [submitSegmentMixSuccess, setSubmitSegmentMixSuccess] = useState(null);
+  const [segments, setSegments] = useState([]);
+  const [submitSegmentSuccess, setSubmitSegmentSuccess] = useState(null);
   
   const [showForm, setShowForm] = useState(false);
   const [showMixCreator, setShowMixCreator] = useState(false);
@@ -34,8 +30,9 @@ export default function Simulations() {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(null);
 
+  // Fetch static campaigns, existing segments mixes, and existing segments on startup
   useEffect(() => {
-    async function fetchCampaigns() {
+    async function fetchStaticCampaigns() {
       try {
         const res = await fetch("http://localhost:8000/campaigns");
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -53,14 +50,38 @@ export default function Simulations() {
         setLoading(false);
       }
     }
-    fetchCampaigns();
+    fetchStaticCampaigns();
   }, []);
 
-  const [dataCampaigns, setDataCampaigns] = useState([]);
-  const [dataCampaignsLoading, setDataCampaignsLoading] = useState(true);
-  const [dataCampaignsError, setDataCampaignsError] = useState(null);
+  useEffect(() => {
+    async function fetchSegmentMixes() {
+      try {
+        const res = await fetch("http://localhost:8000/segment_mixes");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setSegmentMixes(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+    fetchSegmentMixes();
+  }, [submitSegmentMixSuccess])
 
-  // Fetch data campaigns on load or after creating a new one
+  useEffect(() => {
+    async function fetchSegments() {
+      try {
+        const res = await fetch("http://localhost:8000/segments");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setSegments(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+    fetchSegments();
+  }, [submitSegmentSuccess])
+
+  // Fetch data campaigns on startup or after creating a new one
   useEffect(() => {
     async function fetchDataCampaigns() {
       try {
@@ -87,8 +108,9 @@ export default function Simulations() {
   }, [formCampaignIndex, campaigns]);
 
   async function handleNewMixCreated (newMix) {
-    // add new segment mix and get back the segment mix id
-    // then add the correct segment mix entries and pass in that segment mix id
+    setSubmitSegmentMixSuccess(null);
+    // Add new segment mix and get back the segment mix id.
+    // Then add the correct segment mix entries and pass in that segment mix id
     const body = {
       name: newMix.name
     };
@@ -103,9 +125,11 @@ export default function Simulations() {
       });
       create_seg_mix_res_json = await create_segment_mix_res.json();
       if (!create_segment_mix_res.ok) {
-        throw new Error(create_seg_mix_res_json.detail || `HTTP error ${create_segment_mix_res.status}`);
+        throw new Error(create_seg_mix_res.detail || `HTTP error ${create_segment_mix_res.status}`);
       }
+      setSubmitSegmentMixSuccess(true);
       setShowMixCreator(false);
+      setShowForm(true);
     } catch (err) {
       setSubmitError("Could not create new segment mix.");
     }
@@ -137,6 +161,7 @@ export default function Simulations() {
   }
   
   async function handleAddNewSegment (newSegment) {
+    setSubmitSegmentSuccess(null);
     const body = {
       name: newSegment.name
     };
@@ -157,6 +182,7 @@ export default function Simulations() {
           id: resJson.segment_id
         }
         setSegments(prevSegments => [...prevSegments, newSegmentWithId]);
+        setSubmitSegmentSuccess(true);
         return resJson.segment_id;
       } catch (err) {
         setSubmitError("Could not create new segment.");
@@ -197,11 +223,6 @@ export default function Simulations() {
       end_time: formEndTime || null,
       segment_mix_id: formCampaignType === 'SEGMENTED_MAB' ? formSegmentMixId : null,
     };
-
-    // if (formCampaignType === "SEGMENTED_MAB" && isAddingNewMix) {
-    //   console.log("Creating new segment mix with name:", newMixName);
-    //   body.segment_mix_id = 999; // TODO: Change this 
-    // }
 
     try {
       const res = await fetch("http://localhost:8000/data_campaign", {
