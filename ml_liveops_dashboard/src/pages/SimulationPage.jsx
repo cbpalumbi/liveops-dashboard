@@ -101,7 +101,9 @@ export default function SimulationPage() {
 
     if (impressions.length == 0) {
         return (
-            <NotYetRunCampaign></NotYetRunCampaign>
+            <NotYetRunCampaign
+                campaign={campaign}
+            />
         );
     }
 

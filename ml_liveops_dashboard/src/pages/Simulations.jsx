@@ -201,19 +201,19 @@ export default function Simulations() {
       return;
     }
 
-    if (formStartTime && formEndTime) {
-      const startTime = new Date(formStartTime);
-      const endTime = new Date(formEndTime);
-      if (endTime <= startTime) {
-        setSubmitError("End time must be after the start time.");
-        return;
-      }
-    } 
-    else 
-    {
-      setSubmitError("Please select a start and end time.");
-      return;
-    }
+    // if (formStartTime && formEndTime) {
+    //   const startTime = new Date(formStartTime);
+    //   const endTime = new Date(formEndTime);
+    //   if (endTime <= startTime) {
+    //     setSubmitError("End time must be after the start time.");
+    //     return;
+    //   }
+    // } 
+    // else 
+    // {
+    //   setSubmitError("Please select a start and end time.");
+    //   return;
+    // }
 
     const body = {
       campaign_id: campaigns[formCampaignIndex].id,
@@ -333,7 +333,7 @@ export default function Simulations() {
               </select>
             </div>
 
-            {/* Start and End Time Pickers */}
+            {/* Start and End Time Pickers
             <div className="flex space-x-4">
               <div className="flex-1">
                 <label className="block mb-1 font-semibold" htmlFor="start-time">
@@ -359,7 +359,7 @@ export default function Simulations() {
                   onChange={(e) => setFormEndTime(e.target.value)}
                 />
               </div>
-            </div>
+            </div> */}
             
             {/* Conditional Fields for SEGMENTED_MAB */}
             {formCampaignType === "SEGMENTED_MAB" && (

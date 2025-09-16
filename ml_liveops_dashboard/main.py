@@ -40,8 +40,8 @@ class CreateDataCampaignRequest(BaseModel):
     banner_id: int
     campaign_type: str
     segment_mix_id: Optional[int] = None
-    start_time: datetime
-    end_time: datetime
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
 
 class CreateSegmentMixRequest(BaseModel):
     name: str
@@ -116,6 +116,9 @@ class SegmentMixEntryRequest(BaseModel):
 class SegmentRequest(BaseModel):
     id: int
     name: str
+
+class RunSimulationRequest(BaseModel):
+    data_campaign_id: int
 
 # --- Helpers ---
 def validate_static_campaign(campaign_id: int, banner_id: int):
@@ -246,6 +249,10 @@ def create_data_campaign(req: CreateSegmentRequest, db: Session = Depends(get_db
     db.refresh(new_seg)
 
     return {"status": "created", "segment_id": new_seg.id}
+
+# @app.post("run_simulation/{data_campaign_id}")
+# def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depends(get_db())):
+#     return {}
 
 # --- MAB Endpoints ---
 @app.post("/serve")

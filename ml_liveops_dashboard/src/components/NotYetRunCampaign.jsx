@@ -1,8 +1,12 @@
-export default function SimulationPage() {
+export default function SimulationPage({ campaign }) {
 
+    // should show the relevant static details of the campaign
+    // should show a button to run the campaign
     return (
         <div>
-            hi
+            <p>hi</p>
+            {campaign["campaign_type"]}
+            
         </div>
     )
 }
