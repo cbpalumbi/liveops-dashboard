@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import RollingCTRChart from "../components/RollingCTRChart";
 import ServesPerVariantChart from "../components/ServesPerVariantChart";
 import SegmentedMABComponent from "../components/SegmentedMABComponent";
+import NotYetRunCampaign from "../components/NotYetRunCampaign";
 
 export default function SimulationPage() {
 	const { id } = useParams();
@@ -95,6 +96,12 @@ export default function SimulationPage() {
     if (!campaign) {
         return (
             <div>Could not fetch simulation from db.</div>
+        );
+    }
+
+    if (impressions.length == 0) {
+        return (
+            <NotYetRunCampaign></NotYetRunCampaign>
         );
     }
 
