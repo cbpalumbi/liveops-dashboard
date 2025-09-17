@@ -34,26 +34,36 @@ export default function SimulationPage() {
     }, [impressions]);
 
 
-	useEffect(() => {
-        let intervalId; 
+    useEffect(() => {
+        let intervalId;
 
         async function fetchData() {
-            try {
+            try {                
                 const [campaignRes, impressionsRes] = await Promise.allSettled([
                     fetch(`http://localhost:8000/data_campaign/${id}`),
                     fetch(`http://localhost:8000/impressions/${id}`)
                 ]);
 
-                // Process campaign data first to get the end_time
                 if (campaignRes.status === "fulfilled" && campaignRes.value.ok) {
                     const campaignData = await campaignRes.value.json();
                     setCampaign(campaignData);
 
-                    // Check end_time for polling logic
-                    if (campaignData.end_time && new Date(campaignData.end_time) > new Date()) {
-                        // Campaign is active, continue or start polling
+                    if (!campaignData.startTime) {
+                        return;
+                    }
+
+                    // check if we need to start or continue the polling interval
+                    const currentTime = new Date();
+                    const startTime = new Date(campaignData.start_time);
+                    const endTime = new Date(campaignData.end_time);
+
+                    if (startTime < currentTime && currentTime < endTime) {
+                        // Campaign is active, start or continue polling
+                        if (!intervalId) { // Check to prevent setting multiple intervals
+                            intervalId = setInterval(fetchData, 3000);
+                        }
                     } else {
-                        // Campaign is over, clear the interval
+                        // Campaign is over or not yet started, clear any existing interval
                         if (intervalId) {
                             clearInterval(intervalId);
                         }
@@ -62,14 +72,12 @@ export default function SimulationPage() {
                     throw new Error("Failed to load campaign");
                 }
 
-                // Process impressions data
                 if (impressionsRes.status === "fulfilled" && impressionsRes.value.ok) {
                     const impressionsData = await impressionsRes.value.json();
                     setImpressions(impressionsData);
                 } else {
                     throw new Error("Failed to load impressions");
                 }
-
             } catch (err) {
                 console.error(err);
                 setError(err.message || "An unexpected error occurred");
@@ -79,11 +87,7 @@ export default function SimulationPage() {
             }
         }
 
-        // Initial fetch
         fetchData();
-
-        // interval is cleared conditionally inside fetchData
-        intervalId = setInterval(fetchData, 3000);
 
         // Cleanup function
         return () => {
@@ -91,7 +95,7 @@ export default function SimulationPage() {
                 clearInterval(intervalId);
             }
         };
-    }, [id]); 
+    }, [id]);
 
     if (!campaign) {
         return (
@@ -99,7 +103,7 @@ export default function SimulationPage() {
         );
     }
 
-    if (impressions.length == 0) {
+    if (campaign["start_time"] == null) {
         return (
             <NotYetRunCampaign
                 campaign={campaign}
