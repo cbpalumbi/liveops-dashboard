@@ -29,6 +29,7 @@ def test_insert_with_json(test_db_session):
         "static_campaign_id": 1,
         "banner_id": 123,
         "campaign_type": "MAB",
+        "duration": 2,
         "segment_mix_id": None
     }
     db_utils.insert("data_campaigns", data, db=test_db_session)
@@ -46,6 +47,7 @@ def test_insert_with_type_conversion(test_db_session):
     data = {
         "static_campaign_id": 2,
         "banner_id": "789",  # should cast to int
+        "duration": 2,
         "campaign_type": "MAB",
         "segment_mix_id": None
     }
@@ -82,6 +84,7 @@ def test_clear_specific_table(test_db_session):
         "static_campaign_id": 3,
         "banner_id": 1,
         "campaign_type": "MAB",
+        "duration": 1,
         "segment_mix_id": None
     }
     db_utils.insert("data_campaigns", data, db=test_db_session)
@@ -96,6 +99,7 @@ def test_clear_all_tables(test_db_session):
     data = {
         "static_campaign_id": 4,
         "banner_id": 2,
+        "duration": 3,
         "campaign_type": "MAB",
         "segment_mix_id": None
     }
