@@ -39,6 +39,7 @@ class CreateDataCampaignRequest(BaseModel):
     campaign_id: int
     banner_id: int
     campaign_type: str
+    duration: int # minutes
     segment_mix_id: Optional[int] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
@@ -84,6 +85,7 @@ class DataCampaignRequest(BaseModel):
     static_campaign_id: int
     banner_id: int
     campaign_type: str
+    duration: int
     segment_mix_id: Optional[int] = None
     start_time: datetime
     end_time: Optional[datetime]
@@ -141,6 +143,7 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
         static_campaign_id=req.campaign_id,
         banner_id=req.banner_id,
         campaign_type=req.campaign_type,
+        duration=req.duration,
         segment_mix_id=req.segment_mix_id,
         start_time=req.start_time,
         end_time=req.end_time

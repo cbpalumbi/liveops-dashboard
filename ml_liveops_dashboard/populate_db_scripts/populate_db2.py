@@ -27,6 +27,7 @@ def populate(db_path):
             "static_campaign_id": 1,  # assuming your static campaign exists
             "banner_id": 1,           # the banner you want to test
             "campaign_type": "MAB",   # regular MAB type
+            "duration": 1,
             "segment_mix_id": None  # not used for regular MAB
         },
     )

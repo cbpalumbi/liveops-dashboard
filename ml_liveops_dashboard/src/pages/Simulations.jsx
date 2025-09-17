@@ -24,6 +24,7 @@ export default function Simulations() {
   const [formStartTime, setFormStartTime] = useState("");
   const [formEndTime, setFormEndTime] = useState("");
   const [formSegmentMixId, setFormSegmentMixId] = useState("");
+  const [formDuration, setFormDuration] = useState(1);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -201,24 +202,12 @@ export default function Simulations() {
       return;
     }
 
-    // if (formStartTime && formEndTime) {
-    //   const startTime = new Date(formStartTime);
-    //   const endTime = new Date(formEndTime);
-    //   if (endTime <= startTime) {
-    //     setSubmitError("End time must be after the start time.");
-    //     return;
-    //   }
-    // } 
-    // else 
-    // {
-    //   setSubmitError("Please select a start and end time.");
-    //   return;
-    // }
-
+    console.log(formDuration);
     const body = {
       campaign_id: campaigns[formCampaignIndex].id,
       banner_id: formBannerId,
       campaign_type: formCampaignType,
+      duration: formDuration,
       start_time: formStartTime || null,
       end_time: formEndTime || null,
       segment_mix_id: formCampaignType === 'SEGMENTED_MAB' ? formSegmentMixId : null,
@@ -332,34 +321,12 @@ export default function Simulations() {
                 <option value="Random">Random</option>
               </select>
             </div>
-
-            {/* Start and End Time Pickers
-            <div className="flex space-x-4">
-              <div className="flex-1">
-                <label className="block mb-1 font-semibold" htmlFor="start-time">
-                  Start Time
-                </label>
-                <input
-                  id="start-time"
-                  type="date"
-                  className="w-full p-2 border rounded"
-                  value={formStartTime}
-                  onChange={(e) => setFormStartTime(e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block mb-1 font-semibold" htmlFor="end-time">
-                  End Time
-                </label>
-                <input
-                  id="end-time"
-                  type="date"
-                  className="w-full p-2 border rounded"
-                  value={formEndTime}
-                  onChange={(e) => setFormEndTime(e.target.value)}
-                />
-              </div>
-            </div> */}
+            <div>
+              <label className="block mb-1 font-semibold">
+                Duration (min)
+              </label>
+              <input onChange={(e) => setFormDuration(e.target.value)} type="number" step="1" min="1" max="5" defaultValue={1}></input>
+            </div>
             
             {/* Conditional Fields for SEGMENTED_MAB */}
             {formCampaignType === "SEGMENTED_MAB" && (

@@ -41,6 +41,7 @@ def populate(db_path):
             "static_campaign_id": 1,
             "banner_id": 1,
             "campaign_type": "SEGMENTED_MAB",
+            "duration": 1,
             "segment_mix_id": 1,
         },
         db=session,
