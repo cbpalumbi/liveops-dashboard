@@ -87,7 +87,7 @@ class DataCampaignRequest(BaseModel):
     campaign_type: str
     duration: int
     segment_mix_id: Optional[int] = None
-    start_time: datetime
+    start_time: Optional[datetime]
     end_time: Optional[datetime]
     model_config = {
         "from_attributes": True

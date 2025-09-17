@@ -13,7 +13,7 @@ class DataCampaign(Base):
     campaign_type = Column(String, nullable=False)        # e.g. "MAB", "Random", "SEGMENTED_MAB"
     duration = Column(Integer, nullable=False)
     segment_mix_id = Column(Integer, nullable=True)     # NULL unless segmented MAB
-    start_time = Column(DateTime, server_default=func.now(),  nullable=True)
+    start_time = Column(DateTime,  nullable=True)
     end_time = Column(DateTime, nullable=True)
     
     def as_dict(self):

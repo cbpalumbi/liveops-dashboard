@@ -38,7 +38,8 @@ export default function SimulationPage() {
         let intervalId;
 
         async function fetchData() {
-            try {                
+            try {    
+                console.log("Fetching data...");            
                 const [campaignRes, impressionsRes] = await Promise.allSettled([
                     fetch(`http://localhost:8000/data_campaign/${id}`),
                     fetch(`http://localhost:8000/impressions/${id}`)
