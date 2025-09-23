@@ -14,6 +14,8 @@ from ml_liveops_dashboard.ml_scripts.mab import (
     serve_variant_contextual
 )
 from constants import DB_PATH
+from ml_liveops_dashboard.run_simulation import simulate_data_campaign
+from ml_liveops_dashboard.simulation_utils import SimulationResult
 
 engine = create_engine(DB_PATH, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -154,7 +156,6 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
 
     return {"status": "created", "data_campaign_id": new_campaign.id}
 
-
 @app.get("/data_campaigns")
 def get_data_campaigns(db: Session = Depends(get_db)):
     dcs = db.query(DataCampaign).all()
@@ -193,8 +194,6 @@ def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
 @app.get("/segment_mixes", response_model=List[SegmentMixRequest])
 def get_segment_mixes(db: Session = Depends(get_db)):
     sms = db.query(SegmentMix).all()
-    if not sms:
-        raise HTTPException(status_code=404, detail="Could not retrieve segment mixes")
     return sms
 
 @app.post("/segment_mix")
@@ -236,12 +235,10 @@ def get_segment_mix(segment_id: int, db: Session = Depends(get_db)):
 @app.get("/segments", response_model=List[SegmentRequest])
 def get_segments(db: Session = Depends(get_db)):
     segments = db.query(Segment).all()
-    if not segments:
-        raise HTTPException(status_code=404, detail="Could not retrieve segments")
     return segments
 
 @app.post("/segment")
-def create_data_campaign(req: CreateSegmentRequest, db: Session = Depends(get_db)):
+def create_segment(req: CreateSegmentRequest, db: Session = Depends(get_db)):
     new_seg = Segment(
         name=req.name,
         description=req.description,
@@ -253,9 +250,18 @@ def create_data_campaign(req: CreateSegmentRequest, db: Session = Depends(get_db
 
     return {"status": "created", "segment_id": new_seg.id}
 
-# @app.post("run_simulation/{data_campaign_id}")
-# def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depends(get_db())):
-#     return {}
+@app.post("/run_simulation")
+def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depends(get_db)):
+    print("hello")
+    dc = db.query(DataCampaign).filter(DataCampaign.id == req.data_campaign_id).first()
+    if not dc:
+        raise HTTPException(status_code=404, detail="Data campaign not found")
+    
+    # set start time to the present 
+
+    result = simulate_data_campaign(req.data_campaign_id, "local", 50, 0.02)
+
+    return { "regret": result.cumulative_regret_mab }
 
 # --- MAB Endpoints ---
 @app.post("/serve")

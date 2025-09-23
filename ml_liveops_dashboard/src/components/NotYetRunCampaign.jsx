@@ -1,10 +1,33 @@
 import { useState, useEffect } from "react";
 
-export default function SimulationPage({ campaign }) {
-    const [campaigns, setCampaigns] = useState([]);
+export default function NotYetRunCampaign({ campaign }) {
+    const [runResponse, setRunResponse] = useState(null);
+    const [runError, setRunError] = useState(null);
+    const [runSuccess, setRunSuccess] = useState(null);
 
-    function runCampaign() {
-
+    async function runCampaign() {
+        setRunSuccess(null);
+        setRunError(null);
+        const body = {
+            data_campaign_id: campaign["id"]
+        };
+        let post_run_simulation_res = null;
+        let post_run_simulation_res_json = null;
+        try {
+            post_run_simulation_res = await fetch("http://localhost:8000/run_simulation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            post_run_simulation_res_json = await post_run_simulation_res.json();
+            if (!post_run_simulation_res.ok) {
+                throw new Error(post_run_simulation_res.detail || `HTTP error ${post_run_simulation_res.status}`);
+            }
+            setRunResponse(post_run_simulation_res_json);
+            setRunSuccess("Success!")
+        } catch (err) {
+            setRunError("Could not create new segment mix. " + err);
+        }
     }
 
     return (
@@ -28,6 +51,8 @@ export default function SimulationPage({ campaign }) {
                 </svg>
                 <label className="mb-1 font-semibold text-black">Run Simulation</label>
             </button>
+            {runError && <p className="text-red-600 mt-2">{runError}</p>}
+            {runSuccess && <p className="text-green-600 mt-2">{runSuccess}</p>}
         </div>
     )
 }
