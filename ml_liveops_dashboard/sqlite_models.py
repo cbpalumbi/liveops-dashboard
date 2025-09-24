@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, JSON
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()
@@ -15,6 +15,8 @@ class DataCampaign(Base):
     segment_mix_id = Column(Integer, nullable=True)     # NULL unless segmented MAB
     start_time = Column(DateTime,  nullable=True)
     end_time = Column(DateTime, nullable=True)
+    
+    simulation_result = relationship("SimulationResultModel", back_populates="campaign", uselist=False)
     
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -53,3 +55,21 @@ class Segment(Base):
     description = Column(String, nullable=True) 
     rules_json = Column(String, nullable=True)   # optional JSON to define how segment is generated   
 
+# modeled after SimulationResult in simulation utils
+class SimulationResultModel(Base):
+    __tablename__ = "simulation_results"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey('data_campaigns.id'))
+    
+    total_impressions = Column(Integer, nullable=False)
+    cumulative_regret_mab = Column(Float, nullable=False)
+    cumulative_regret_uniform = Column(Float, nullable=False)
+    variant_counts = Column(JSON, nullable=False)
+    
+    # optional campaign-specific fields
+    per_segment_regret = Column(JSON, nullable=True)
+    impression_log = Column(JSON, nullable=True)
+    true_ctrs = Column(JSON, nullable=True)
+
+    campaign = relationship("DataCampaign", back_populates="simulation_result")

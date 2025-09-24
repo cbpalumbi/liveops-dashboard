@@ -24,6 +24,7 @@ export default function NotYetRunCampaign({ campaign }) {
                 throw new Error(post_run_simulation_res.detail || `HTTP error ${post_run_simulation_res.status}`);
             }
             setRunResponse(post_run_simulation_res_json);
+            console.log([post_run_simulation_res_json]);
             setRunSuccess("Success!")
         } catch (err) {
             setRunError("Could not create new segment mix. " + err);

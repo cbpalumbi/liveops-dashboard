@@ -2,11 +2,11 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 import json
 
-from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression, SegmentMix, SegmentMixEntry, Segment
+from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression, SegmentMix, SegmentMixEntry, Segment, SimulationResultModel
 from ml_liveops_dashboard.ml_scripts.mab import (
     report_impression, 
     serve_variant, 
@@ -250,18 +250,41 @@ def create_segment(req: CreateSegmentRequest, db: Session = Depends(get_db)):
 
     return {"status": "created", "segment_id": new_seg.id}
 
-@app.post("/run_simulation")
+@app.post("/run_simulation", response_model=SimulationResult)
 def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depends(get_db)):
-    print("hello")
     dc = db.query(DataCampaign).filter(DataCampaign.id == req.data_campaign_id).first()
     if not dc:
         raise HTTPException(status_code=404, detail="Data campaign not found")
     
-    # set start time to the present 
+    current_time = datetime.now()
+    end_time = current_time + timedelta(days=dc.duration)
+
+    dc.start_time = current_time
+    dc.end_time = end_time
+
+    db.add(dc)
+    db.commit()
+    db.refresh(dc) 
 
     result = simulate_data_campaign(req.data_campaign_id, "local", 50, 0.02)
 
-    return { "regret": result.cumulative_regret_mab }
+    result_db_entry = SimulationResultModel(
+        campaign_id=req.data_campaign_id,
+        total_impressions=result.total_impressions,
+        cumulative_regret_mab=result.cumulative_regret_mab,
+        cumulative_regret_uniform=result.cumulative_regret_uniform,
+        variant_counts=result.variant_counts,
+        per_segment_regret=result.per_segment_regret,
+        impression_log=result.impression_log,
+        true_ctrs=result.true_ctrs
+    )
+    
+    db.add(result_db_entry)
+    
+    db.commit()
+    db.refresh(result_db_entry) 
+    
+    return result
 
 # --- MAB Endpoints ---
 @app.post("/serve")
