@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import json
 
 from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression, SegmentMix, SegmentMixEntry, Segment, SimulationResultModel
@@ -123,6 +123,26 @@ class SegmentRequest(BaseModel):
 
 class RunSimulationRequest(BaseModel):
     data_campaign_id: int
+
+class SimulationResultRequest(BaseModel):
+    """
+    Pydantic model for serializing a SimulationResultModel database object.
+    It includes all fields from the SQLAlchemy model SimulationResultModel.
+    """
+    id: int
+    campaign_id: int
+    total_impressions: int
+    cumulative_regret_mab: float
+    cumulative_regret_uniform: float
+    variant_counts: Dict[str, Any]
+    per_segment_regret: Optional[Dict[str, Any]]
+    impression_log: Optional[List[Dict[str, Any]]]
+    true_ctrs: Optional[Dict[str, Any]]
+    completed: bool
+    model_config = {
+        "from_attributes": True
+    }
+ 
 
 # --- Helpers ---
 def validate_static_campaign(campaign_id: int, banner_id: int):
@@ -273,6 +293,7 @@ def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depend
         total_impressions=result.total_impressions,
         cumulative_regret_mab=result.cumulative_regret_mab,
         cumulative_regret_uniform=result.cumulative_regret_uniform,
+        completed=True,
         variant_counts=result.variant_counts,
         per_segment_regret=result.per_segment_regret,
         impression_log=result.impression_log,
@@ -280,11 +301,15 @@ def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depend
     )
     
     db.add(result_db_entry)
-    
     db.commit()
     db.refresh(result_db_entry) 
     
     return result
+
+@app.get("/simulation_result/{data_campaign_id}", response_model=Optional[SimulationResultRequest])
+def get_simulation_result(data_campaign_id: int, db: Session = Depends(get_db)):
+    simulation_result = db.query(SimulationResultModel).filter(SimulationResultModel.campaign_id == data_campaign_id).first()
+    return simulation_result
 
 # --- MAB Endpoints ---
 @app.post("/serve")

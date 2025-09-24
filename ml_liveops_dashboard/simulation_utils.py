@@ -111,6 +111,7 @@ class SimulationResult:
     cumulative_regret_mab: float
     cumulative_regret_uniform: float
     variant_counts: Dict[int, int]
+    completed: bool = False
 
     # Optional / campaign-specific fields
     per_segment_regret: Optional[Dict[int, Dict[str, Any]]] = field(default=None)
@@ -199,6 +200,7 @@ def generate_regret_summary(
         per_segment_regret=per_segment_regret,
         impression_log=impression_log,
         true_ctrs=true_ctrs,
+        completed=True
     )
 
 def generate_regret_summary_contextual(
@@ -287,4 +289,5 @@ def generate_regret_summary_contextual(
         per_segment_regret={}, # no segmented for contextual mab
         impression_log=impression_log,
         true_ctrs=true_ctrs_summary,
+        completed=True
     )

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 
@@ -15,7 +15,7 @@ class DataCampaign(Base):
     segment_mix_id = Column(Integer, nullable=True)     # NULL unless segmented MAB
     start_time = Column(DateTime,  nullable=True)
     end_time = Column(DateTime, nullable=True)
-    
+
     simulation_result = relationship("SimulationResultModel", back_populates="campaign", uselist=False)
     
     def as_dict(self):
@@ -66,6 +66,7 @@ class SimulationResultModel(Base):
     cumulative_regret_mab = Column(Float, nullable=False)
     cumulative_regret_uniform = Column(Float, nullable=False)
     variant_counts = Column(JSON, nullable=False)
+    completed = Column(Boolean, nullable=False)
     
     # optional campaign-specific fields
     per_segment_regret = Column(JSON, nullable=True)

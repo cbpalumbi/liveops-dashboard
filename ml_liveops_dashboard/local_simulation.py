@@ -50,7 +50,17 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
             for variant_id in static_banner_variants
         }
 
-        timestamp = datetime.now(timezone.utc) - timedelta(weeks=1)
+        if dc.end_time is None:
+            # If end_time isn't defined, calculate it from start_time and duration
+            end_time = dc.start_time + timedelta(minutes=dc.duration)
+        else:
+            end_time = dc.end_time
+
+        duration_timedelta = end_time - dc.start_time
+        if impressions > 1:
+            time_step = duration_timedelta / impressions
+
+        timestamp = dc.start_time
 
         for i in range(impressions):
             serve_data = serve_variant(dc, db)
@@ -58,7 +68,7 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
 
             ctr = true_ctrs[variant["id"]]
             clicked = random.random() < ctr
-            timestamp += timedelta(minutes=1)
+            timestamp += time_step
 
             report_impression(data_campaign_id, variant["id"], clicked, timestamp, db)
 

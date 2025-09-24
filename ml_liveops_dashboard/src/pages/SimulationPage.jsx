@@ -8,6 +8,7 @@ import NotYetRunCampaign from "../components/NotYetRunCampaign";
 
 export default function SimulationPage() {
 	const { id } = useParams();
+    const [simulationResult, setSimulationResult] = useState(null)
 	const [campaign, setCampaign] = useState(null);
 	const [impressions, setImpressions] = useState([]);
 	const [error, setError] = useState(null);
@@ -40,25 +41,43 @@ export default function SimulationPage() {
         async function fetchData() {
             try {    
                 console.log("Fetching data...");            
-                const [campaignRes, impressionsRes] = await Promise.allSettled([
+                const [simulationResultRes, campaignRes, impressionsRes] = await Promise.allSettled([
+                    fetch(`http://localhost:8000/simulation_result/${id}`),
                     fetch(`http://localhost:8000/data_campaign/${id}`),
                     fetch(`http://localhost:8000/impressions/${id}`)
                 ]);
+                let simulationResultData = null;
+                if (simulationResultRes.status === "fulfilled" && simulationResultRes.value.ok) {
+                    simulationResultData = await simulationResultRes.value.json();
+                    setSimulationResult(simulationResultData);
+                    if (!simulationResultData || simulationResultData.completed) {
+                        if (intervalId) {
+                            clearInterval(intervalId);
+                        }
+                    }
+                    console.log("Simulation result is " + simulationResultData);
+
+                } else {
+                    throw new Error("Failed to load simulationResult");
+                }
 
                 if (campaignRes.status === "fulfilled" && campaignRes.value.ok) {
                     const campaignData = await campaignRes.value.json();
                     setCampaign(campaignData);
                     
                     if (!campaignData.start_time) {
-                        throw new Error("Campaign doesn't have start time defined. This component shouldn't be loaded.");
+                        console.log("No start time defined. Campaign has not been run yet.");
+                        return;
                     }
-
+                    
                     // check if we need to start or continue the polling interval
                     const currentTime = new Date();
                     const startTime = new Date(campaignData.start_time);
                     const endTime = new Date(campaignData.end_time);
 
-                    if (startTime < currentTime && currentTime < endTime) {
+                    const simulationOver = simulationResultData && simulationResultData.completed;
+
+                    if (!simulationOver && startTime < currentTime && currentTime < endTime) {
                         // Campaign is active, start or continue polling
                         if (!intervalId) { // Check to prevent setting multiple intervals
                             intervalId = setInterval(fetchData, 3000);

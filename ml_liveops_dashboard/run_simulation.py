@@ -20,7 +20,6 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, d
 
     engine = create_engine(db_path, connect_args={"check_same_thread": False})
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-
     Base.metadata.create_all(bind=engine)
     
     # Get data campaign details
