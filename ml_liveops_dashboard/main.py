@@ -257,7 +257,7 @@ def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depend
         raise HTTPException(status_code=404, detail="Data campaign not found")
     
     current_time = datetime.now()
-    end_time = current_time + timedelta(days=dc.duration)
+    end_time = current_time + timedelta(minutes=dc.duration)
 
     dc.start_time = current_time
     dc.end_time = end_time

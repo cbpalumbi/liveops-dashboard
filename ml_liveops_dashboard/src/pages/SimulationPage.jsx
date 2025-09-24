@@ -48,9 +48,9 @@ export default function SimulationPage() {
                 if (campaignRes.status === "fulfilled" && campaignRes.value.ok) {
                     const campaignData = await campaignRes.value.json();
                     setCampaign(campaignData);
-
-                    if (!campaignData.startTime) {
-                        return;
+                    
+                    if (!campaignData.start_time) {
+                        throw new Error("Campaign doesn't have start time defined. This component shouldn't be loaded.");
                     }
 
                     // check if we need to start or continue the polling interval
