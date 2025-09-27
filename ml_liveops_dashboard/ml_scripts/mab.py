@@ -117,7 +117,8 @@ def report_impression(
         variant_id=variant_id,
         clicked=clicked,
         timestamp=timestamp,
-        segment=segment_id  # will be None for non-segmented campaigns
+        segment=segment_id,  # will be None for non-segmented campaigns
+        player_context=player_context
     )
     db.add(impression)
     db.commit()
