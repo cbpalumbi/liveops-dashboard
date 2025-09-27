@@ -287,7 +287,7 @@ def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depend
     db.commit()
     db.refresh(dc) 
 
-    result = simulate_data_campaign(req.data_campaign_id, "local", req.impressions, 0.02)
+    result = simulate_data_campaign(req.data_campaign_id, "local", req.impressions, 0)
 
     result_db_entry = SimulationResultModel(
         campaign_id=req.data_campaign_id,

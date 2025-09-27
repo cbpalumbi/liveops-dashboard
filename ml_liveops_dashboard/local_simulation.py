@@ -77,8 +77,9 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
                 "clicked": int(clicked)
             })
 
-            print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
-            time.sleep(delay)
+            #print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), clicked: {clicked} (CTR={ctr:.2%})")
+            if delay > 0:
+                time.sleep(delay)
 
         return generate_regret_summary(impression_log, true_ctrs, campaign_type="mab")
 
