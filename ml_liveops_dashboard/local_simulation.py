@@ -117,7 +117,22 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             for variant_id in static_banner_variants
         }
 
-        timestamp = datetime.now(timezone.utc) - timedelta(weeks=1)
+        
+        if dc.start_time is None:
+            print("Simulation doesn't have a start time.")
+            return
+
+        if dc.end_time is None:
+            # If end_time isn't defined, calculate it from start_time and duration
+            end_time = dc.start_time + timedelta(minutes=dc.duration)
+        else:
+            end_time = dc.end_time
+
+        duration_timedelta = end_time - dc.start_time
+        if impressions > 1:
+            time_step = duration_timedelta / impressions
+
+        timestamp = dc.start_time
 
         for i in range(impressions):
             serve_data = serve_variant_segmented(dc, db)
@@ -126,7 +141,7 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
 
             ctr = true_ctrs[variant["id"]]
             clicked = random.random() < ctr
-            timestamp += timedelta(minutes=1)
+            timestamp += time_step
 
             report_impression(data_campaign_id, variant["id"], clicked, timestamp, db, segment_id=segment_id)
 
@@ -136,9 +151,10 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
                 "segment_id": segment_id
             })
 
-            print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), "
-                  f"segment {segment_id}, clicked: {clicked} (CTR={ctr:.2%})")
-            time.sleep(delay)
+            #print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), "
+            #      f"segment {segment_id}, clicked: {clicked} (CTR={ctr:.2%})")
+            if delay > 0:
+                time.sleep(delay)
 
         return generate_regret_summary(impression_log, true_ctrs, campaign_type="segmented_mab")
 
@@ -207,5 +223,3 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5):
     finally:
         db.close()
 
-
-    return
