@@ -2,6 +2,7 @@
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import datetime
 
 from ml_liveops_dashboard.sqlite_models import Base
 from ml_liveops_dashboard.db_utils import insert, clear, print as print_tables
@@ -43,6 +44,7 @@ def populate(db_path):
             "campaign_type": "SEGMENTED_MAB",
             "duration": 1,
             "segment_mix_id": 1,
+            "start_time": datetime.datetime.now() # default for testing
         },
         db=session,
     )

@@ -50,6 +50,10 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
             for variant_id in static_banner_variants
         }
 
+        if dc.start_time is None:
+            print("Simulation doesn't have a start time.")
+            return
+
         if dc.end_time is None:
             # If end_time isn't defined, calculate it from start_time and duration
             end_time = dc.start_time + timedelta(minutes=dc.duration)

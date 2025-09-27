@@ -2,6 +2,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import sys
+import datetime
 
 from ml_liveops_dashboard.sqlite_models import Base
 from ml_liveops_dashboard.db_utils import insert, print as print_tables
@@ -29,7 +30,8 @@ def populate(db_path):
             "banner_id": 1,           # the banner you want to test
             "campaign_type": "CONTEXTUAL_MAB",
             "duration": 1,
-            "segment_mix_id": None  # not used for regular MAB
+            "segment_mix_id": None,  # not used for regular MAB
+            "start_time": datetime.datetime.now() # default for testing
         },
     )
 

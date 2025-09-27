@@ -1,6 +1,7 @@
 # populate_db2.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import datetime
 import sys
 
 from ml_liveops_dashboard.sqlite_models import Base
@@ -28,7 +29,8 @@ def populate(db_path):
             "banner_id": 1,           # the banner you want to test
             "campaign_type": "MAB",   # regular MAB type
             "duration": 1,
-            "segment_mix_id": None  # not used for regular MAB
+            "segment_mix_id": None,  # not used for regular MAB
+            "start_time": datetime.datetime.now() # default for testing
         },
     )
 

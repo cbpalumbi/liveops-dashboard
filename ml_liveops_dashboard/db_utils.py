@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from tabulate import tabulate
 import json
+import datetime
 
 from ml_liveops_dashboard.sqlite_models import Base
 from constants import DB_PATH 
@@ -199,6 +200,11 @@ def insert(
                 col_values[col.name] = int(val)
             elif col.type.python_type == float:
                 col_values[col.name] = float(val)
+            elif col.type.python_type == datetime.datetime:
+                try:
+                    col_values[col.name] = datetime.datetime.fromisoformat(str(val))
+                except ValueError:
+                    raise ValueError(f"Invalid datetime format for column '{col.name}'. Received: {val}")
             else:
                 col_values[col.name] = str(val)
 
