@@ -7,13 +7,24 @@ export default function NotYetRunCampaign({ campaign }) {
     const [runError, setRunError] = useState(null);
     const [runSuccess, setRunSuccess] = useState(null);
 
+    const [impressions, setImpressions] = useState(100); 
+
     async function runCampaign() {
-        setIsRunning(true);
+        
         setRunSuccess(null);
         setRunError(null);
 
+        const impressionsValue = parseInt(impressions, 10);
+        if (isNaN(impressionsValue) || impressionsValue <= 0) {
+            setRunError("Please enter a valid number of impressions greater than 0.");
+            return;
+        }
+
+        setIsRunning(true);
+
         const body = {
-            data_campaign_id: campaign["id"]
+            data_campaign_id: campaign["id"],
+            impressions: impressionsValue
         };
 
         let post_run_simulation_res = null;
@@ -61,6 +72,25 @@ export default function NotYetRunCampaign({ campaign }) {
 
     return (
         <div className="p-4 bg-white rounded-lg shadow-inner">
+            
+            {/* Impressions Input Box */}
+            <div className="pb-6">
+                <label className="block mb-1 font-semibold text-gray-700" htmlFor="impressions-input">
+                    Number of Impressions
+                </label>
+                <input
+                    id="impressions-input"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={impressions}
+                    onChange={(e) => setImpressions(e.target.value)}
+                    className="w-45 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    placeholder="e.g., 100000"
+                    disabled={isRunning}
+                />
+            </div>
+            
             {/* Run Simulation Button */}
             <button
                 onClick={runCampaign}
