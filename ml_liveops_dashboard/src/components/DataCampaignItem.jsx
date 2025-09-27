@@ -4,7 +4,7 @@ export default function DataCampaignItem({ dataCampaign }) {
       <h3 className="text-lg font-semibold mb-2">{dataCampaign.name || `Campaign #${dataCampaign.id}`}</h3>
       {/* TODO: Add Campaign name and show tutorial name properly */}
       <p>
-        <strong>Tutorial:</strong> {dataCampaign.tutorial?.title || `Tutorial #${dataCampaign.btutorial_id}`}
+        <strong>Tutorial:</strong> {dataCampaign.tutorial?.title || `Tutorial #${dataCampaign.tutorial_id}`}
       </p>
       <p>
         <strong>Type:</strong> {dataCampaign.campaign_type}
