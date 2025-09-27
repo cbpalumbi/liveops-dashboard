@@ -1,3 +1,5 @@
+import { campaignFriendlyNames } from "../pages/SimulationPage"
+
 export default function CampaignDetails({ campaign }) {
     return (
         <div>
@@ -17,7 +19,7 @@ export default function CampaignDetails({ campaign }) {
                     {/* Type */}
                     <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded">
                         <dt className="font-medium text-gray-600">Campaign Type:</dt>
-                        <dd className="font-semibold text-gray-800">{campaign.campaign_type}</dd>
+                        <dd className="font-semibold text-gray-800">{campaignFriendlyNames[campaign.campaign_type.toLowerCase()]}</dd>
                     </div>
                     {/* Duration */}
                     <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded">

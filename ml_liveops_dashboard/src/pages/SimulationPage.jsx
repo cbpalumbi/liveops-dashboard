@@ -176,6 +176,9 @@ export default function SimulationPage() {
         return (
             <div>
                 <SimulationHeader id={id} campaign={campaign} error={error} />
+                <CampaignDetails
+                    campaign={campaign}
+                />
             </div>
         );
     } else {
@@ -185,7 +188,7 @@ export default function SimulationPage() {
     }
 }
 
-const campaignFriendlyNames = {
+export const campaignFriendlyNames = {
   mab: "MAB Campaign",
   segmented_mab: "Segmented MAB Campaign",
   contextual_mab: "Contextual MAB Campaign"
