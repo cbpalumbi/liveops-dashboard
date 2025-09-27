@@ -115,7 +115,7 @@ def report_impression(
         data_campaign_id=data_campaign_id,
         banner_id=dc.banner_id,
         variant_id=variant_id,
-        clicked=clicked,
+        clicked=int(clicked),
         timestamp=timestamp,
         segment=segment_id,  # will be None for non-segmented campaigns
         player_context=player_context
