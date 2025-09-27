@@ -1,4 +1,4 @@
-export default function DataCampaignItem({ campaign }) {
+export default function CampaignDetails({ campaign }) {
     return (
         <div>
             <div className="pt-4 mt-4 border-t border-gray-200 max-w-3xl">
