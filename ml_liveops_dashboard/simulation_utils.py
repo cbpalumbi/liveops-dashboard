@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 #TODO: Will be replaced by CTRs defined in data
 def get_ctr_for_variant(static_campaign, banner_id, variant_id, segment_id=None,
                         min_ctr=0.05, max_ctr=0.4):
-    for banner in static_campaign["banners"]:
+    for banner in static_campaign["tutorials"]:
         if banner["id"] == banner_id:
             for variant in banner["variants"]:
                 if variant["id"] == variant_id:
@@ -48,7 +48,7 @@ def get_true_params_for_variant(static_campaign, banner_id, variant_id):
 
     # determine a 7 item array for each variant 
 
-    for banner in static_campaign["banners"]:
+    for banner in static_campaign["tutorials"]:
         if banner["id"] == banner_id:
             for variant in banner["variants"]:
                 if variant["id"] == variant_id:
@@ -222,8 +222,8 @@ def generate_regret_summary_contextual(
     cumulative_regret_uniform = 0.0
     total_impressions = len(impression_log)
     
-    num_banners = len(true_param_vectors)
-    uniform_prob = 1 / num_banners
+    num_tutorials = len(true_param_vectors)
+    uniform_prob = 1 / num_tutorials
 
     for i, impression in enumerate(impression_log, 1):
         variant_id = impression["variant_id"]

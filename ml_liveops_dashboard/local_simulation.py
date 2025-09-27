@@ -43,7 +43,7 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
         banner_id = dc.banner_id
 
         static_banner_variants = [
-            v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
         ]
         true_ctrs = {
             variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
@@ -110,7 +110,7 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
         banner_id = dc.banner_id
 
         static_banner_variants = [
-            v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
         ]
         true_ctrs = {
             variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
@@ -181,7 +181,7 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5) ->
         banner_id = dc.banner_id
 
         static_banner_variants_ids = [
-            v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
         ]
 
         # instead of determining true ctrs per variant here, i need to determine a 'true param vector' for each variant

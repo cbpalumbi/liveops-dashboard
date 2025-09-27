@@ -7,7 +7,7 @@ import json
 import random
 
 def get_ctr_for_variant(static_campaign, banner_id, variant_id, min_ctr=0.03, max_ctr=0.3):
-    for banner in static_campaign["banners"]:
+    for banner in static_campaign["tutorials"]:
         if banner["id"] == banner_id:
             for variant in banner["variants"]:
                 if variant["id"] == variant_id:

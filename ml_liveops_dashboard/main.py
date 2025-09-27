@@ -149,7 +149,7 @@ class SimulationResultRequest(BaseModel):
 def validate_static_campaign(campaign_id: int, banner_id: int):
     for campaign in static_campaigns:
         if campaign["id"] == campaign_id:
-            for banner in campaign["banners"]:
+            for banner in campaign["tutorials"]:
                 if banner["id"] == banner_id:
                     return True
             raise HTTPException(status_code=400, detail="Banner not found in this campaign")

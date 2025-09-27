@@ -63,7 +63,7 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, d
         # Hash once to find true CTRs for banner variants
         banner_id = data_campaign["banner_id"]
         static_banner_variants = [
-            v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
         ]
         true_ctrs = {
             variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
@@ -145,7 +145,7 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
     # Compute true CTRs once for regret calculation
     banner_id = data_campaign["banner_id"]
     static_banner_variants = [
-        v["id"] for b in static_campaign["banners"] if b["id"] == banner_id for v in b["variants"]
+        v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
     ]
     true_ctrs = {
         variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)

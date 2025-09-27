@@ -35,7 +35,7 @@ def mock_requests(monkeypatch):
 def test_simulate_data_campaign_api(mock_requests, monkeypatch):
     monkeypatch.setattr(run_simulation, "load_static_campaigns", lambda: [{
         "id": 100,
-        "banners": [{"id": 10, "variants": [{"id": 1, "name": "A"}]}]
+        "tutorials": [{"id": 10, "variants": [{"id": 1, "name": "A"}]}]
     }])
     monkeypatch.setattr(run_simulation, "clear", lambda *_, **__: None)
     run_simulation.simulate_data_campaign(1, "api", impressions=3, delay=0)
@@ -52,7 +52,7 @@ def test_simulate_data_campaign_local(monkeypatch):
     }))
     monkeypatch.setattr(run_simulation, "load_static_campaigns", lambda: [{
         "id": 100,
-        "banners": [{"id": 10, "variants": [{"id": 1, "name": "A"}]}]
+        "tutorials": [{"id": 10, "variants": [{"id": 1, "name": "A"}]}]
     }])
     monkeypatch.setattr(run_simulation, "clear", lambda *_, **__: None)
     monkeypatch.setattr(run_simulation, "run_mab_local", lambda *_, **__: None)
@@ -73,7 +73,7 @@ def test_simulate_data_campaign_segmented_api(monkeypatch):
     }))
     monkeypatch.setattr(run_simulation, "load_static_campaigns", lambda: [{
         "id": 101,
-        "banners": [{"id": 11, "variants": [{"id": 2, "name": "B"}]}]
+        "tutorials": [{"id": 11, "variants": [{"id": 2, "name": "B"}]}]
     }])
     monkeypatch.setattr(run_simulation, "clear", lambda *_, **__: None)
     monkeypatch.setattr(run_simulation, "generate_regret_summary", lambda *_, **__: None)
@@ -92,7 +92,7 @@ def test_simulate_data_campaign_segmented_local(monkeypatch):
     }))
     monkeypatch.setattr(run_simulation, "load_static_campaigns", lambda: [{
         "id": 102,
-        "banners": [{"id": 12, "variants": [{"id": 3, "name": "C"}]}]
+        "tutorials": [{"id": 12, "variants": [{"id": 3, "name": "C"}]}]
     }])
     monkeypatch.setattr(run_simulation, "clear", lambda *_, **__: None)
     monkeypatch.setattr(run_simulation, "run_segmented_mab_local", lambda *_, **__: None)

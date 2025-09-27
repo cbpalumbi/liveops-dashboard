@@ -41,8 +41,8 @@ export default function Simulations() {
         setCampaigns(data);
         if (data.length > 0) {
           setFormCampaignIndex(0);
-          if (data[0].banners.length > 0) {
-            setFormBannerId(data[0].banners[0].id);
+          if (data[0].tutorials.length > 0) {
+            setFormBannerId(data[0].tutorials[0].id);
           }
         }
       } catch (err) {
@@ -103,8 +103,8 @@ export default function Simulations() {
   // Update banner dropdown when campaign changes in form
   useEffect(() => {
     if (campaigns.length > 0) {
-      const banners = campaigns[formCampaignIndex]?.banners || [];
-      setFormBannerId(banners.length > 0 ? banners[0].id : null);
+      const tutorials = campaigns[formCampaignIndex]?.tutorials || [];
+      setFormBannerId(tutorials.length > 0 ? tutorials[0].id : null);
     }
   }, [formCampaignIndex, campaigns]);
 
@@ -295,9 +295,9 @@ export default function Simulations() {
                 className="w-full p-2 border rounded"
                 value={formBannerId || ""}
                 onChange={(e) => setFormBannerId(Number(e.target.value))}
-                disabled={!campaigns[formCampaignIndex]?.banners.length}
+                disabled={!campaigns[formCampaignIndex]?.tutorials.length}
               >
-                {campaigns[formCampaignIndex]?.banners.map((b) => (
+                {campaigns[formCampaignIndex]?.tutorials.map((b) => (
                   <option key={b.id} value={b.id}>
                       {b.title || `Banner ${b.id}`}
                   </option>

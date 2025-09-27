@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
-import BannerList from "../components/BannerList"
+import TutorialList from "../components/TutorialList"
 
 
-export default function Campaigns() {
+export default function Tutorials() {
     const [campaigns, setCampaigns] = useState([])
     const [selectedCampaignIndex, setSelectedCampaignIndex] = useState(0)
     const [loading, setLoading] = useState(true)
@@ -31,7 +31,7 @@ export default function Campaigns() {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-4">Campaigns</h1>
+            <h1 className="text-2xl font-bold mb-4">Tutorials</h1>
             {/* Dropdown */}
             <select
                 value={selectedCampaignIndex}
@@ -45,8 +45,8 @@ export default function Campaigns() {
                 ))}
             </select>
 
-            {/* Banner List */}
-            <BannerList banners={campaigns[selectedCampaignIndex]?.banners} />
+            {/* Tutorial List */}
+            <TutorialList tutorials={campaigns[selectedCampaignIndex]?.tutorials} />
         </div>
     )
 }

@@ -17,7 +17,7 @@ def get_static_banner_variants(static_campaign_id: int, banner_id: int) -> list[
     if not static_campaign:
         raise ValueError(f"Static campaign id {static_campaign_id} not found")
 
-    banner = next((b for b in static_campaign["banners"] if b["id"] == banner_id), None)
+    banner = next((b for b in static_campaign["tutorials"] if b["id"] == banner_id), None)
     if not banner:
         raise ValueError(f"Banner id {banner_id} not found in static campaign {static_campaign_id}")
 
@@ -72,7 +72,7 @@ def serve_variant(dc: DataCampaign, db: Session):
     if not static_campaign:
         raise ValueError("Static campaign not found")
 
-    banner = next((b for b in static_campaign["banners"] if b["id"] == dc.banner_id), None)
+    banner = next((b for b in static_campaign["tutorials"] if b["id"] == dc.banner_id), None)
     if not banner:
         raise ValueError("Banner not found in static campaign")
 
@@ -289,7 +289,7 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     if not static_campaign:
         raise ValueError("Static campaign not found")
 
-    banner = next((b for b in static_campaign["banners"] if b["id"] == dc.banner_id), None)
+    banner = next((b for b in static_campaign["tutorials"] if b["id"] == dc.banner_id), None)
     if not banner:
         raise ValueError("Banner not found in static campaign")
 
