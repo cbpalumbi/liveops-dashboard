@@ -358,6 +358,36 @@ export default function Simulations() {
               </div>
             )}
 
+            {/* Conditional Fields for SEGMENTED_MAB */}
+            {formCampaignType === "CONTEXTUAL_MAB" && (
+              <div className="p-4 border-t border-dashed">
+                <h3 className="text-lg font-semibold mb-2">Contextual MAB Options</h3>
+                <label className="block mb-1 font-semibold" htmlFor="segment-mix-select">
+                  Segment Mix
+                </label>
+                <select
+                  id="segment-mix-select"
+                  className="w-full p-2 border rounded"
+                  value={formSegmentMixId}
+                  onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === 'new') {
+                          setShowMixCreator(true);
+                          setShowForm(false);
+                      } else {
+                          setFormSegmentMixId(value);
+                      }
+                  }}
+                >
+                  <option value="" disabled>Select a mix or create new</option>
+                  {segmentMixes.map((mix) => (
+                      <option key={mix.id} value={mix.id}>{mix.name}</option>
+                  ))}
+                  <option value="new">-- Add New Mix --</option>
+                </select>
+              </div>
+            )}
+
             {/* Submit button and messages */}
             <button
               type="submit"
