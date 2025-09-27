@@ -77,11 +77,9 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, d
 
     elif campaign_type == "contextual_mab":
         if mode == "api":
-            run_contextual_mab_via_api(data_campaign["id"], impressions)
-            return None
+            return run_contextual_mab_via_api(data_campaign["id"], impressions)
         elif mode == "local":
-            run_contextual_mab_local(data_campaign["id"], SessionLocal(), impressions)
-            return None 
+            return run_contextual_mab_local(data_campaign["id"], SessionLocal(), impressions)
     else:
         print("Unsupported campaign type")
 

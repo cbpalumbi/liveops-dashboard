@@ -161,7 +161,7 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
     finally:
         db.close()
 
-def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5):
+def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5) -> SimulationResult:
     print("RUNNING CONTEXTUAL MAB LOCAL")
 
     try:
@@ -190,7 +190,21 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5):
             for variant_id in static_banner_variants_ids
         }
 
-        timestamp = datetime.now(timezone.utc) - timedelta(weeks=1)
+        if dc.start_time is None:
+            print("Simulation doesn't have a start time.")
+            return
+
+        if dc.end_time is None:
+            # If end_time isn't defined, calculate it from start_time and duration
+            end_time = dc.start_time + timedelta(minutes=dc.duration)
+        else:
+            end_time = dc.end_time
+
+        duration_timedelta = end_time - dc.start_time
+        if impressions > 1:
+            time_step = duration_timedelta / impressions
+
+        timestamp = dc.start_time
 
         for i in range(impressions):
             simulated_player_context = generate_player(i)
@@ -209,7 +223,7 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5):
             
             # simulate click event
             clicked = random.random() < true_ctr
-            timestamp += timedelta(minutes=1)
+            timestamp += time_step
             report_impression(dc.id, served_variant_id, clicked, timestamp, db, None, simulated_player_context_string)
             
             impression_log.append({
@@ -219,7 +233,6 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5):
             })
 
         return generate_regret_summary_contextual(impression_log, true_param_vectors)
-        
     finally:
         db.close()
 
