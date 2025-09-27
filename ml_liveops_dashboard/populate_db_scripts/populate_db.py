@@ -40,7 +40,7 @@ def populate(db_path):
         "data_campaigns",
         {
             "static_campaign_id": 1,
-            "banner_id": 1,
+            "tutorial_id": 1,
             "campaign_type": "SEGMENTED_MAB",
             "duration": 1,
             "segment_mix_id": 1,

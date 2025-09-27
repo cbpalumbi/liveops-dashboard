@@ -39,7 +39,7 @@ def get_db():
 # --- Pydantic models ---
 class CreateDataCampaignRequest(BaseModel):
     campaign_id: int
-    banner_id: int
+    tutorial_id: int
     campaign_type: str
     duration: int # minutes
     segment_mix_id: Optional[int] = None
@@ -85,7 +85,7 @@ class ReportRequest(BaseModel):
 class DataCampaignRequest(BaseModel):
     id: int
     static_campaign_id: int
-    banner_id: int
+    tutorial_id: int
     campaign_type: str
     duration: int
     segment_mix_id: Optional[int] = None
@@ -97,7 +97,7 @@ class DataCampaignRequest(BaseModel):
 
 class ImpressionRequest(BaseModel):
     data_campaign_id: int
-    banner_id: int
+    tutorial_id: int
     variant_id: int
     clicked: bool
     segment: Optional[int] = None
@@ -146,25 +146,25 @@ class SimulationResultRequest(BaseModel):
  
 
 # --- Helpers ---
-def validate_static_campaign(campaign_id: int, banner_id: int):
+def validate_static_campaign(campaign_id: int, tutorial_id: int):
     for campaign in static_campaigns:
         if campaign["id"] == campaign_id:
-            for banner in campaign["tutorials"]:
-                if banner["id"] == banner_id:
+            for tutorial in campaign["tutorials"]:
+                if tutorial["id"] == tutorial_id:
                     return True
-            raise HTTPException(status_code=400, detail="Banner not found in this campaign")
+            raise HTTPException(status_code=400, detail="Tutorial not found in this campaign")
     raise HTTPException(status_code=404, detail="Static campaign not found")
 
 # --- Endpoint to create a data campaign ---
 @app.post("/data_campaign")
 def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(get_db)):
     # Validate campaign exists in static data
-    validate_static_campaign(req.campaign_id, req.banner_id)
+    validate_static_campaign(req.campaign_id, req.tutorial_id)
 
     # Insert into DB
     new_campaign = DataCampaign(
         static_campaign_id=req.campaign_id,
-        banner_id=req.banner_id,
+        tutorial_id=req.tutorial_id,
         campaign_type=req.campaign_type,
         duration=req.duration,
         segment_mix_id=req.segment_mix_id,

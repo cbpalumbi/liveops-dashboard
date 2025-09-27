@@ -60,14 +60,14 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, d
     elif campaign_type == "mab":
         # Original MAB / random campaign flow
 
-        # Hash once to find true CTRs for banner variants
-        banner_id = data_campaign["banner_id"]
-        static_banner_variants = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
+        # Hash once to find true CTRs for tutorial variants
+        tutorial_id = data_campaign["tutorial_id"]
+        static_tutorial_variants = [
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
         ]
         true_ctrs = {
-            variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
-            for variant_id in static_banner_variants
+            variant_id: get_ctr_for_variant(static_campaign, tutorial_id, variant_id)
+            for variant_id in static_tutorial_variants
         }
 
         if mode == "api":
@@ -143,13 +143,13 @@ def run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay
     impression_log = []
 
     # Compute true CTRs once for regret calculation
-    banner_id = data_campaign["banner_id"]
-    static_banner_variants = [
-        v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
+    tutorial_id = data_campaign["tutorial_id"]
+    static_tutorial_variants = [
+        v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
     ]
     true_ctrs = {
-        variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
-        for variant_id in static_banner_variants
+        variant_id: get_ctr_for_variant(static_campaign, tutorial_id, variant_id)
+        for variant_id in static_tutorial_variants
     }
     current_time = datetime.now(timezone.utc)
     for i in range(impressions):

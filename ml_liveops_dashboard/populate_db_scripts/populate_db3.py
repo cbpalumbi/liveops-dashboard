@@ -27,7 +27,7 @@ def populate(db_path):
         "camp",
         {
             "static_campaign_id": 1,  # assuming your static campaign exists
-            "banner_id": 1,           # the banner you want to test
+            "tutorial_id": 1,           # the tutorial you want to test
             "campaign_type": "CONTEXTUAL_MAB",
             "duration": 1,
             "segment_mix_id": None,  # not used for regular MAB

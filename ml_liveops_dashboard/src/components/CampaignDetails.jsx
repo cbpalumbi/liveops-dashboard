@@ -11,10 +11,10 @@ export default function CampaignDetails({ campaign }) {
                         <dt className="font-medium text-gray-600">Static Campaign ID:</dt>
                         <dd className="font-semibold text-gray-800">{campaign.static_campaign_id}</dd>
                     </div>
-                    {/* Banner ID */}
+                    {/* Tutorial ID */}
                     <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded">
-                        <dt className="font-medium text-gray-600">Banner ID:</dt>
-                        <dd className="font-semibold text-gray-800">{campaign.banner_id}</dd>
+                        <dt className="font-medium text-gray-600">Tutorial ID:</dt>
+                        <dd className="font-semibold text-gray-800">{campaign.tutorial_id}</dd>
                     </div>
                     {/* Type */}
                     <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded">

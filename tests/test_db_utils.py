@@ -27,7 +27,7 @@ def test_get_table_invalid():
 def test_insert_with_json(test_db_session):
     data = {
         "static_campaign_id": 1,
-        "banner_id": 123,
+        "tutorial_id": 123,
         "campaign_type": "MAB",
         "duration": 2,
         "segment_mix_id": None
@@ -38,7 +38,7 @@ def test_insert_with_json(test_db_session):
     row = test_db_session.query(table_class).first()
     assert row is not None
     assert row.static_campaign_id == 1
-    assert row.banner_id == 123
+    assert row.tutorial_id == 123
     assert row.campaign_type == "MAB"
     assert row.segment_mix_id is None
 
@@ -46,14 +46,14 @@ def test_insert_with_json(test_db_session):
 def test_insert_with_type_conversion(test_db_session):
     data = {
         "static_campaign_id": 2,
-        "banner_id": "789",  # should cast to int
+        "tutorial_id": "789",  # should cast to int
         "duration": 2,
         "campaign_type": "MAB",
         "segment_mix_id": None
     }
     db_utils.insert("data_campaigns", data, db=test_db_session)
     row = test_db_session.query(DataCampaign).filter_by(static_campaign_id=2).first()
-    assert isinstance(row.banner_id, int)
+    assert isinstance(row.tutorial_id, int)
     
 def test_insert_unknown_table(test_db_session):
     data = {"foo": "bar"}
@@ -82,7 +82,7 @@ def test_print_unknown_table_again(test_db_session):
 def test_clear_specific_table(test_db_session):
     data = {
         "static_campaign_id": 3,
-        "banner_id": 1,
+        "tutorial_id": 1,
         "campaign_type": "MAB",
         "duration": 1,
         "segment_mix_id": None
@@ -98,7 +98,7 @@ def test_clear_specific_table(test_db_session):
 def test_clear_all_tables(test_db_session):
     data = {
         "static_campaign_id": 4,
-        "banner_id": 2,
+        "tutorial_id": 2,
         "duration": 3,
         "campaign_type": "MAB",
         "segment_mix_id": None
@@ -114,7 +114,7 @@ def test_clear_all_tables(test_db_session):
 def test_clear_impressions_with_campaign_id(test_db_session):
     imp = Impression(
         data_campaign_id=42,
-        banner_id=1,
+        tutorial_id=1,
         variant_id=1,
         clicked=1,
         segment=None

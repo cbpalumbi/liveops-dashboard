@@ -16,7 +16,7 @@ def mock_requests(monkeypatch):
                 "id": 1,
                 "static_campaign_id": 100,
                 "campaign_type": "mab",
-                "banner_id": 10
+                "tutorial_id": 10
             })
         return FakeResponse(404, text="Not found")
     def fake_post(url, json=None, *_, **__):
@@ -46,7 +46,7 @@ def test_simulate_data_campaign_local(monkeypatch):
             "id": 1,
             "static_campaign_id": 100,
             "campaign_type": "mab",
-            "banner_id": 10
+            "tutorial_id": 10
         })),
         "post": staticmethod(lambda *_, **__: FakeResponse(200, {}))
     }))
@@ -64,7 +64,7 @@ def test_simulate_data_campaign_segmented_api(monkeypatch):
             "id": 2,
             "static_campaign_id": 101,
             "campaign_type": "segmented_mab",
-            "banner_id": 11
+            "tutorial_id": 11
         })),
         "post": staticmethod(lambda url, json=None, *_, **__: (
             FakeResponse(200, {"variant": {"id": 2, "name": "B"}, "segment_id": "seg1"})
@@ -86,7 +86,7 @@ def test_simulate_data_campaign_segmented_local(monkeypatch):
             "id": 3,
             "static_campaign_id": 102,
             "campaign_type": "segmented_mab",
-            "banner_id": 12
+            "tutorial_id": 12
         })),
         "post": staticmethod(lambda *_, **__: FakeResponse(200, {}))
     }))

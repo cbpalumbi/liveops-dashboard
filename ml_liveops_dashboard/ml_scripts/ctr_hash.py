@@ -6,14 +6,14 @@ import hashlib
 import json
 import random
 
-def get_ctr_for_variant(static_campaign, banner_id, variant_id, min_ctr=0.03, max_ctr=0.3):
-    for banner in static_campaign["tutorials"]:
-        if banner["id"] == banner_id:
-            for variant in banner["variants"]:
+def get_ctr_for_variant(static_campaign, tutorial_id, variant_id, min_ctr=0.03, max_ctr=0.3):
+    for tutorial in static_campaign["tutorials"]:
+        if tutorial["id"] == tutorial_id:
+            for variant in tutorial["variants"]:
                 if variant["id"] == variant_id:
                     variant_str = json.dumps({
                         "campaign_id": static_campaign["id"],
-                        "banner_id": banner_id,
+                        "tutorial_id": tutorial_id,
                         "variant_id": variant_id,
                         "color": variant.get("color")
                     }, sort_keys=True)

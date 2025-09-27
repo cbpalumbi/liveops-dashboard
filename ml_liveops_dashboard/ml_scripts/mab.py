@@ -12,32 +12,32 @@ from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentMix, Segment
 with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
     static_campaigns = json.load(f)
 
-def get_static_banner_variants(static_campaign_id: int, banner_id: int) -> list[int]:
+def get_static_tutorial_variants(static_campaign_id: int, tutorial_id: int) -> list[int]:
     static_campaign = next((c for c in static_campaigns if c["id"] == static_campaign_id), None)
     if not static_campaign:
         raise ValueError(f"Static campaign id {static_campaign_id} not found")
 
-    banner = next((b for b in static_campaign["tutorials"] if b["id"] == banner_id), None)
-    if not banner:
-        raise ValueError(f"Banner id {banner_id} not found in static campaign {static_campaign_id}")
+    tutorial = next((b for b in static_campaign["tutorials"] if b["id"] == tutorial_id), None)
+    if not tutorial:
+        raise ValueError(f"Tutorial id {tutorial_id} not found in static campaign {static_campaign_id}")
 
-    return [variant["id"] for variant in banner["variants"]]
+    return [variant["id"] for variant in tutorial["variants"]]
 
-def run_thompson_sampling(data_campaign_id: int, banner_id: int, db: Session):
+def run_thompson_sampling(data_campaign_id: int, tutorial_id: int, db: Session):
     # Get static campaign id for this data campaign
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
         raise ValueError("Data campaign not found")
 
-    static_banner_variants = get_static_banner_variants(dc.static_campaign_id, banner_id)
+    static_tutorial_variants = get_static_tutorial_variants(dc.static_campaign_id, tutorial_id)
 
     variant_scores = []
 
     zero_impression_variants = [
-        vid for vid in static_banner_variants
+        vid for vid in static_tutorial_variants
         if db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
-            Impression.banner_id == banner_id,
+            Impression.tutorial_id == tutorial_id,
             Impression.variant_id == vid
         ).scalar() == 0
     ]
@@ -45,16 +45,16 @@ def run_thompson_sampling(data_campaign_id: int, banner_id: int, db: Session):
     if zero_impression_variants:
         return random.choice(zero_impression_variants)
 
-    for variant_id in static_banner_variants:
+    for variant_id in static_tutorial_variants:
         clicks = db.query(func.sum(Impression.clicked)).filter(
             Impression.data_campaign_id == data_campaign_id,
-            Impression.banner_id == banner_id,
+            Impression.tutorial_id == tutorial_id,
             Impression.variant_id == variant_id
         ).scalar() or 0
 
         impressions = db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
-            Impression.banner_id == banner_id,
+            Impression.tutorial_id == tutorial_id,
             Impression.variant_id == variant_id
         ).scalar() or 0
 
@@ -72,21 +72,21 @@ def serve_variant(dc: DataCampaign, db: Session):
     if not static_campaign:
         raise ValueError("Static campaign not found")
 
-    banner = next((b for b in static_campaign["tutorials"] if b["id"] == dc.banner_id), None)
-    if not banner:
-        raise ValueError("Banner not found in static campaign")
+    tutorial = next((b for b in static_campaign["tutorials"] if b["id"] == dc.tutorial_id), None)
+    if not tutorial:
+        raise ValueError("Tutorial not found in static campaign")
 
     # Variant Selection Logic
     if dc.campaign_type.lower() == "mab":
-        variant_id = run_thompson_sampling(dc.id, banner["id"], db)
-        chosen_variant = next(v for v in banner["variants"] if v["id"] == variant_id)
+        variant_id = run_thompson_sampling(dc.id, tutorial["id"], db)
+        chosen_variant = next(v for v in tutorial["variants"] if v["id"] == variant_id)
     else:
-        chosen_variant = random.choice(banner["variants"])
+        chosen_variant = random.choice(tutorial["variants"])
 
     return {
         "data_campaign_id": dc.id,
         "static_campaign_id": dc.static_campaign_id,
-        "banner_id": banner["id"],
+        "tutorial_id": tutorial["id"],
         "variant": chosen_variant
     }
 
@@ -113,7 +113,7 @@ def report_impression(
     # Store impression in SQLite
     impression = Impression(
         data_campaign_id=data_campaign_id,
-        banner_id=dc.banner_id,
+        tutorial_id=dc.tutorial_id,
         variant_id=variant_id,
         clicked=int(clicked),
         timestamp=timestamp,
@@ -183,7 +183,7 @@ class ThompsonBandit:
             self.state[variant_id]["beta"] += 1
 
 
-def run_thompson_sampling_segmented(data_campaign_id: int, banner_id: int, segment_id: int, db: Session):
+def run_thompson_sampling_segmented(data_campaign_id: int, tutorial_id: int, segment_id: int, db: Session):
     """
     Run Thompson Sampling for a specific segment.
     """
@@ -192,16 +192,16 @@ def run_thompson_sampling_segmented(data_campaign_id: int, banner_id: int, segme
     if not dc:
         raise ValueError("Data campaign not found")
 
-    static_banner_variants = get_static_banner_variants(dc.static_campaign_id, banner_id)
+    static_tutorial_variants = get_static_tutorial_variants(dc.static_campaign_id, tutorial_id)
 
     variant_scores = []
 
     # Find variants with zero impressions in this segment
     zero_impression_variants = [
-        vid for vid in static_banner_variants
+        vid for vid in static_tutorial_variants
         if db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
-            Impression.banner_id == banner_id,
+            Impression.tutorial_id == tutorial_id,
             Impression.variant_id == vid,
             Impression.segment == segment_id  # filter by segment
         ).scalar() == 0
@@ -211,17 +211,17 @@ def run_thompson_sampling_segmented(data_campaign_id: int, banner_id: int, segme
         return random.choice(zero_impression_variants)
 
     # Calculate Thompson Sampling score per variant
-    for variant_id in static_banner_variants:
+    for variant_id in static_tutorial_variants:
         clicks = db.query(func.sum(Impression.clicked)).filter(
             Impression.data_campaign_id == data_campaign_id,
-            Impression.banner_id == banner_id,
+            Impression.tutorial_id == tutorial_id,
             Impression.variant_id == variant_id,
             Impression.segment == segment_id  # filter by segment
         ).scalar() or 0
 
         impressions = db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
-            Impression.banner_id == banner_id,
+            Impression.tutorial_id == tutorial_id,
             Impression.variant_id == variant_id,
             Impression.segment == segment_id  # filter by segment
         ).scalar() or 0
@@ -264,7 +264,7 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     # Initialize bandits if needed
     if segmented_bandits == {}:
         segment_ids = [e.segment_id for e in entries]
-        variant_ids = get_static_banner_variants(dc.static_campaign_id, dc.banner_id)
+        variant_ids = get_static_tutorial_variants(dc.static_campaign_id, dc.tutorial_id)
         init_segmented_bandits(segment_ids, variant_ids)
 
     # weighted random segment choice
@@ -289,16 +289,16 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     if not static_campaign:
         raise ValueError("Static campaign not found")
 
-    banner = next((b for b in static_campaign["tutorials"] if b["id"] == dc.banner_id), None)
-    if not banner:
-        raise ValueError("Banner not found in static campaign")
+    tutorial = next((b for b in static_campaign["tutorials"] if b["id"] == dc.tutorial_id), None)
+    if not tutorial:
+        raise ValueError("Tutorial not found in static campaign")
 
-    chosen_variant = next(v for v in banner["variants"] if v["id"] == variant_id)
+    chosen_variant = next(v for v in tutorial["variants"] if v["id"] == variant_id)
 
     return {
         "data_campaign_id": dc.id,
         "static_campaign_id": dc.static_campaign_id,
-        "banner_id": dc.banner_id,
+        "tutorial_id": dc.tutorial_id,
         "segment_id": selected_segment,
         "variant": chosen_variant
     }
@@ -355,10 +355,10 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
     """
     global linucb_model
 
-    banner_variant_ids = get_static_banner_variants(dc.static_campaign_id, dc.banner_id)
+    tutorial_variant_ids = get_static_tutorial_variants(dc.static_campaign_id, dc.tutorial_id)
 
     player_vector = player_context_json_to_vector(player_context)
-    n_arms = len(banner_variant_ids)
+    n_arms = len(tutorial_variant_ids)
     n_features = len(player_vector)
 
     # Initialize the model on the first call
@@ -367,12 +367,12 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
 
     # Choose the best variant based on the context vector
     chosen_arm_index = linucb_model.choose_arm(player_vector)
-    chosen_variant = banner_variant_ids[chosen_arm_index]
+    chosen_variant = tutorial_variant_ids[chosen_arm_index]
     
     return {
         "data_campaign_id": dc.id,
         "static_campaign_id": dc.static_campaign_id,
-        "banner_id": dc.banner_id,
+        "tutorial_id": dc.tutorial_id,
         "variant": chosen_variant
     }
 

@@ -16,7 +16,7 @@ def test_mab_simulation_flow():
     assert result.cumulative_regret_mab < 2 * result.cumulative_regret_uniform, \
         "MAB regret should no more than half of uniform random regret"
     assert len(result.impression_log) == 100
-    assert set(result.variant_counts.keys()) == {1, 2}
+    assert set(result.variant_counts.keys()) == {1, 2, 3}
 
 def test_segmented_mab_simulation_flow(test_db_session):
     session = test_db_session

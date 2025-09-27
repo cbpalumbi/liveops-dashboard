@@ -9,7 +9,7 @@ class DataCampaign(Base):
     __tablename__ = "data_campaigns"
     id = Column(Integer, primary_key=True, index=True)
     static_campaign_id = Column(Integer, nullable=False)
-    banner_id = Column(Integer, nullable=False)
+    tutorial_id = Column(Integer, nullable=False)
     campaign_type = Column(String, nullable=False)        # e.g. "MAB", "Random", "SEGMENTED_MAB"
     duration = Column(Integer, nullable=False)
     segment_mix_id = Column(Integer, nullable=True)     # NULL unless segmented MAB
@@ -25,7 +25,7 @@ class Impression(Base):
     __tablename__ = "impressions"
     id = Column(Integer, primary_key=True, index=True)
     data_campaign_id = Column(Integer, nullable=False)    # Link to a data campaign run
-    banner_id = Column(Integer, index=True, nullable=False)
+    tutorial_id = Column(Integer, index=True, nullable=False)
     variant_id = Column(Integer, nullable=False)
     clicked = Column(Integer)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())

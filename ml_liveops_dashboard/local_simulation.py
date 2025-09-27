@@ -40,14 +40,14 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
             return
 
         impression_log = []
-        banner_id = dc.banner_id
+        tutorial_id = dc.tutorial_id
 
-        static_banner_variants = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
+        static_tutorial_variants = [
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
         ]
         true_ctrs = {
-            variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
-            for variant_id in static_banner_variants
+            variant_id: get_ctr_for_variant(static_campaign, tutorial_id, variant_id)
+            for variant_id in static_tutorial_variants
         }
 
         if dc.start_time is None:
@@ -107,14 +107,14 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             return
 
         impression_log = []
-        banner_id = dc.banner_id
+        tutorial_id = dc.tutorial_id
 
-        static_banner_variants = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
+        static_tutorial_variants = [
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
         ]
         true_ctrs = {
-            variant_id: get_ctr_for_variant(static_campaign, banner_id, variant_id)
-            for variant_id in static_banner_variants
+            variant_id: get_ctr_for_variant(static_campaign, tutorial_id, variant_id)
+            for variant_id in static_tutorial_variants
         }
 
         
@@ -178,16 +178,16 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5) ->
             return
 
         impression_log = []
-        banner_id = dc.banner_id
+        tutorial_id = dc.tutorial_id
 
-        static_banner_variants_ids = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == banner_id for v in b["variants"]
+        static_tutorial_variants_ids = [
+            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
         ]
 
         # instead of determining true ctrs per variant here, i need to determine a 'true param vector' for each variant
         true_param_vectors = {
-            variant_id: np.array(get_true_params_for_variant(static_campaign, banner_id, variant_id))
-            for variant_id in static_banner_variants_ids
+            variant_id: np.array(get_true_params_for_variant(static_campaign, tutorial_id, variant_id))
+            for variant_id in static_tutorial_variants_ids
         }
 
         if dc.start_time is None:

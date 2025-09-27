@@ -7,16 +7,16 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
 #TODO: Will be replaced by CTRs defined in data
-def get_ctr_for_variant(static_campaign, banner_id, variant_id, segment_id=None,
+def get_ctr_for_variant(static_campaign, tutorial_id, variant_id, segment_id=None,
                         min_ctr=0.05, max_ctr=0.4):
-    for banner in static_campaign["tutorials"]:
-        if banner["id"] == banner_id:
-            for variant in banner["variants"]:
+    for tutorial in static_campaign["tutorials"]:
+        if tutorial["id"] == tutorial_id:
+            for variant in tutorial["variants"]:
                 if variant["id"] == variant_id:
                     # Base string includes segment_id if provided
                     variant_str = json.dumps({
                         "campaign_id": static_campaign["id"],
-                        "banner_id": banner_id,
+                        "tutorial_id": tutorial_id,
                         "variant_id": variant_id,
                         "segment_id": segment_id,   # <--- key change
                         "color": variant.get("color")
@@ -29,7 +29,7 @@ def get_ctr_for_variant(static_campaign, banner_id, variant_id, segment_id=None,
                     return ctr
     raise ValueError("Variant not found")
 
-def get_true_params_for_variant(static_campaign, banner_id, variant_id):
+def get_true_params_for_variant(static_campaign, tutorial_id, variant_id):
 
     '''
     "player_context": {
@@ -48,14 +48,14 @@ def get_true_params_for_variant(static_campaign, banner_id, variant_id):
 
     # determine a 7 item array for each variant 
 
-    for banner in static_campaign["tutorials"]:
-        if banner["id"] == banner_id:
-            for variant in banner["variants"]:
+    for tutorial in static_campaign["tutorials"]:
+        if tutorial["id"] == tutorial_id:
+            for variant in tutorial["variants"]:
                 if variant["id"] == variant_id:
                     # Base string includes segment_id if provided
                     variant_str = json.dumps({
                         "campaign_id": static_campaign["id"],
-                        "banner_id": banner_id,
+                        "tutorial_id": tutorial_id,
                         "variant_id": variant_id,
                         "color": variant.get("color")
                     }, sort_keys=True)
@@ -79,7 +79,7 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
     
     Args:
         context_vector: A NumPy array representing the player's features.
-        true_param_vector: A NumPy array representing the "true" parameters for a specific banner variant.
+        true_param_vector: A NumPy array representing the "true" parameters for a specific tutorial variant.
         
     Returns:
         The simulated true CTR, a value between 0 and 1.
@@ -229,9 +229,9 @@ def generate_regret_summary_contextual(
         variant_id = impression["variant_id"]
         player_context = impression["player_context_vector"]
         
-        # --- 1. Calculate the true CTR for the chosen banner and this context ---
-        chosen_banner_params = true_param_vectors[variant_id]
-        true_ctr_mab = calculate_true_ctr_logistic(player_context, chosen_banner_params)
+        # --- 1. Calculate the true CTR for the chosen tutorial and this context ---
+        chosen_tutorial_params = true_param_vectors[variant_id]
+        true_ctr_mab = calculate_true_ctr_logistic(player_context, chosen_tutorial_params)
 
         # --- 2. Find the best possible CTR for this specific impression ---
         # This is what a perfect (oracle) model would have done
@@ -251,7 +251,7 @@ def generate_regret_summary_contextual(
 
         # --- 4. Calculate regrets ---
         # The regret for the MAB policy is the difference between the optimal
-        # CTR and the CTR of the banner it actually chose.
+        # CTR and the CTR of the tutorial it actually chose.
         mab_regret = optimal_ctr - true_ctr_mab
         cumulative_regret_mab += mab_regret
         

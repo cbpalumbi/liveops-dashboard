@@ -19,7 +19,7 @@ export default function Simulations() {
 
   // Form state
   const [formCampaignIndex, setFormCampaignIndex] = useState(0);
-  const [formBannerId, setFormBannerId] = useState(null);
+  const [formTutorialId, setFormTutorialId] = useState(null);
   const [formCampaignType, setFormCampaignType] = useState("MAB");
   const [formStartTime, setFormStartTime] = useState("");
   const [formEndTime, setFormEndTime] = useState("");
@@ -42,7 +42,7 @@ export default function Simulations() {
         if (data.length > 0) {
           setFormCampaignIndex(0);
           if (data[0].tutorials.length > 0) {
-            setFormBannerId(data[0].tutorials[0].id);
+            setFormTutorialId(data[0].tutorials[0].id);
           }
         }
       } catch (err) {
@@ -100,11 +100,11 @@ export default function Simulations() {
     fetchDataCampaigns();
   }, [submitSuccess]);
 
-  // Update banner dropdown when campaign changes in form
+  // Update tutorial dropdown when campaign changes in form
   useEffect(() => {
     if (campaigns.length > 0) {
       const tutorials = campaigns[formCampaignIndex]?.tutorials || [];
-      setFormBannerId(tutorials.length > 0 ? tutorials[0].id : null);
+      setFormTutorialId(tutorials.length > 0 ? tutorials[0].id : null);
     }
   }, [formCampaignIndex, campaigns]);
 
@@ -197,15 +197,15 @@ export default function Simulations() {
     setSubmitSuccess(null);
 
     // Basic validation
-    if (formBannerId == null) {
-      setSubmitError("Please select a banner");
+    if (formTutorialId == null) {
+      setSubmitError("Please select a tutorial");
       return;
     }
 
     console.log(formDuration);
     const body = {
       campaign_id: campaigns[formCampaignIndex].id,
-      banner_id: formBannerId,
+      tutorial_id: formTutorialId,
       campaign_type: formCampaignType,
       duration: formDuration,
       start_time: formStartTime || null,
@@ -287,19 +287,19 @@ export default function Simulations() {
             </div>
 
             <div>
-              <label className="block mb-1 font-semibold" htmlFor="banner-select">
-                Banner
+              <label className="block mb-1 font-semibold" htmlFor="tutorial-select">
+                Tutorial
               </label>
               <select
-                id="banner-select"
+                id="tutorial-select"
                 className="w-full p-2 border rounded"
-                value={formBannerId || ""}
-                onChange={(e) => setFormBannerId(Number(e.target.value))}
+                value={formTutorialId || ""}
+                onChange={(e) => setFormTutorialId(Number(e.target.value))}
                 disabled={!campaigns[formCampaignIndex]?.tutorials.length}
               >
                 {campaigns[formCampaignIndex]?.tutorials.map((b) => (
                   <option key={b.id} value={b.id}>
-                      {b.title || `Banner ${b.id}`}
+                      {b.title || `Tutorial ${b.id}`}
                   </option>
                 ))}
               </select>
