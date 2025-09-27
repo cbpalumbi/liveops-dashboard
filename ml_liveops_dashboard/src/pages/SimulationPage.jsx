@@ -5,6 +5,7 @@ import RollingCTRChart from "../components/RollingCTRChart";
 import ServesPerVariantChart from "../components/ServesPerVariantChart";
 import SegmentedMABComponent from "../components/SegmentedMABComponent";
 import NotYetRunCampaign from "../components/NotYetRunCampaign";
+import CampaignDetails from "../components/CampaignDetails";
 
 export default function SimulationPage() {
 	const { id } = useParams();
@@ -136,6 +137,12 @@ export default function SimulationPage() {
         return (
             <div className="p-6">
                 <SimulationHeader id={id} campaign={campaign} error={error} />
+                <br></br>
+                <hr></hr>
+                
+                <CampaignDetails
+                    campaign={campaign}
+                />
                 <br></br>
                 <hr></hr>
                 <br></br>

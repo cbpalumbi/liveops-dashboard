@@ -38,7 +38,7 @@ export default function RollingCTRChart({ rollingCTRData }) {
 
     return (
         <div>
-            <h3 className="text-xl font-semibold mb-3">Rolling CTR</h3>
+            <h3 className="text-gray-800 text-xl font-bold mb-3">Rolling CTR</h3>
 
             <button
                 onClick={onPlayClick}
