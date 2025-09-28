@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Tabs from './components/Tabs'
-import Tutorials from './pages/Campaigns'
+import Tutorials from './pages/Tutorials'
 import Simulations from './pages/Simulations'
 import SimulationPage from './pages/SimulationPage'
 
