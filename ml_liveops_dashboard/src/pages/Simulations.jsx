@@ -18,7 +18,6 @@ export default function Simulations() {
   const [showMixCreator, setShowMixCreator] = useState(false);
 
   // Form state
-  const [formCampaignIndex, setFormCampaignIndex] = useState(0);
   const [formTutorialId, setFormTutorialId] = useState(null);
   const [formCampaignType, setFormCampaignType] = useState("MAB");
   const [formStartTime, setFormStartTime] = useState("");
@@ -40,10 +39,7 @@ export default function Simulations() {
         const data = await res.json();
         setCampaigns(data);
         if (data.length > 0) {
-          setFormCampaignIndex(0);
-          if (data[0].tutorials.length > 0) {
-            setFormTutorialId(data[0].tutorials[0].id);
-          }
+          setFormTutorialId(data[0].id);
         }
       } catch (err) {
         setError(err.message);
@@ -99,14 +95,6 @@ export default function Simulations() {
     }
     fetchDataCampaigns();
   }, [submitSuccess]);
-
-  // Update tutorial dropdown when campaign changes in form
-  useEffect(() => {
-    if (campaigns.length > 0) {
-      const tutorials = campaigns[formCampaignIndex]?.tutorials || [];
-      setFormTutorialId(tutorials.length > 0 ? tutorials[0].id : null);
-    }
-  }, [formCampaignIndex, campaigns]);
 
   async function handleNewMixCreated (newMix) {
     setSubmitSegmentMixSuccess(null);
@@ -204,7 +192,7 @@ export default function Simulations() {
 
     console.log(formDuration);
     const body = {
-      campaign_id: campaigns[formCampaignIndex].id,
+      campaign_id: 0,
       tutorial_id: formTutorialId,
       campaign_type: formCampaignType,
       duration: formDuration,
@@ -268,23 +256,6 @@ export default function Simulations() {
       ) : (
         showForm && (
           <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded shadow-md">
-            <div>
-              <label className="block mb-1 font-semibold" htmlFor="campaign-select">
-                  Campaign
-              </label>
-              <select
-                id="campaign-select"
-                className="w-full p-2 border rounded"
-                value={formCampaignIndex}
-                onChange={(e) => setFormCampaignIndex(Number(e.target.value))}
-              >
-                {campaigns.map((c, i) => (
-                  <option key={c.id} value={i}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             <div>
               <label className="block mb-1 font-semibold" htmlFor="tutorial-select">
@@ -295,9 +266,9 @@ export default function Simulations() {
                 className="w-full p-2 border rounded"
                 value={formTutorialId || ""}
                 onChange={(e) => setFormTutorialId(Number(e.target.value))}
-                disabled={!campaigns[formCampaignIndex]?.tutorials.length}
+                disabled={!campaigns.length}
               >
-                {campaigns[formCampaignIndex]?.tutorials.map((b) => (
+                {campaigns.map((b) => (
                   <option key={b.id} value={b.id}>
                       {b.title || `Tutorial ${b.id}`}
                   </option>

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session ,selectinload
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
@@ -158,11 +158,17 @@ class VariantRequest(BaseModel):
     color: str
     base_ctr: float
     base_params_weights_json: str # for contextual MAB
+    model_config = {
+        "from_attributes": True
+    }
 
 class TutorialRequest(BaseModel):
     id: int
     title: str
     variants: List[VariantRequest]
+    model_config = {
+        "from_attributes": True
+    }
 
 
 # --- Endpoint to create a data campaign ---
@@ -193,12 +199,21 @@ def get_data_campaigns(db: Session = Depends(get_db)):
 
 @app.get("/tutorials")
 def get_tutorials(db: Session = Depends(get_db), response_model=List[TutorialRequest]):
-    tutorials = db.query(Tutorial).all()
+    tutorials = (
+        db.query(Tutorial)
+        .options(selectinload(Tutorial.variants)) # loads in variant table - bypasses lazy loading
+        .all()
+    )
     return tutorials
 
 @app.get("/tutorials/{campaign_id}")
 def get_tutorial(campaign_id: int, db: Session = Depends(get_db), response_model=TutorialRequest):
-    tutorial = db.query(Tutorial).filter(Tutorial.id == campaign_id).first()
+    tutorial = (
+        db.query(Tutorial)
+        .options(selectinload(Tutorial.variants)) 
+        .filter(Tutorial.id == campaign_id)
+        .first() 
+    )
     if not tutorial:
         raise HTTPException(status_code=404, detail="Tutorial not found")
     return tutorial
