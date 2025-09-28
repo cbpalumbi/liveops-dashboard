@@ -6,6 +6,7 @@ import datetime
 
 from ml_liveops_dashboard.sqlite_models import Base
 from ml_liveops_dashboard.db_utils import insert, print as print_tables
+from ml_liveops_dashboard.populate_db_scripts.populate_tutorials import populate as populate_tutorials
 from constants import DB_PATH, TESTS_DB_PATH
 
 def populate(db_path):
@@ -21,6 +22,8 @@ def populate(db_path):
     # --- Patch db_utils to use this session ---
     import ml_liveops_dashboard.db_utils as db_utils
     db_utils.session = session
+
+    populate_tutorials(db_path)
 
     # --- Insert data campaign ---
     insert(

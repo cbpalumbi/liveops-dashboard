@@ -74,3 +74,32 @@ class SimulationResultModel(Base):
     true_ctrs = Column(JSON, nullable=True)
 
     campaign = relationship("DataCampaign", back_populates="simulation_result")
+
+class Tutorial(Base):
+    __tablename__ = "tutorials"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    
+    # 'variants' is a list of Variant objects associated with this tutorial
+    variants = relationship("Variant", back_populates="tutorial", cascade="all, delete-orphan")
+
+class Variant(Base):
+    __tablename__ = "variants"
+
+    db_id = Column(Integer, primary_key=True, index=True) 
+    
+    # refers to the index within the parent tutorial's list of variants
+    json_id = Column(Integer, nullable=False) 
+    
+    name = Column(String, nullable=False)
+    color = Column(String, nullable=True) # to be removed probably
+
+    # link to tutorials table
+    tutorial_id = Column(Integer, ForeignKey("tutorials.id"), nullable=False)
+
+    tutorial = relationship("Tutorial", back_populates="variants")
+    
+    # Base CTR and Contextual Weights
+    base_ctr = Column(Float, default=0.0) 
+    base_params_weights_json = Column(String, default="{}") # Stored as JSON string

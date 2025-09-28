@@ -27,7 +27,10 @@ TABLE_ALIASES = {
     "camp": "data_campaigns",
     "seg": "segments",
     "seg-mix": "segment_mixes",
-    "seg-mix-entry": "segment_mix_entries"
+    "seg-mix-entry": "segment_mix_entries",
+    "sim-res": "simulation_results",
+    "tut": "tutorials",
+    "var": "variants"
 }
 
 def get_table(name_or_alias):

@@ -6,6 +6,7 @@ import datetime
 
 from ml_liveops_dashboard.sqlite_models import Base
 from ml_liveops_dashboard.db_utils import insert, clear, print as print_tables
+from ml_liveops_dashboard.populate_db_scripts.populate_tutorials import populate as populate_tutorials
 import ml_liveops_dashboard.db_utils as db_utils
 from constants import DB_PATH, TESTS_DB_PATH
 
@@ -18,6 +19,8 @@ def populate(db_path):
 
     # --- Create all tables from Base ---
     Base.metadata.create_all(engine)
+
+    populate_tutorials(db_path)
 
     # --- Clear segment-related tables first ---
     clear("segment_mixes", db=session)
