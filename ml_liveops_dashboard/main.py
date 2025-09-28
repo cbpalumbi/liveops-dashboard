@@ -4,37 +4,44 @@ from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-import json
 
-from ml_liveops_dashboard.sqlite_models import Base, DataCampaign, Impression, SegmentMix, SegmentMixEntry, Segment, SimulationResultModel
+from constants import DB_PATH
+from ml_liveops_dashboard.sqlite_models import (
+    Base, 
+    DataCampaign,
+    Impression,
+    SegmentMix, 
+    SegmentMixEntry, 
+    Segment, 
+    SimulationResultModel,
+    Tutorial,
+    Variant
+)
 from ml_liveops_dashboard.ml_scripts.mab import (
     report_impression, 
     serve_variant, 
     serve_variant_segmented, 
     serve_variant_contextual
 )
-from constants import DB_PATH
 from ml_liveops_dashboard.run_simulation import simulate_data_campaign
 from ml_liveops_dashboard.simulation_utils import SimulationResult
+from ml_liveops_dashboard.populate_db_scripts.populate_tutorials import populate as populate_tutorials
 
 engine = create_engine(DB_PATH, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 Base.metadata.create_all(bind=engine)
 
-# --- Load static campaign JSON ---
-with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
-    static_campaigns = json.load(f)
-
 # --- App ---
 app = FastAPI()
+populate_tutorials(DB_PATH)
 
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        db.close()        
 
 # --- Pydantic models ---
 class CreateDataCampaignRequest(BaseModel):
@@ -143,24 +150,26 @@ class SimulationResultRequest(BaseModel):
     model_config = {
         "from_attributes": True
     }
- 
 
-# --- Helpers ---
-def validate_static_campaign(campaign_id: int, tutorial_id: int):
-    for campaign in static_campaigns:
-        if campaign["id"] == campaign_id:
-            for tutorial in campaign["tutorials"]:
-                if tutorial["id"] == tutorial_id:
-                    return True
-            raise HTTPException(status_code=400, detail="Tutorial not found in this campaign")
-    raise HTTPException(status_code=404, detail="Static campaign not found")
+class VariantRequest(BaseModel):
+    id: int
+    json_id: int # refers to the index this occupies within its parent tutorial's variant list
+    name: str
+    color: str
+    base_ctr: float
+    base_params_weights_json: str # for contextual MAB
+
+class TutorialRequest(BaseModel):
+    id: int
+    title: str
+    variants: List[VariantRequest]
+
 
 # --- Endpoint to create a data campaign ---
 @app.post("/data_campaign")
 def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(get_db)):
-    # Validate campaign exists in static data
-    validate_static_campaign(req.campaign_id, req.tutorial_id)
-
+    # TODO: validate that the tutorial requested actually exists in the db
+    
     # Insert into DB
     new_campaign = DataCampaign(
         static_campaign_id=req.campaign_id,
@@ -182,16 +191,17 @@ def get_data_campaigns(db: Session = Depends(get_db)):
     dcs = db.query(DataCampaign).all()
     return dcs
 
-@app.get("/campaigns")
-def get_campaigns():
-    return static_campaigns
+@app.get("/tutorials")
+def get_tutorials(db: Session = Depends(get_db), response_model=List[TutorialRequest]):
+    tutorials = db.query(Tutorial).all()
+    return tutorials
 
-@app.get("/campaigns/{campaign_id}")
-def get_campaign(campaign_id: int):
-    for c in static_campaigns:
-        if c["id"] == campaign_id:
-            return c
-    raise HTTPException(status_code=404, detail="Campaign not found")
+@app.get("/tutorials/{campaign_id}")
+def get_tutorial(campaign_id: int, db: Session = Depends(get_db), response_model=TutorialRequest):
+    tutorial = db.query(Tutorial).filter(Tutorial.id == campaign_id).first()
+    if not tutorial:
+        raise HTTPException(status_code=404, detail="Tutorial not found")
+    return tutorial
 
 @app.get("/impressions/{data_campaign_id}", response_model=List[ImpressionRequest])
 def get_impressions(data_campaign_id: int, db: Session = Depends(get_db)):

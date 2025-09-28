@@ -87,7 +87,7 @@ class Tutorial(Base):
 class Variant(Base):
     __tablename__ = "variants"
 
-    db_id = Column(Integer, primary_key=True, index=True) 
+    id = Column(Integer, primary_key=True, index=True) 
     
     # refers to the index within the parent tutorial's list of variants
     json_id = Column(Integer, nullable=False) 

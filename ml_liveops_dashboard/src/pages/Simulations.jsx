@@ -35,7 +35,7 @@ export default function Simulations() {
   useEffect(() => {
     async function fetchStaticCampaigns() {
       try {
-        const res = await fetch("http://localhost:8000/campaigns");
+        const res = await fetch("http://localhost:8000/tutorials");
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setCampaigns(data);
