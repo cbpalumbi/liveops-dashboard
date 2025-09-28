@@ -49,7 +49,8 @@ def populate(db_path):
                 # db_id will be auto-incremented, we only set the fixed data
                 json_id=variant_data["id"],
                 name=variant_data["name"],
-                color=variant_data["color"]
+                color=variant_data["color"],
+                base_ctr=0.05
             )
             # SQLAlchemy automatically handles the foreign key linkage here
             tutorial_obj.variants.append(variant_obj)

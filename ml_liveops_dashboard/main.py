@@ -170,6 +170,9 @@ class TutorialRequest(BaseModel):
         "from_attributes": True
     }
 
+class PatchVariantRequest(BaseModel):
+    base_ctr: Optional[float] = Field(None, ge=0.0, le=1.0) # Ensures 0 <= CTR <= 1
+
 
 # --- Endpoint to create a data campaign ---
 @app.post("/data_campaign")
@@ -217,6 +220,21 @@ def get_tutorial(campaign_id: int, db: Session = Depends(get_db), response_model
     if not tutorial:
         raise HTTPException(status_code=404, detail="Tutorial not found")
     return tutorial
+
+@app.patch("/variant/{variant_id}")
+def patch_tutorial_variant(req: PatchVariantRequest, variant_id: int, db: Session = Depends(get_db), response_model=VariantRequest):
+    variant = db.query(Variant).filter(Variant.id == variant_id).first()
+    
+    if not variant:
+        raise HTTPException(status_code=404, detail="Variant not found")
+
+    if req.base_ctr is not None:
+        variant.base_ctr = req.base_ctr
+
+    db.commit()
+    db.refresh(variant)
+    
+    return variant
 
 @app.get("/impressions/{data_campaign_id}", response_model=List[ImpressionRequest])
 def get_impressions(data_campaign_id: int, db: Session = Depends(get_db)):
