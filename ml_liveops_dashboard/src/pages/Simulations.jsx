@@ -3,7 +3,7 @@ import DataCampaignList from "../components/DataCampaignList";
 import SegmentMixCreator from "../components/SegmentMixCreator";
 
 export default function Simulations() {
-  const [campaigns, setCampaigns] = useState([]);
+  const [tutorials, setTutorials] = useState([]);
 
   // Data campaigns
   const [dataCampaigns, setDataCampaigns] = useState([]);
@@ -30,14 +30,14 @@ export default function Simulations() {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(null);
 
-  // Fetch static campaigns, existing segments mixes, and existing segments on startup
+  // Fetch tutorials, existing segments mixes, and existing segments on startup
   useEffect(() => {
     async function fetchStaticCampaigns() {
       try {
         const res = await fetch("http://localhost:8000/tutorials");
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        setCampaigns(data);
+        setTutorials(data);
         if (data.length > 0) {
           setFormTutorialId(data[0].id);
         }
@@ -218,9 +218,9 @@ export default function Simulations() {
     }
   }
 
-  if (loading) return <div>Loading campaigns...</div>;
+  if (loading) return <div>Loading tutorials...</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
-  if (campaigns.length === 0) return <div>No campaigns available</div>;
+  if (tutorials.length === 0) return <div>No tutorials available</div>;
 
   return (
     <div className="p-4 max-w-md">
@@ -266,9 +266,9 @@ export default function Simulations() {
                 className="w-full p-2 border rounded"
                 value={formTutorialId || ""}
                 onChange={(e) => setFormTutorialId(Number(e.target.value))}
-                disabled={!campaigns.length}
+                disabled={!tutorials.length}
               >
-                {campaigns.map((b) => (
+                {tutorials.map((b) => (
                   <option key={b.id} value={b.id}>
                       {b.title || `Tutorial ${b.id}`}
                   </option>

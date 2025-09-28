@@ -32,18 +32,6 @@ export default function Tutorials() {
     return (
         <div>
             <h1 className="text-2xl font-bold mb-4">Tutorials</h1>
-            {/* Dropdown */}
-            <select
-                value={selectedTutorialIndex}
-                onChange={(e) => setSelectedTutorialIndex(Number(e.target.value))}
-                className="p-2 border border-gray-300 rounded-lg shadow-sm"
-            >
-                {tutorials.map((tutorial, index) => (
-                    <option key={index} value={index}>
-                        {tutorial.name}
-                    </option>
-                ))}
-            </select>
 
             {/* Tutorial List */}
             <TutorialList tutorials={tutorials} />
