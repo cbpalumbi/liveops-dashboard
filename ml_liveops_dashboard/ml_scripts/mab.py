@@ -141,9 +141,6 @@ def report_impression(
 
     return {"status": "logged"}
 
-
-import random
-
 class ThompsonBandit:
     def __init__(self, variant_ids):
         # priors: start with Beta(1, 1) for each variant
@@ -277,18 +274,13 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     bandit = segmented_bandits[selected_segment]
     variant_id = bandit.select_variant()
 
-    # Get static campaign info for variant details TODO: cache this at startup
-    with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
-        static_campaigns = json.load(f)
-    static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
-    if not static_campaign:
-        raise ValueError("Static campaign not found")
+    query_result = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+    if not query_result:
+        print(f"Tutorial not found in local DB")
+        return None
+    tutorial = query_result
 
-    tutorial = next((b for b in static_campaign["tutorials"] if b["id"] == dc.tutorial_id), None)
-    if not tutorial:
-        raise ValueError("Tutorial not found in static campaign")
-
-    chosen_variant = next(v for v in tutorial["variants"] if v["id"] == variant_id)
+    chosen_variant = next(v for v in tutorial.variants if v.json_id == variant_id)
 
     return {
         "data_campaign_id": dc.id,

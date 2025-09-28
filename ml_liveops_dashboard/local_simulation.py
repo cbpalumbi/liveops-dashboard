@@ -97,21 +97,17 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             print(f"DataCampaign {data_campaign_id} not found")
             return
 
-        static_campaigns = load_static_campaigns()
-        static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
-        if not static_campaign:
-            print("Static campaign for data campaign not found")
-            return
+        query_result = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+        if not query_result:
+            print(f"Tutorial not found in local DB")
+            return None
+        tutorial = query_result
 
         impression_log = []
-        tutorial_id = dc.tutorial_id
 
-        static_tutorial_variants = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
-        ]
         true_ctrs = {
-            variant_id: get_ctr_for_variant(static_campaign, tutorial_id, variant_id)
-            for variant_id in static_tutorial_variants
+            v.json_id: v.base_ctr
+            for v in tutorial.variants
         }
 
         
@@ -136,14 +132,14 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             variant = serve_data["variant"]
             segment_id = serve_data["segment_id"]
 
-            ctr = true_ctrs[variant["id"]]
+            ctr = true_ctrs[variant.json_id]
             clicked = random.random() < ctr
             timestamp += time_step
 
-            report_impression(data_campaign_id, variant["id"], clicked, timestamp, db, segment_id=segment_id)
+            report_impression(data_campaign_id, variant.json_id, clicked, timestamp, db, segment_id=segment_id)
 
             impression_log.append({
-                "variant_id": variant["id"],
+                "variant_id": variant.json_id,
                 "clicked": int(clicked),
                 "segment_id": segment_id
             })
