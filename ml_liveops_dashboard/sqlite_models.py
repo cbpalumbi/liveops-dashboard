@@ -84,6 +84,9 @@ class Tutorial(Base):
     # 'variants' is a list of Variant objects associated with this tutorial
     variants = relationship("Variant", back_populates="tutorial", cascade="all, delete-orphan")
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class Variant(Base):
     __tablename__ = "variants"
 

@@ -1,92 +1,77 @@
 # Multi Armed Bandit
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional, List
 import random, json
 import numpy as np
 
-from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentMix, SegmentMixEntry, Impression
-
-# --- Load static campaign JSON ---
-with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
-    static_campaigns = json.load(f)
-
-def get_static_tutorial_variants(static_campaign_id: int, tutorial_id: int) -> list[int]:
-    static_campaign = next((c for c in static_campaigns if c["id"] == static_campaign_id), None)
-    if not static_campaign:
-        raise ValueError(f"Static campaign id {static_campaign_id} not found")
-
-    tutorial = next((b for b in static_campaign["tutorials"] if b["id"] == tutorial_id), None)
-    if not tutorial:
-        raise ValueError(f"Tutorial id {tutorial_id} not found in static campaign {static_campaign_id}")
-
-    return [variant["id"] for variant in tutorial["variants"]]
+from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentMix, SegmentMixEntry, Impression, Tutorial
 
 def run_thompson_sampling(data_campaign_id: int, tutorial_id: int, db: Session):
     # Get static campaign id for this data campaign
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
         raise ValueError("Data campaign not found")
+    
+    tutorial = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+    if not tutorial:
+        raise ValueError("Tutorial not found")
 
-    static_tutorial_variants = get_static_tutorial_variants(dc.static_campaign_id, tutorial_id)
+    static_tutorial_variants= tutorial.variants
 
     variant_scores = []
 
     zero_impression_variants = [
-        vid for vid in static_tutorial_variants
+        v.json_id for v in static_tutorial_variants
         if db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
             Impression.tutorial_id == tutorial_id,
-            Impression.variant_id == vid
+            Impression.variant_id == v.json_id
         ).scalar() == 0
     ]
 
     if zero_impression_variants:
         return random.choice(zero_impression_variants)
 
-    for variant_id in static_tutorial_variants:
+    for variant in static_tutorial_variants:
         clicks = db.query(func.sum(Impression.clicked)).filter(
             Impression.data_campaign_id == data_campaign_id,
             Impression.tutorial_id == tutorial_id,
-            Impression.variant_id == variant_id
+            Impression.variant_id == variant.json_id
         ).scalar() or 0
 
         impressions = db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
             Impression.tutorial_id == tutorial_id,
-            Impression.variant_id == variant_id
+            Impression.variant_id == variant.json_id
         ).scalar() or 0
 
         alpha = 1 + clicks
         beta = 1 + (impressions - clicks)
         score = random.betavariate(alpha, beta)
-        variant_scores.append((variant_id, score))
+        variant_scores.append((variant.json_id, score))
 
     best_variant = max(variant_scores, key=lambda x: x[1])[0]
     return best_variant
 
 # --- Serve Logic (can be used by API endpoint or local function) ---
 def serve_variant(dc: DataCampaign, db: Session):
-    static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
-    if not static_campaign:
-        raise ValueError("Static campaign not found")
-
-    tutorial = next((b for b in static_campaign["tutorials"] if b["id"] == dc.tutorial_id), None)
+    tutorial = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
     if not tutorial:
-        raise ValueError("Tutorial not found in static campaign")
+        raise ValueError("Tutorial not found")
 
     # Variant Selection Logic
     if dc.campaign_type.lower() == "mab":
-        variant_id = run_thompson_sampling(dc.id, tutorial["id"], db)
-        chosen_variant = next(v for v in tutorial["variants"] if v["id"] == variant_id)
+        variant_id = run_thompson_sampling(dc.id, tutorial.id, db)
+        chosen_variant = next(v for v in tutorial.variants if v.json_id == variant_id)
     else:
-        chosen_variant = random.choice(tutorial["variants"])
+        chosen_variant = random.choice(tutorial.variants)
 
     return {
         "data_campaign_id": dc.id,
         "static_campaign_id": dc.static_campaign_id,
-        "tutorial_id": tutorial["id"],
+        "tutorial_id": tutorial.id,
         "variant": chosen_variant
     }
 
@@ -191,18 +176,22 @@ def run_thompson_sampling_segmented(data_campaign_id: int, tutorial_id: int, seg
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
         raise ValueError("Data campaign not found")
+    
+    tutorial = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+    if not tutorial:
+        raise ValueError("Tutorial not found")
 
-    static_tutorial_variants = get_static_tutorial_variants(dc.static_campaign_id, tutorial_id)
+    static_tutorial_variants= tutorial.variants
 
     variant_scores = []
 
     # Find variants with zero impressions in this segment
     zero_impression_variants = [
-        vid for vid in static_tutorial_variants
+        v.json_id for v in static_tutorial_variants
         if db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
             Impression.tutorial_id == tutorial_id,
-            Impression.variant_id == vid,
+            Impression.variant_id == v.json_id,
             Impression.segment == segment_id  # filter by segment
         ).scalar() == 0
     ]
@@ -211,25 +200,25 @@ def run_thompson_sampling_segmented(data_campaign_id: int, tutorial_id: int, seg
         return random.choice(zero_impression_variants)
 
     # Calculate Thompson Sampling score per variant
-    for variant_id in static_tutorial_variants:
+    for variant in static_tutorial_variants:
         clicks = db.query(func.sum(Impression.clicked)).filter(
             Impression.data_campaign_id == data_campaign_id,
             Impression.tutorial_id == tutorial_id,
-            Impression.variant_id == variant_id,
+            Impression.variant_id == variant.json_id,
             Impression.segment == segment_id  # filter by segment
         ).scalar() or 0
 
         impressions = db.query(func.count(Impression.id)).filter(
             Impression.data_campaign_id == data_campaign_id,
             Impression.tutorial_id == tutorial_id,
-            Impression.variant_id == variant_id,
+            Impression.variant_id == variant.json_id,
             Impression.segment == segment_id  # filter by segment
         ).scalar() or 0
 
         alpha = 1 + clicks
         beta = 1 + (impressions - clicks)
         score = random.betavariate(alpha, beta)
-        variant_scores.append((variant_id, score))
+        variant_scores.append((variant.json_id, score))
 
     # Return the variant with highest sampled score
     best_variant = max(variant_scores, key=lambda x: x[1])[0]
@@ -260,11 +249,17 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     ).all()
     if not entries:
         raise ValueError("No entries found for segment mix")
+    
+    tutorial = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+    if not tutorial:
+        raise ValueError("Tutorial not found")
+
+    static_tutorial_variants= tutorial.variants
 
     # Initialize bandits if needed
     if segmented_bandits == {}:
         segment_ids = [e.segment_id for e in entries]
-        variant_ids = get_static_tutorial_variants(dc.static_campaign_id, dc.tutorial_id)
+        variant_ids = [v.json_id for v in static_tutorial_variants]
         init_segmented_bandits(segment_ids, variant_ids)
 
     # weighted random segment choice
@@ -351,7 +346,13 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
     """
     global linucb_model
 
-    tutorial_variant_ids = get_static_tutorial_variants(dc.static_campaign_id, dc.tutorial_id)
+    tutorial = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+    if not tutorial:
+        raise ValueError("Tutorial not found")
+
+    static_tutorial_variants= tutorial.variants
+
+    tutorial_variant_ids = [v.json_id for v in static_tutorial_variants]
 
     player_vector = player_context_json_to_vector(player_context)
     n_arms = len(tutorial_variant_ids)

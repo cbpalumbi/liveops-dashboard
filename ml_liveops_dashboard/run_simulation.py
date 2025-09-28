@@ -3,18 +3,15 @@ import time
 from datetime import datetime, timedelta, timezone
 import random
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, selectinload
 
 from ml_liveops_dashboard.local_simulation import run_mab_local, run_segmented_mab_local, run_contextual_mab_local
 from ml_liveops_dashboard.simulation_utils import SimulationResult, generate_regret_summary, get_ctr_for_variant, load_static_campaigns
 from ml_liveops_dashboard.db_utils import clear
-from ml_liveops_dashboard.sqlite_models import DataCampaign, Base
+from ml_liveops_dashboard.sqlite_models import DataCampaign, Base, Tutorial
 from constants import DB_PATH
 
 API_BASE = "http://localhost:8000" 
-
-def get_static_campaign(data_campaign, static_campaigns):
-    return next((c for c in static_campaigns if c["id"] == data_campaign["static_campaign_id"]), None)
 
 def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, db_path=DB_PATH) -> SimulationResult:
 
@@ -38,14 +35,14 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, d
             print(f"DataCampaign {data_campaign_id} not found in local DB")
             return None
         data_campaign = query_result.as_dict()
+
+        query_result = session.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == data_campaign["tutorial_id"]).first()
+        if not query_result:
+            print(f"Tutorial not found in local DB")
+            return None
+        tutorial = query_result
     else:
         raise ValueError(f"Unknown mode: {mode}")
-
-    static_campaigns = load_static_campaigns()
-    static_campaign = get_static_campaign(data_campaign, static_campaigns)
-    if not static_campaign:
-        print("Static campaign for data campaign not found")
-        return None
     
     # Clear any old impressions for this data campaign
     clear("imp",data_campaign["id"])
@@ -54,20 +51,15 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, d
     campaign_type = data_campaign["campaign_type"].lower()
     if campaign_type == "segmented_mab":
         if mode == "api":
-            return run_segmented_mab_via_api(data_campaign, static_campaign, impressions, delay)
+            return run_segmented_mab_via_api(data_campaign, tutorial, impressions, delay)
         elif mode == "local":
             return run_segmented_mab_local(data_campaign["id"], SessionLocal(), impressions, delay)
     elif campaign_type == "mab":
         # Original MAB / random campaign flow
 
-        # Hash once to find true CTRs for tutorial variants
-        tutorial_id = data_campaign["tutorial_id"]
-        static_tutorial_variants = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
-        ]
         true_ctrs = {
-            variant_id: get_ctr_for_variant(static_campaign, tutorial_id, variant_id)
-            for variant_id in static_tutorial_variants
+            v.json_id: v.base_ctr
+            for v in tutorial.variants
         }
 
         if mode == "api":

@@ -2,10 +2,11 @@
 
 import random
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 import numpy as np
 import json
 
+from sqlalchemy.orm import selectinload
 from ml_liveops_dashboard.ml_scripts.mab import (
     serve_variant,
     serve_variant_segmented,
@@ -22,7 +23,7 @@ from ml_liveops_dashboard.simulation_utils import (
     get_true_params_for_variant, 
     calculate_true_ctr_logistic
 )
-from ml_liveops_dashboard.sqlite_models import DataCampaign
+from ml_liveops_dashboard.sqlite_models import DataCampaign, Tutorial
 from ml_liveops_dashboard.generate_fake_players import generate_player
 
 def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
@@ -33,21 +34,17 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
             print(f"DataCampaign {data_campaign_id} not found")
             return
 
-        static_campaigns = load_static_campaigns()
-        static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
-        if not static_campaign:
-            print("Static campaign for data campaign not found")
-            return
+        query_result = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+        if not query_result:
+            print(f"Tutorial not found in local DB")
+            return None
+        tutorial = query_result
 
         impression_log = []
-        tutorial_id = dc.tutorial_id
 
-        static_tutorial_variants = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
-        ]
         true_ctrs = {
-            variant_id: get_ctr_for_variant(static_campaign, tutorial_id, variant_id)
-            for variant_id in static_tutorial_variants
+            v.json_id: v.base_ctr
+            for v in tutorial.variants
         }
 
         if dc.start_time is None:
@@ -70,14 +67,14 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
             serve_data = serve_variant(dc, db)
             variant = serve_data["variant"]
 
-            ctr = true_ctrs[variant["id"]]
+            ctr = true_ctrs[variant.json_id]
             clicked = random.random() < ctr
             timestamp += time_step
 
-            report_impression(data_campaign_id, variant["id"], clicked, timestamp, db)
+            report_impression(data_campaign_id, variant.json_id, clicked, timestamp, db)
 
             impression_log.append({
-                "variant_id": variant["id"],
+                "variant_id": variant.json_id,
                 "clicked": int(clicked)
             })
 
