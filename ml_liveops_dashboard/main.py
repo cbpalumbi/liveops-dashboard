@@ -172,7 +172,7 @@ class TutorialRequest(BaseModel):
 
 class PatchVariantRequest(BaseModel):
     base_ctr: Optional[float] = Field(None, ge=0.0, le=1.0) # Ensures 0 <= CTR <= 1
-
+    base_params_weights_json: str
 
 # --- Endpoint to create a data campaign ---
 @app.post("/data_campaign")
@@ -230,6 +230,7 @@ def patch_tutorial_variant(req: PatchVariantRequest, variant_id: int, db: Sessio
 
     if req.base_ctr is not None:
         variant.base_ctr = req.base_ctr
+        variant.base_params_weights_json = req.base_params_weights_json
 
     db.commit()
     db.refresh(variant)

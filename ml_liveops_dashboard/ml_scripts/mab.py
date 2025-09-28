@@ -304,10 +304,6 @@ def serve_variant_segmented(dc: DataCampaign, db: Session):
     }
 
 def player_context_json_to_vector(ctx_json: str) -> List[float]:
-    """
-    Convert a JSON string of PlayerContext into a numeric feature vector for KMeans.
-    Expected keys: age, sessions_per_day, avg_session_length, lifetime_spend, playstyle_vector (3 floats)
-    """
     ctx = json.loads(ctx_json)
 
     # exclude region and device type because they are not numeric. could add back later but need to convert to enum or something
