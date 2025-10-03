@@ -191,7 +191,7 @@ export default function SimulationPage() {
 export const campaignFriendlyNames = {
   mab: "MAB Campaign",
   segmented_mab: "Segmented MAB Campaign",
-  contextual_mab: "Contextual MAB Campaign"
+  contextual_mab: "Contextual MAB Campaign with LinUCB"
 };
 
 function SimulationHeader({ id, campaign, error }) {

@@ -223,7 +223,7 @@ export default function Simulations() {
   if (tutorials.length === 0) return <div>No tutorials available</div>;
 
   return (
-    <div className="p-4 max-w-md">
+    <div className="p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-4">Simulations</h1>
 
       {/* New Simulation Button */}
@@ -286,9 +286,9 @@ export default function Simulations() {
                 value={formCampaignType}
                 onChange={(e) => setFormCampaignType(e.target.value)}
               >
-                <option value="MAB">MAB</option>
+                <option value="MAB">Multi-Armed Bandit (MAB)</option>
                 <option value="SEGMENTED_MAB">Segmented MAB</option>
-                <option value="CONTEXTUAL_MAB">Contextual MAB</option>
+                <option value="CONTEXTUAL_MAB">Contextual MAB with LinUCB</option>
                 <option value="Random">Random</option>
               </select>
             </div>
