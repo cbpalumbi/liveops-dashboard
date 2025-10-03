@@ -6,6 +6,7 @@ from datetime import timedelta
 import numpy as np
 import json
 
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from ml_liveops_dashboard.ml_scripts.mab import (
     serve_variant,
@@ -17,13 +18,13 @@ from ml_liveops_dashboard.ml_scripts.mab import (
 from ml_liveops_dashboard.simulation_utils import (
     SimulationResult, 
     generate_regret_summary, 
-    generate_regret_summary_contextual,
-    get_ctr_for_variant, 
+    generate_regret_summary_segmented,
+    generate_regret_summary_contextual, 
     load_static_campaigns, 
     get_true_params_for_variant, 
     calculate_true_ctr_logistic
 )
-from ml_liveops_dashboard.sqlite_models import DataCampaign, Tutorial
+from ml_liveops_dashboard.sqlite_models import DataCampaign, Tutorial, SegmentMix, SegmentMixEntry
 from ml_liveops_dashboard.generate_fake_players import generate_player
 
 def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
@@ -104,12 +105,29 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
 
         impression_log = []
 
-        true_ctrs = {
+        base_ctrs = {
             v.json_id: v.base_ctr
             for v in tutorial.variants
         }
 
+        # load in the segments 
+        statement = (
+            select(SegmentMix)
+            .where(SegmentMix.id == dc.segment_mix_id)
+            
+            .options(
+                selectinload(SegmentMix.entries)
+                .selectinload(SegmentMixEntry.segment)
+            )
+        )
         
+        segment_mix = db.execute(statement).scalar_one_or_none()
+
+        segment_ctrs = {
+            entry.segment.id: entry.segment.true_ctr
+            for entry in segment_mix.entries
+        }
+
         if dc.start_time is None:
             print("Simulation doesn't have a start time.")
             return
@@ -131,7 +149,10 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             variant = serve_data["variant"]
             segment_id = serve_data["segment_id"]
 
-            ctr = true_ctrs[variant.json_id]
+            # ctr is derived from segment instead of from variant 
+            # TODO: Future work: make the segment a modifer on the ctr instead of a full override
+
+            ctr = segment_ctrs[segment_id]
             clicked = random.random() < ctr
             timestamp += time_step
 
@@ -148,7 +169,7 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             if delay > 0:
                 time.sleep(delay)
 
-        return generate_regret_summary(impression_log, true_ctrs, campaign_type="segmented_mab")
+        return generate_regret_summary_segmented(impression_log, base_ctrs, campaign_type="segmented_mab")
 
     finally:
         db.close()

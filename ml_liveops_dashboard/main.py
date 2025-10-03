@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session ,selectinload
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
@@ -64,7 +64,7 @@ class CreateSegmentMixEntryRequest(BaseModel):
 class CreateSegmentRequest(BaseModel):
     name: str
     description: Optional[str] = None
-    rules_json: Optional[str] = None
+    true_ctr: Optional[float] = None
 
 class PlayerContext(BaseModel): # Used for contextual MAB campaigns
     player_id: int
@@ -127,6 +127,7 @@ class SegmentMixEntryRequest(BaseModel):
 class SegmentRequest(BaseModel):
     id: int
     name: str
+    true_ctr: float
 
 class RunSimulationRequest(BaseModel):
     data_campaign_id: int
@@ -251,6 +252,8 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
 
 @app.get("/segment_mix/{segment_mix_id}", response_model=SegmentMixRequest)
 def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
+    # Note - does not eager load the corresponding segment mix entry and segments
+
     sm = db.query(SegmentMix).filter(SegmentMix.id == segment_mix_id).first()
     if not sm:
         raise HTTPException(status_code=404, detail="SegmentMix not found")
@@ -258,8 +261,19 @@ def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
 
 @app.get("/segment_mixes", response_model=List[SegmentMixRequest])
 def get_segment_mixes(db: Session = Depends(get_db)):
-    sms = db.query(SegmentMix).all()
-    return sms
+    # Returns all segment mixes and eager loads their segment mix entries and segments 
+    
+    statement = (
+        select(SegmentMix)
+        .options(
+            selectinload(SegmentMix.entries)
+            .selectinload(SegmentMixEntry.segment)
+        )
+    )
+    
+    result = db.execute(statement).scalars().all()
+    
+    return result
 
 @app.post("/segment_mix")
 def create_data_campaign(req: CreateSegmentMixRequest, db: Session = Depends(get_db)):
@@ -307,7 +321,7 @@ def create_segment(req: CreateSegmentRequest, db: Session = Depends(get_db)):
     new_seg = Segment(
         name=req.name,
         description=req.description,
-        rules_json=req.rules_json
+        true_ctr=req.true_ctr,
     )
     db.add(new_seg)
     db.commit()

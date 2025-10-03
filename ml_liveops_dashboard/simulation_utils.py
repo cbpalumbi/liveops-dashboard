@@ -118,7 +118,7 @@ class SimulationResult:
     impression_log: Optional[List[Dict[str, Any]]] = field(default=None)
     true_ctrs: Optional[Dict[int, float]] = field(default=None)
 
-def generate_regret_summary(
+def generate_regret_summary (
     impression_log: List[dict],
     true_ctrs: Dict[int, float],
     campaign_type: str
@@ -203,7 +203,92 @@ def generate_regret_summary(
         completed=True
     )
 
-def generate_regret_summary_contextual(
+def generate_regret_summary_segmented (
+    impression_log: List[dict],
+    segment_ctrs: Dict[int, float],
+    campaign_type: str
+) -> SimulationResult:
+    
+    best_ctr = max(segment_ctrs.values())
+    cumulative_regret_mab = 0.0
+    cumulative_regret_uniform = 0.0
+    total_impressions = len(impression_log)
+    uniform_prob = 1 / len(segment_ctrs)
+
+    # For segmented campaigns
+    segment_logs = defaultdict(list) if campaign_type == "segmented_mab" else None
+
+    for i, impression in enumerate(impression_log, 1):
+        variant_id = impression["variant_id"]
+        segment_id = impression.get("segment_id")
+
+        # Overall regret
+        mab_regret = best_ctr - segment_ctrs[segment_id]
+        cumulative_regret_mab += mab_regret
+        expected_click_uniform = sum(ctr * uniform_prob for ctr in segment_ctrs.values())
+        cumulative_regret_uniform += best_ctr - expected_click_uniform
+
+        # Track per-segment impressions
+        if campaign_type == "segmented_mab" and segment_id is not None:
+            segment_logs[segment_id].append(impression)
+
+        if i % 10 == 0 or i == total_impressions:
+            print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
+
+    # Variant counts overall
+    variant_ids = [entry["variant_id"] for entry in impression_log]
+    counts = Counter(variant_ids)
+    print("\nImpression counts per variant:")
+    for variant_id, count in counts.items():
+        print(f"Variant ID {variant_id}: {count} impressions")
+
+    print(f"\nFinal cumulative regret after {total_impressions} impressions:")
+    print(f"  MAB policy: {cumulative_regret_mab:.3f}")
+    print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
+
+    # Build per-segment results
+    per_segment_regret = {}
+    if campaign_type == "segmented_mab":
+        print("\n--- Per-segment regret summary ---")
+        for segment_id, logs in segment_logs.items():
+            seg_cum_regret_mab = sum(best_ctr - segment_ctrs[imp["segment_id"]] for imp in logs)
+            seg_cum_regret_uniform = sum(best_ctr - expected_click_uniform for _ in logs)
+
+            # Count how many times each variant was shown for this segment
+            variant_counts = Counter([imp["variant_id"] for imp in logs])
+
+            # Print regret + impressions
+            print(
+                f"Segment {segment_id}: MAB regret = {seg_cum_regret_mab:.3f}, "
+                f"Uniform regret = {seg_cum_regret_uniform:.3f}, "
+                f"Impressions = {len(logs)}"
+            )
+
+            # Print per-variant allocation
+            for vid, count in variant_counts.items():
+                pct = (count / len(logs)) * 100
+                print(f"  Variant {vid}: {count} impressions ({pct:.1f}%)")
+
+            per_segment_regret[segment_id] = {
+                "mab_regret": seg_cum_regret_mab,
+                "uniform_regret": seg_cum_regret_uniform,
+                "impressions": len(logs),
+                "variant_counts": dict(variant_counts),
+            }
+
+    return SimulationResult(
+        campaign_type=campaign_type,
+        total_impressions=total_impressions,
+        cumulative_regret_mab=cumulative_regret_mab,
+        cumulative_regret_uniform=cumulative_regret_uniform,
+        variant_counts=dict(counts),
+        per_segment_regret=per_segment_regret,
+        impression_log=impression_log,
+        true_ctrs=segment_ctrs,
+        completed=True
+    )
+
+def generate_regret_summary_contextual (
     impression_log: List[dict],
     true_param_vectors: Dict[int, np.ndarray]
 ) -> SimulationResult:

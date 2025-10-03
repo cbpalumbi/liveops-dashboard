@@ -63,7 +63,8 @@ class Segment(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True) 
-    rules_json = Column(String, nullable=True)   # optional JSON to define how segment is generated   
+    # this represents the ctr value that this segment will use - will override any base ctr for a variant
+    true_ctr = Column(Float, nullable=True)
 
     segment_mix_entries = relationship(
         "SegmentMixEntry", 

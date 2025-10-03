@@ -31,8 +31,8 @@ def populate(db_path):
     insert("segment_mixes", {"name": "Platform Mix"}, db=session)
 
     # --- Insert segments ---
-    insert("segments", {"name": "Mobile Users", "description": "", "rules_json": ""}, db=session)
-    insert("segments", {"name": "Other Users", "description": "", "rules_json": ""}, db=session)
+    insert("segments", {"name": "Mobile Users", "description": "", "true_ctr": 0.30}, db=session)
+    insert("segments", {"name": "Other Users", "description": "", "true_ctr": 0.15}, db=session)
 
     # --- Insert segment mix entries ---
     insert("segment_mix_entries", {"segment_mix_id": 1, "segment_id": 1, "percentage": 40}, db=session)
