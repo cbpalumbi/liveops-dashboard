@@ -64,7 +64,7 @@ class CreateSegmentMixEntryRequest(BaseModel):
 class CreateSegmentRequest(BaseModel):
     name: str
     description: Optional[str] = None
-    true_ctr: Optional[float] = None
+    segment_ctr_modifier: Optional[float] = None
 
 class PlayerContext(BaseModel): # Used for contextual MAB campaigns
     player_id: int
@@ -127,7 +127,7 @@ class SegmentMixEntryRequest(BaseModel):
 class SegmentRequest(BaseModel):
     id: int
     name: str
-    true_ctr: float
+    segment_ctr_modifier: float
 
 class RunSimulationRequest(BaseModel):
     data_campaign_id: int
@@ -321,7 +321,7 @@ def create_segment(req: CreateSegmentRequest, db: Session = Depends(get_db)):
     new_seg = Segment(
         name=req.name,
         description=req.description,
-        true_ctr=req.true_ctr,
+        segment_ctr_modifier=req.segment_ctr_modifier,
     )
     db.add(new_seg)
     db.commit()

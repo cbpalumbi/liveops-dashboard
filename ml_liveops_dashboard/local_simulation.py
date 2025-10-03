@@ -123,11 +123,6 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
         
         segment_mix = db.execute(statement).scalar_one_or_none()
 
-        segment_ctrs = {
-            entry.segment.id: entry.segment.true_ctr
-            for entry in segment_mix.entries
-        }
-
         if dc.start_time is None:
             print("Simulation doesn't have a start time.")
             return
@@ -144,6 +139,11 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
 
         timestamp = dc.start_time
 
+        segment_ctr_modifiers = {
+            entry.segment.id: entry.segment.segment_ctr_modifier
+            for entry in segment_mix.entries
+        }
+
         for i in range(impressions):
             serve_data = serve_variant_segmented(dc, db)
             variant = serve_data["variant"]
@@ -152,7 +152,7 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             # ctr is derived from segment instead of from variant 
             # TODO: Future work: make the segment a modifer on the ctr instead of a full override
 
-            ctr = segment_ctrs[segment_id]
+            ctr = base_ctrs[variant.json_id] + segment_ctr_modifiers[segment_id]
             clicked = random.random() < ctr
             timestamp += time_step
 
@@ -169,7 +169,7 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             if delay > 0:
                 time.sleep(delay)
 
-        return generate_regret_summary_segmented(impression_log, base_ctrs, campaign_type="segmented_mab")
+        return generate_regret_summary_segmented(impression_log, base_ctrs, segment_ctr_modifiers, campaign_type="segmented_mab")
 
     finally:
         db.close()

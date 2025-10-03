@@ -205,54 +205,128 @@ def generate_regret_summary (
 
 def generate_regret_summary_segmented (
     impression_log: List[dict],
-    segment_ctrs: Dict[int, float],
+    base_ctrs: Dict[int, float],
+    # Corrected structure: {segment_id: modifier_factor}
+    segment_ctr_modifiers: Dict[int, float], 
     campaign_type: str
-) -> SimulationResult:
+) -> 'SimulationResult':
+    """
+    Calculates cumulative regret for a segmented MAB where the expected reward 
+    (CTR) is unique for every (segment, variant) pair.
+
+    The true CTRs are derived by applying the single segment modifier uniformly 
+    to all variant base CTRs: TrueCTR = BaseCTR + SegmentModifier.
+
+    Regret is calculated against the Segment-Specific Optimal Variant CTR.
+    """
+
+    # set up the true_ctrs_map, just a more convenient way of arranging the info 
+    true_ctrs_map = defaultdict(dict)
     
-    best_ctr = max(segment_ctrs.values())
+    # Collect all segment IDs that appeared in the log or in the modifiers
+    log_segment_ids = {imp.get("segment_id") for imp in impression_log if imp.get("segment_id") is not None}
+    modifier_segment_ids = set(segment_ctr_modifiers.keys())
+    all_segment_ids = log_segment_ids.union(modifier_segment_ids)
+
+    for segment_id in all_segment_ids:
+        # Get the single segment-wide modifier, defaulting to 0 (no modification)
+        modifier = segment_ctr_modifiers.get(segment_id, 0) 
+        
+        for variant_id, base_ctr in base_ctrs.items():
+            # Calculate true CTR (BaseCTR * Modifier)
+            true_ctr = base_ctr + modifier
+            
+            # Clamp between 0.0 and 1.0 (CTR cannot be negative or > 1)
+            true_ctr = max(0.0, min(1.0, true_ctr))
+            
+            true_ctrs_map[segment_id][variant_id] = true_ctr
+
+    # REGRET LOGIC
+    
     cumulative_regret_mab = 0.0
     cumulative_regret_uniform = 0.0
     total_impressions = len(impression_log)
-    uniform_prob = 1 / len(segment_ctrs)
 
-    # For segmented campaigns
+    # 1. Pre-calculate Segment-Specific Optimal CTRs and Uniform Baseline CTRs
+    segment_optimum_ctrs: Dict[int, float] = {}
+    segment_average_ctrs: Dict[int, float] = {}
+    
+    for segment_id, variant_ctrs in true_ctrs_map.items():
+        if not variant_ctrs:
+            continue
+            
+        # Optimal CTR for this segment (The best possible action)
+        segment_optimum_ctrs[segment_id] = max(variant_ctrs.values())
+        
+        # Uniform Baseline (Average of all variant CTRs for this segment, 
+        # representing random allocation)
+        segment_average_ctrs[segment_id] = sum(variant_ctrs.values()) / len(variant_ctrs)
+        
+    # For segmented campaigns, track impressions per segment
     segment_logs = defaultdict(list) if campaign_type == "segmented_mab" else None
 
+    # --- Main Regret Loop ---
     for i, impression in enumerate(impression_log, 1):
         variant_id = impression["variant_id"]
         segment_id = impression.get("segment_id")
+        
+        # Ensure we have data for this segment
+        if segment_id is None or segment_id not in true_ctrs_map:
+            continue 
 
-        # Overall regret
-        mab_regret = best_ctr - segment_ctrs[segment_id]
+        # A. Optimal CTR for this specific segment
+        optimal_ctr = segment_optimum_ctrs.get(segment_id, 0.0)
+        
+        # B. True CTR of the variant ACTUALLY served by the MAB
+        actual_served_ctr = true_ctrs_map[segment_id].get(variant_id, 0.0) 
+
+        # 1. MAB Regret (Optimal vs. Policy Action)
+        mab_regret = optimal_ctr - actual_served_ctr
         cumulative_regret_mab += mab_regret
-        expected_click_uniform = sum(ctr * uniform_prob for ctr in segment_ctrs.values())
-        cumulative_regret_uniform += best_ctr - expected_click_uniform
+
+        # 2. Uniform Regret (Optimal vs. Uniform Baseline Action)
+        uniform_baseline_ctr = segment_average_ctrs.get(segment_id, 0.0)
+        uniform_regret_per_impression = optimal_ctr - uniform_baseline_ctr
+        cumulative_regret_uniform += uniform_regret_per_impression
 
         # Track per-segment impressions
         if campaign_type == "segmented_mab" and segment_id is not None:
             segment_logs[segment_id].append(impression)
 
-        if i % 10 == 0 or i == total_impressions:
-            print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
-
+    # --- Output and Summary ---
+    
     # Variant counts overall
     variant_ids = [entry["variant_id"] for entry in impression_log]
     counts = Counter(variant_ids)
-    print("\nImpression counts per variant:")
+    
+    print("\nImpression counts per variant (Overall):")
     for variant_id, count in counts.items():
         print(f"Variant ID {variant_id}: {count} impressions")
 
     print(f"\nFinal cumulative regret after {total_impressions} impressions:")
     print(f"  MAB policy: {cumulative_regret_mab:.3f}")
-    print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
+    print(f"  Uniform random baseline: {cumulative_regret_uniform:.3f}")
 
     # Build per-segment results
     per_segment_regret = {}
     if campaign_type == "segmented_mab":
         print("\n--- Per-segment regret summary ---")
         for segment_id, logs in segment_logs.items():
-            seg_cum_regret_mab = sum(best_ctr - segment_ctrs[imp["segment_id"]] for imp in logs)
-            seg_cum_regret_uniform = sum(best_ctr - expected_click_uniform for _ in logs)
+            
+            # Use pre-calculated segment-specific values
+            seg_optimal_ctr = segment_optimum_ctrs.get(segment_id, 0.0)
+            seg_uniform_ctr = segment_average_ctrs.get(segment_id, 0.0)
+            
+            # Recalculate MAB regret for the segment (Optimal - Served Variant's CTR)
+            seg_cum_regret_mab = sum(
+                seg_optimal_ctr - true_ctrs_map[imp["segment_id"]].get(imp["variant_id"], 0.0)
+                for imp in logs
+                if imp["segment_id"] in true_ctrs_map
+            )
+            
+            # Recalculate Uniform regret for the segment (constant regret per impression * total impressions)
+            regret_per_uniform_impression = seg_optimal_ctr - seg_uniform_ctr
+            seg_cum_regret_uniform = regret_per_uniform_impression * len(logs)
 
             # Count how many times each variant was shown for this segment
             variant_counts = Counter([imp["variant_id"] for imp in logs])
@@ -276,6 +350,7 @@ def generate_regret_summary_segmented (
                 "variant_counts": dict(variant_counts),
             }
 
+    # The final returned object should reflect the overall cumulative regrets
     return SimulationResult(
         campaign_type=campaign_type,
         total_impressions=total_impressions,
@@ -284,7 +359,7 @@ def generate_regret_summary_segmented (
         variant_counts=dict(counts),
         per_segment_regret=per_segment_regret,
         impression_log=impression_log,
-        true_ctrs=segment_ctrs,
+        true_ctrs=true_ctrs_map, # Store the derived map
         completed=True
     )
 
