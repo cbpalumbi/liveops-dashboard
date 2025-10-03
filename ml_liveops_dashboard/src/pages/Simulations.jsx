@@ -326,8 +326,10 @@ export default function Simulations() {
                   ))}
                   <option value="new">-- Add New Mix --</option>
                 </select>
+                <div className="w-full p-2 mt-2 border rounded">Hello</div>
               </div>
             )}
+            
 
             {/* Conditional Fields for SEGMENTED_MAB */}
             {formCampaignType === "CONTEXTUAL_MAB" && (

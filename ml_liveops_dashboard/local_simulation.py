@@ -34,11 +34,10 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
             print(f"DataCampaign {data_campaign_id} not found")
             return
 
-        query_result = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
-        if not query_result:
+        tutorial = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+        if not tutorial:
             print(f"Tutorial not found in local DB")
             return None
-        tutorial = query_result
 
         impression_log = []
 

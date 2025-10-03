@@ -37,6 +37,12 @@ class SegmentMix(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
 
+    entries = relationship(
+        "SegmentMixEntry", 
+        back_populates="segment_mix", 
+        cascade="all, delete-orphan"
+    )
+
 class SegmentMixEntry(Base):
     """
     Each SegmentMix consists of multiple SegmentMixEntries.
@@ -44,9 +50,13 @@ class SegmentMixEntry(Base):
     """
     __tablename__ = "segment_mix_entries"
     id = Column(Integer, primary_key=True, index=True)
-    segment_mix_id = Column(Integer, nullable=False)
-    segment_id = Column(Integer, nullable=False)
+    segment_mix_id = Column(Integer, ForeignKey("segment_mixes.id"), nullable=False)
+    segment_id = Column(Integer, ForeignKey("segments.id"), nullable=False)
     percentage = Column(Float, nullable=False)
+
+    segment_mix = relationship("SegmentMix", back_populates="entries")
+
+    segment = relationship("Segment", back_populates="segment_mix_entries")
 
 class Segment(Base):
     __tablename__ = "segments"
@@ -54,6 +64,11 @@ class Segment(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True) 
     rules_json = Column(String, nullable=True)   # optional JSON to define how segment is generated   
+
+    segment_mix_entries = relationship(
+        "SegmentMixEntry", 
+        back_populates="segment",
+    )
 
 # modeled after SimulationResult in simulation utils
 class SimulationResultModel(Base):

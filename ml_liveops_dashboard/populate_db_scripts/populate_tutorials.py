@@ -44,16 +44,18 @@ def populate(db_path):
         )
 
         # Loop through the variants and append them to the tutorial object
+        # They can't all have the same base CTRs or regret will be 0 for any kind of
+        base_ctr = 0.15
         for variant_data in tutorial_data.get("variants", []):
             variant_obj = Variant(
                 # db_id will be auto-incremented, we only set the fixed data
                 json_id=variant_data["id"],
                 name=variant_data["name"],
                 color=variant_data["color"],
-                base_ctr=0.05
+                base_ctr=base_ctr
             )
-            # SQLAlchemy automatically handles the foreign key linkage here
             tutorial_obj.variants.append(variant_obj)
+            base_ctr += 0.10
         
         # Add the parent object. All related variants will be inserted too.
         session.add(tutorial_obj)

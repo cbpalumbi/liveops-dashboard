@@ -45,7 +45,7 @@ def simulate_data_campaign(data_campaign_id, mode, impressions=50, delay=0.02, d
         raise ValueError(f"Unknown mode: {mode}")
     
     # Clear any old impressions for this data campaign
-    clear("imp",data_campaign["id"])
+    clear("imp", data_campaign["id"])
 
     # Branch by campaign type
     campaign_type = data_campaign["campaign_type"].lower()
