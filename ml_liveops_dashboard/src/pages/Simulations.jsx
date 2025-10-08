@@ -23,12 +23,13 @@ export default function Simulations() {
   const [formStartTime, setFormStartTime] = useState("");
   const [formEndTime, setFormEndTime] = useState("");
   const [formSegmentMixId, setFormSegmentMixId] = useState("");
+  const [selectedSegmentMix, setSelectedSegmentMix] = useState(null);
   const [formDuration, setFormDuration] = useState(1);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(null);
+  const [submitSuccess, setSubmitSuccess] = useState(null)
 
   // Fetch tutorials, existing segments mixes, and existing segments on startup
   useEffect(() => {
@@ -218,6 +219,68 @@ export default function Simulations() {
     }
   }
 
+  function SegmentedMABInfoBox({ 
+        formCampaignType,         
+        formSegmentMixId, 
+        segmentMixes, 
+        setFormSegmentMixId,      
+        setShowMixCreator,        
+        setShowForm               
+    }) {
+    const selectedSegmentMix = segmentMixes.find(
+      (mix) => mix.id === formSegmentMixId
+    );
+    console.log("hello " + selectedSegmentMix);
+
+    return (
+      <div>
+        {/* Conditional Fields for SEGMENTED_MAB */}
+        {formCampaignType === "SEGMENTED_MAB" && (
+          <div className="p-4 border-t border-dashed">
+            {/* ... Segment Mix Select dropdown ... */}
+            <label className="block mb-1 font-semibold" htmlFor="segment-mix-select">
+              Segment Mix
+            </label>
+            <select
+              id="segment-mix-select"
+              className="w-full p-2 border rounded"
+              value={formSegmentMixId}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'new') {
+                  setShowMixCreator(true);
+                  setShowForm(false);
+                } else {
+                  setFormSegmentMixId(Number(value)); 
+                }
+              }}
+            >
+            <option value="" disabled>Select a mix or create new</option>
+              {segmentMixes.map((mix) => (
+                <option key={mix.id} value={mix.id}>{mix.name}</option>
+              ))}
+            <option value="new">-- Add New Mix --</option>
+            </select>
+
+            {selectedSegmentMix && selectedSegmentMix.entries.length > 0 && (
+              <div className="w-full p-2 mt-2 border rounded">
+                <h4 className="font-medium mb-1">Segments in Mix: {selectedSegmentMix.name}</h4>
+                <ul className="list-disc list-inside">
+                  {selectedSegmentMix.entries.map((entry, index) => (
+                    <li key={index} className="text-sm">
+                      <span className="text-gray-700">{entry.segment.name}</span>: 
+                      <span className="font-bold ml-1">{entry.percentage}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (loading) return <div>Loading tutorials...</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
   if (tutorials.length === 0) return <div>No tutorials available</div>;
@@ -298,40 +361,17 @@ export default function Simulations() {
               </label>
               <input onChange={(e) => setFormDuration(e.target.value)} type="number" step="1" min="1" max="5" defaultValue={1}></input>
             </div>
-            
-            {/* Conditional Fields for SEGMENTED_MAB */}
-            {formCampaignType === "SEGMENTED_MAB" && (
-              <div className="p-4 border-t border-dashed">
-                <h3 className="text-lg font-semibold mb-2">Segmented MAB Options</h3>
-                <label className="block mb-1 font-semibold" htmlFor="segment-mix-select">
-                  Segment Mix
-                </label>
-                <select
-                  id="segment-mix-select"
-                  className="w-full p-2 border rounded"
-                  value={formSegmentMixId}
-                  onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === 'new') {
-                          setShowMixCreator(true);
-                          setShowForm(false);
-                      } else {
-                          setFormSegmentMixId(value);
-                      }
-                  }}
-                >
-                  <option value="" disabled>Select a mix or create new</option>
-                  {segmentMixes.map((mix) => (
-                      <option key={mix.id} value={mix.id}>{mix.name}</option>
-                  ))}
-                  <option value="new">-- Add New Mix --</option>
-                </select>
-                <div className="w-full p-2 mt-2 border rounded">Hello</div>
-              </div>
-            )}
-            
 
-            {/* Conditional Fields for SEGMENTED_MAB */}
+            <SegmentedMABInfoBox
+              formCampaignType={formCampaignType}
+              formSegmentMixId={formSegmentMixId}
+              segmentMixes={segmentMixes}
+              setFormSegmentMixId={setFormSegmentMixId}
+              setShowMixCreator={setShowMixCreator}
+              setShowForm={setShowForm}
+            />
+
+            {/* Conditional Fields for CONTEXTUAL_MAB */}
             {formCampaignType === "CONTEXTUAL_MAB" && (
               <div className="p-4 border-t border-dashed">
                 <h3 className="text-lg font-semibold mb-2">Contextual MAB Options</h3>
@@ -349,6 +389,7 @@ export default function Simulations() {
                           setShowForm(false);
                       } else {
                           setFormSegmentMixId(value);
+                          setSelectedSegmentMix(segmentMixes.find((mix) => mix.id === formSegmentMixId))
                       }
                   }}
                 >

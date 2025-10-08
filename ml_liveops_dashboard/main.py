@@ -113,21 +113,23 @@ class ImpressionRequest(BaseModel):
     model_config = {
         "from_attributes": True
     }
-    
-class SegmentMixRequest(BaseModel):
+
+class SegmentRequest(BaseModel):
     id: int
     name: str
+    segment_ctr_modifier: float
 
 class SegmentMixEntryRequest(BaseModel):
     id: int
     segment_mix_id: int
     segment_id: int
     percentage: float
-
-class SegmentRequest(BaseModel):
+    segment: Optional[SegmentRequest] = None
+    
+class SegmentMixRequest(BaseModel):
     id: int
     name: str
-    segment_ctr_modifier: float
+    entries: Optional[List[SegmentMixEntryRequest]] = None
 
 class RunSimulationRequest(BaseModel):
     data_campaign_id: int
