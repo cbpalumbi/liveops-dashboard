@@ -192,7 +192,7 @@ export default function Simulations() {
       return;
     }
 
-    if (formCampaignType == "SEGMENTED_MAB" && !selectedSegmentMix) {
+    if (formCampaignType == "SEGMENTED_MAB" && formSegmentMixId == "") {
       setSubmitError("Please select a valid segment mix");
       return;
     } 
