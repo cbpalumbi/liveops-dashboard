@@ -192,7 +192,11 @@ export default function Simulations() {
       return;
     }
 
-    console.log(formDuration);
+    if (formCampaignType == "SEGMENTED_MAB" && !selectedSegmentMix) {
+      setSubmitError("Please select a valid segment mix");
+      return;
+    } 
+
     const body = {
       campaign_id: 0,
       tutorial_id: formTutorialId,
@@ -228,41 +232,65 @@ export default function Simulations() {
         setShowMixCreator,        
         setShowForm               
     }) {
+
+    if (formCampaignType !== "SEGMENTED_MAB") { return null; }
     const selectedSegmentMix = segmentMixes.find(
       (mix) => mix.id === formSegmentMixId
     );
 
+     // Function to handle the dropdown change
+    const handleMixChange = (e) => {
+        const value = e.target.value;
+        if (value === 'new') {
+            setShowMixCreator(true);
+            setShowForm(false);
+        } else {
+            setFormSegmentMixId(value === "" ? "" : Number(value)); 
+        }
+    };
+    
     return (
-      <div>
-        {/* Conditional Fields for SEGMENTED_MAB */}
-        {formCampaignType === "SEGMENTED_MAB" && (
-          <div className="p-4 border-t border-dashed">
-            {/* ... Segment Mix Select dropdown ... */}
+        <div className="p-4 border-t border-dashed">
             <label className="block mb-1 font-semibold" htmlFor="segment-mix-select">
-              Segment Mix
+                Segment Mix
             </label>
-            <select
-              id="segment-mix-select"
-              className="w-full p-2 border rounded"
-              value={formSegmentMixId}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === 'new') {
-                  setShowMixCreator(true);
-                  setShowForm(false);
-                } else {
-                  setFormSegmentMixId(Number(value)); 
-                }
-              }}
-            >
-            <option value="" disabled>Select a mix or create new</option>
-              {segmentMixes.map((mix) => (
-                <option key={mix.id} value={mix.id}>{mix.name}</option>
-              ))}
-            <option value="new">-- Add New Mix --</option>
-            </select>
+            
+            {/* --- Conditional rendering based on whether mixes exist --- */}
+            {segmentMixes.length === 0 ? (
+                <div className="flex items-center justify-between p-3 border rounded bg-gray-50">
+                    <span className="text-gray-600">No segment mixes available.</span>
+                    <button
+                        onClick={() => {
+                            setShowMixCreator(true);
+                            setShowForm(false);
+                        }}
+                        className="px-3 text-sm text-black rounded"
+                    >
+                        Create New Mix
+                    </button>
+                </div>
+            ) : (
+                <select
+                    id="segment-mix-select"
+                    className="w-full p-2 border rounded"
+                    value={formSegmentMixId}
+                    onChange={handleMixChange}
+                >
+                    {/* Default/Placeholder Option */}
+                    <option value="">Select a mix or create new</option>
+                    
+                    {/* Dynamic Mix Options */}
+                    {segmentMixes.map((mix) => (
+                        <option key={mix.id} value={mix.id}>{mix.name}</option> 
+                    ))}
+                    
+                    {/* Create New Option */}
+                    <option value="new">-- Add New Mix --</option>
+                </select>
+            )}
 
-            {selectedSegmentMix && selectedSegmentMix.entries.length > 0 && (
+            {/* Display segment mix entries */}
+            {selectedSegmentMix && selectedSegmentMix.entries?.length > 0 && (
               <div className="w-full p-2 mt-2 border rounded">
                 <h4 className="font-medium mb-1">Segments in Mix:</h4>
                 <ul className="list-disc list-inside">
@@ -275,9 +303,7 @@ export default function Simulations() {
                 </ul>
               </div>
             )}
-          </div>
-        )}
-      </div>
+        </div>
     );
   }
 
