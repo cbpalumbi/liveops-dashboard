@@ -9,6 +9,7 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
     const [percentage, setPercentage] = useState('');
     const [error, setError] = useState(null);
     const [newSegmentName, setNewSegmentName] = useState('');
+    const [newSegmentModifier, setNewSegmentModifier] = useState(0);
     const [showNewSegmentInput, setShowNewSegmentInput] = useState(false);
 
     const handleAddNewSegment = async (e) => {
@@ -18,14 +19,19 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
             setError('Please enter a name for the new segment.');
             return;
         }
+        if (newSegmentModifier < 0 || newSegmentModifier > 1) {
+            setError('Modifier must be a positive number between 0 and 1.');
+            return;
+        }
          
-        const newSegment = {name: newSegmentName.trim() };
+        const newSegment = {name: newSegmentName.trim(), modifier: newSegmentModifier };
         
         // the new id should be the id returned from adding this segment via api
         const newId = await onAddNewSegment(newSegment);
 
         // Clear the input and hide the field
         setNewSegmentName('');
+        setNewSegmentModifier(0);
         setShowNewSegmentInput(false);
         // Automatically select the new segment so the user can add it to the mix
         setSelectedSegmentId(newId.toString()); 
@@ -112,7 +118,7 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
                         >
                             <option value="">Select Segment</option>
                             {segments.map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
+                                <option key={s.id} value={s.id}>{s.name} (modifier +{s.segment_ctr_modifier}%)</option>
                             ))}
                         </select>
                     </div>
@@ -138,7 +144,7 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
                 
                 {/* New section for creating a segment */}
                 {!showNewSegmentInput ? (
-                    <div className="mt-2 text-center">
+                    <div className="mt-2">
                         <button
                             type="button"
                             onClick={() => setShowNewSegmentInput(true)}
@@ -151,11 +157,19 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
                     <div className="flex space-x-2 mt-2">
                         <input
                             type="text"
-                            className="w-full p-2 border rounded"
+                            className="w-half p-2 border rounded"
                             placeholder="Enter new segment name"
                             value={newSegmentName}
                             onChange={(e) => setNewSegmentName(e.target.value)}
                         />
+                        <p className="pt-3">Modifier:</p>
+                        <input
+                            type="number"
+                            className="w-half p-2 border rounded"
+                            value={newSegmentModifier}
+                            onChange={(e) => setNewSegmentModifier(e.target.value)}
+                        />
+                        
                         <button
                             type="button"
                             onClick={handleAddNewSegment}
@@ -171,7 +185,7 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
                     <ul className="list-disc list-inside space-y-1">
                         {newEntries.map((entry, index) => (
                             <li key={index} className="flex justify-between items-center text-gray-700">
-                                <span>{entry.segment.name}: {entry.percentage}%</span>
+                                <span>{entry.segment.name} (modifier: +{entry.segment.segment_ctr_modifier}%): {entry.percentage}%</span>
                                 <button 
                                     type="button"
                                     onClick={() => handleRemoveEntry(index)} 

@@ -153,7 +153,8 @@ export default function Simulations() {
   async function handleAddNewSegment (newSegment) {
     setSubmitSegmentSuccess(null);
     const body = {
-      name: newSegment.name
+      name: newSegment.name,
+      segment_ctr_modifier: newSegment.modifier
     };
 
     try {
@@ -230,7 +231,6 @@ export default function Simulations() {
     const selectedSegmentMix = segmentMixes.find(
       (mix) => mix.id === formSegmentMixId
     );
-    console.log("hello " + selectedSegmentMix);
 
     return (
       <div>
@@ -264,7 +264,7 @@ export default function Simulations() {
 
             {selectedSegmentMix && selectedSegmentMix.entries.length > 0 && (
               <div className="w-full p-2 mt-2 border rounded">
-                <h4 className="font-medium mb-1">Segments in Mix: {selectedSegmentMix.name}</h4>
+                <h4 className="font-medium mb-1">Segments in Mix:</h4>
                 <ul className="list-disc list-inside">
                   {selectedSegmentMix.entries.map((entry, index) => (
                     <li key={index} className="text-sm">
@@ -291,7 +291,16 @@ export default function Simulations() {
 
       {/* New Simulation Button */}
       <button
-        onClick={() => setShowForm(!showForm)}
+        onClick={() => {
+          setError(null);
+          setSubmitError(null);
+          setSubmitSuccess(null);
+          setFormCampaignType("MAB");
+          setFormTutorialId(0);
+          setFormSegmentMixId(0);
+
+          setShowForm(!showForm)
+        }}
         className="inline-flex items-center px-4 py-2 text-black rounded focus:outline-none mb-4"
       >
         <svg

@@ -63,8 +63,8 @@ class CreateSegmentMixEntryRequest(BaseModel):
 
 class CreateSegmentRequest(BaseModel):
     name: str
+    segment_ctr_modifier: float
     description: Optional[str] = None
-    segment_ctr_modifier: Optional[float] = None
 
 class PlayerContext(BaseModel): # Used for contextual MAB campaigns
     player_id: int
