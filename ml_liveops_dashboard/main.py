@@ -254,9 +254,18 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
 
 @app.get("/segment_mix/{segment_mix_id}", response_model=SegmentMixRequest)
 def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
-    # Note - does not eager load the corresponding segment mix entry and segments
+    # Note: Eager loads the corresponding segment mix entries and segments
+    statement = (
+        select(SegmentMix)
+        .options(
+            selectinload(SegmentMix.entries)
+            .selectinload(SegmentMixEntry.segment)
+        )
+        .where(SegmentMix.id == segment_mix_id)
+    )
 
-    sm = db.query(SegmentMix).filter(SegmentMix.id == segment_mix_id).first()
+    sm = db.execute(statement).scalars().first()
+
     if not sm:
         raise HTTPException(status_code=404, detail="SegmentMix not found")
     return sm
