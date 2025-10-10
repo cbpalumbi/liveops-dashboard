@@ -89,6 +89,32 @@ class ReportRequest(BaseModel):
     timestamp: datetime
     player_context: Optional[PlayerContext] = None
 
+class SegmentRequest(BaseModel):
+    id: int
+    name: str
+    segment_ctr_modifier: float
+    model_config = {
+        "from_attributes": True 
+    }
+
+class SegmentMixEntryRequest(BaseModel):
+    id: int
+    segment_mix_id: int
+    segment_id: int
+    percentage: float
+    segment: Optional[SegmentRequest] = None
+    model_config = {
+        "from_attributes": True 
+    }
+    
+class SegmentMixRequest(BaseModel):
+    id: int
+    name: str
+    entries: Optional[List[SegmentMixEntryRequest]] = None
+    model_config = {
+        "from_attributes": True 
+    }
+
 class DataCampaignRequest(BaseModel):
     id: int
     static_campaign_id: int
@@ -96,6 +122,7 @@ class DataCampaignRequest(BaseModel):
     campaign_type: str
     duration: int
     segment_mix_id: Optional[int] = None
+    segment_mix: Optional[SegmentMixRequest] = None
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     model_config = {
@@ -113,23 +140,6 @@ class ImpressionRequest(BaseModel):
     model_config = {
         "from_attributes": True
     }
-
-class SegmentRequest(BaseModel):
-    id: int
-    name: str
-    segment_ctr_modifier: float
-
-class SegmentMixEntryRequest(BaseModel):
-    id: int
-    segment_mix_id: int
-    segment_id: int
-    percentage: float
-    segment: Optional[SegmentRequest] = None
-    
-class SegmentMixRequest(BaseModel):
-    id: int
-    name: str
-    entries: Optional[List[SegmentMixEntryRequest]] = None
 
 class RunSimulationRequest(BaseModel):
     data_campaign_id: int
@@ -250,7 +260,30 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
     dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
     if not dc:
         raise HTTPException(status_code=404, detail="Data campaign not found")
-    return dc
+    
+    # segment_mix_data is optional 
+    segment_mix_data = None
+    
+    if dc.segment_mix_id:
+        statement = (
+            select(SegmentMix)
+            .options(
+                selectinload(SegmentMix.entries)
+                .selectinload(SegmentMixEntry.segment)
+            )
+            .where(SegmentMix.id == dc.segment_mix_id)
+        )
+
+        sm = db.execute(statement).scalars().first()
+        if sm:
+            segment_mix_data = SegmentMixRequest.model_validate(sm)
+        
+    response_data = dc.__dict__.copy() 
+    response_data.pop('_sa_instance_state', None)
+    
+    response_data["segment_mix"] = segment_mix_data
+    
+    return response_data
 
 @app.get("/segment_mix/{segment_mix_id}", response_model=SegmentMixRequest)
 def get_segment_mix(segment_mix_id: int, db: Session = Depends(get_db)):
@@ -357,7 +390,7 @@ def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depend
     db.refresh(dc) 
 
     result = simulate_data_campaign(req.data_campaign_id, "local", req.impressions, 0)
-    
+
     result_db_entry = SimulationResultModel(
         campaign_id=req.data_campaign_id,
         total_impressions=result.total_impressions,
