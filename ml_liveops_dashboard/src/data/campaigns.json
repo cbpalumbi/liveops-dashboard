@@ -5,7 +5,7 @@
     "tutorials": [
       {
         "title": "Guided Tutorial",
-        "id": 2,
+        "id": 0,
         "variants": [
           { "name": "Option A: 5 Hints", "id": 1, "color": "bg-teal-400" },
           { "name": "Option B: 10 Hints", "id": 2, "color": "bg-pink-400" }

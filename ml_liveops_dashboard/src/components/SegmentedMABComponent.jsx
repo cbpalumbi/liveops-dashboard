@@ -1,11 +1,10 @@
-
 import { useEffect, useState} from "react";
 import ServesPerVariantChart from "./ServesPerVariantChart";
 
 export default function SegmentedMABComponent({ impressions, campaign }) {
     const [segmentMix, setSegmentMix] = useState(null);
-    const [segments, setSegments] = useState([]);
     const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(true); 
 
     // extract segment_mix_id from the passed-in campaign
     let segmentMixId = campaign["segment_mix_id"];
@@ -14,6 +13,7 @@ export default function SegmentedMABComponent({ impressions, campaign }) {
     }
     
     useEffect(() => {
+        setIsLoading(true); 
         async function fetchData() {
             try {
                 const [segmentMixRes] = await Promise.allSettled([
@@ -28,23 +28,35 @@ export default function SegmentedMABComponent({ impressions, campaign }) {
                 } else {
                     throw new Error("Failed to load segment mix");
                 }
-
             } catch (err) {
                 console.error(err);
                 setError(err.message || "An unexpected error occurred");
+            } finally {
+                setIsLoading(false); 
             }
         }
 
         fetchData();
 
     }, [segmentMixId]);
+    
+    // Handle Error State
+    if (error) {
+        return <div>Error: {error}</div>;
+    }
 
+    // Handle Loading State
+    if (isLoading || segmentMix === null) {
+        return <div>Loading Segment Mix...</div>;
+    }
+
+    // Render Success State
     return (
         <div>
             <ServesPerVariantChart
                 campaignType={campaign["campaign_type"].toLowerCase()}
                 impressions={impressions}
-                segments={segmentMix.entries.map(entry => entry.segment) ?? []}
+                segments={segmentMix.entries?.map(entry => entry.segment) ?? []}
             />
         </div>
     )

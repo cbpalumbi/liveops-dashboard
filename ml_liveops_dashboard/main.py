@@ -303,7 +303,7 @@ def get_segment_mix_entries(segment_mix_id: int, db: Session = Depends(get_db)):
     return entries
 
 @app.post("/segment_mix_entry")
-def create_data_campaign(req: CreateSegmentMixEntryRequest, db: Session = Depends(get_db)):
+def create_segment_mix_entry(req: CreateSegmentMixEntryRequest, db: Session = Depends(get_db)):
     new_seg_mix_entry = SegmentMixEntry(
         segment_mix_id=req.segment_mix_id,
         segment_id=req.segment_id,
@@ -357,7 +357,7 @@ def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depend
     db.refresh(dc) 
 
     result = simulate_data_campaign(req.data_campaign_id, "local", req.impressions, 0)
-
+    
     result_db_entry = SimulationResultModel(
         campaign_id=req.data_campaign_id,
         total_impressions=result.total_impressions,
