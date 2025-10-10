@@ -163,6 +163,9 @@ export default function SimulationPage() {
         return (
             <div>
                 <SimulationHeader id={id} campaign={campaign} error={error} />
+                <CampaignDetails
+                    campaign={campaign}
+                />
                 <SegmentedMABComponent
                     campaign={campaign}
                     impressions={impressions}
