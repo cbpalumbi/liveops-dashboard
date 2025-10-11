@@ -26,6 +26,7 @@ from ml_liveops_dashboard.ml_scripts.mab import (
 from ml_liveops_dashboard.run_simulation import simulate_data_campaign
 from ml_liveops_dashboard.simulation_utils import SimulationResult
 from ml_liveops_dashboard.populate_db_scripts.populate_tutorials import populate as populate_tutorials
+from ml_liveops_dashboard.populate_db_scripts.populate_example_segment_mix import populate as populate_example_segment_mix
 
 engine = create_engine(DB_PATH, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -35,6 +36,7 @@ Base.metadata.create_all(bind=engine)
 # --- App ---
 app = FastAPI()
 populate_tutorials(DB_PATH)
+populate_example_segment_mix(DB_PATH)
 
 def get_db():
     db = SessionLocal()

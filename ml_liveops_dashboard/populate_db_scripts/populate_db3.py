@@ -44,7 +44,7 @@ def populate(db_path):
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print("Usage: python populate_db.py --mode <dev|test>")
+        print("Usage: python populate_db3.py --mode <dev|test>")
         sys.exit(1)
 
     # Check mode flag

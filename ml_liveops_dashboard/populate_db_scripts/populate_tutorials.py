@@ -22,12 +22,12 @@ def populate(db_path):
     with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
         CAMPAIGN_DATA = json.load(f)
 
+    print("\n--- POPULATE TUTORIALS: Inserting Tutorial and Variant Definitions ---")
+
     # --- Clear existing tables ---
     clear("tutorials", db=session)
     clear("variants", db=session)
 
-    print("\n--- 1. Inserting Tutorial and Variant Definitions ---")
-    
     if not CAMPAIGN_DATA:
         print("Error: CAMPAIGN_DATA is empty.")
         return
@@ -66,7 +66,7 @@ def populate(db_path):
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print("Usage: python populate_db.py --mode <dev|test>")
+        print("Usage: python populate_tutorials.py --mode <dev|test>")
         sys.exit(1)
 
     # Check mode flag
