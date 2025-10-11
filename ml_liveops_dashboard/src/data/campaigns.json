@@ -7,17 +7,42 @@
         "title": "Guided Tutorial",
         "id": 0,
         "variants": [
-          { "name": "Option A: 5 Hints", "id": 1, "color": "bg-teal-400" },
-          { "name": "Option B: 10 Hints", "id": 2, "color": "bg-pink-400" }
+          { 
+            "id": 1,  
+            "name": "Option A: 5 Hints",
+            "base_ctr": 0.10,
+            "color": "bg-teal-400" 
+          },
+          { 
+            "id": 2, 
+            "name": "Option B: 10 Hints",
+            "base_ctr": 0.20, 
+            "color": "bg-pink-400" 
+          }
         ]
       },
       {
         "title": "Open-Ended Tutorial",
         "id": 1,
         "variants": [
-          { "name": "Option A: 3 Minutes Intended Completion Time", "id": 1, "color": "bg-red-400" },
-          { "name": "Option B: 5 Minutes Intended Completion Time", "id": 2, "color": "bg-yellow-400" },
-          { "name": "Option C: 10 Minutes Intended Completion Time", "id": 3, "color": "bg-indigo-400" }
+          { 
+            "id": 1, 
+            "name": "Option A: 3 Minutes Intended Completion Time",
+            "base_ctr": 0.10, 
+            "color": "bg-red-400" 
+          },
+          { 
+            "id": 2, 
+            "name": "Option B: 5 Minutes Intended Completion Time", 
+            "base_ctr": 0.20,
+            "color": "bg-yellow-400" 
+          },
+          { 
+            "id": 3, 
+            "name": "Option C: 10 Minutes Intended Completion Time", 
+            "base_ctr": 0.30,
+            "color": "bg-indigo-400" 
+          }
         ]
       }
     ]
