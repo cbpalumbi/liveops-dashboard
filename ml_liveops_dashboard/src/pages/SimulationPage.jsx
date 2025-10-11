@@ -163,13 +163,21 @@ export default function SimulationPage() {
         return (
             <div>
                 <SimulationHeader id={id} campaign={campaign} error={error} />
+                <br></br>
+                <hr></hr>
                 <CampaignDetails
                     campaign={campaign}
                 />
+                <br></br>
+                <hr></hr>
+                <br></br>
                 <SegmentedMABComponent
                     campaign={campaign}
                     impressions={impressions}
                 />
+                <hr></hr>
+                <br></br>
+                <br></br>
                 <RollingCTRChart 
                     rollingCTRData={rollingCTRData}
                 />

@@ -115,12 +115,32 @@ class SegmentMixRequest(BaseModel):
         "from_attributes": True 
     }
 
+class VariantRequest(BaseModel):
+    id: int
+    json_id: int # refers to the index this occupies within its parent tutorial's variant list
+    name: str
+    color: str
+    base_ctr: float
+    base_params_weights_json: str # for contextual MAB
+    model_config = {
+        "from_attributes": True
+    }
+
+class TutorialRequest(BaseModel):
+    id: int
+    title: str
+    variants: List[VariantRequest]
+    model_config = {
+        "from_attributes": True
+    }
+
 class DataCampaignRequest(BaseModel):
     id: int
     static_campaign_id: int
-    tutorial_id: int
     campaign_type: str
     duration: int
+    tutorial_id: int
+    tutorial: Optional[TutorialRequest] = None
     segment_mix_id: Optional[int] = None
     segment_mix: Optional[SegmentMixRequest] = None
     start_time: Optional[datetime]
@@ -164,25 +184,6 @@ class SimulationResultRequest(BaseModel):
         "from_attributes": True
     }
 
-class VariantRequest(BaseModel):
-    id: int
-    json_id: int # refers to the index this occupies within its parent tutorial's variant list
-    name: str
-    color: str
-    base_ctr: float
-    base_params_weights_json: str # for contextual MAB
-    model_config = {
-        "from_attributes": True
-    }
-
-class TutorialRequest(BaseModel):
-    id: int
-    title: str
-    variants: List[VariantRequest]
-    model_config = {
-        "from_attributes": True
-    }
-
 class PatchVariantRequest(BaseModel):
     base_ctr: Optional[float] = Field(None, ge=0.0, le=1.0) # Ensures 0 <= CTR <= 1
     base_params_weights_json: str
@@ -210,6 +211,8 @@ def create_data_campaign(req: CreateDataCampaignRequest, db: Session = Depends(g
 
 @app.get("/data_campaigns")
 def get_data_campaigns(db: Session = Depends(get_db)):
+    # Note: does not eager load any of the associated data (Tutorial, Segment Mix)
+
     dcs = db.query(DataCampaign).all()
     return dcs
 
@@ -261,7 +264,19 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
     if not dc:
         raise HTTPException(status_code=404, detail="Data campaign not found")
     
-    # segment_mix_data is optional 
+    # Eager load Tutorial obj 
+    tutorial = (
+        db.query(Tutorial)
+        .options(selectinload(Tutorial.variants)) 
+        .filter(Tutorial.id == dc.tutorial_id)
+        .first() 
+    )
+    if not tutorial:
+        raise HTTPException(status_code=404, detail="Tutorial not found")
+    
+    tutorial_data = TutorialRequest.model_validate(tutorial)
+    
+    # Eager load segment mix information if this is a segmented MAB campaign
     segment_mix_data = None
     
     if dc.segment_mix_id:
@@ -281,7 +296,9 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
     response_data = dc.__dict__.copy() 
     response_data.pop('_sa_instance_state', None)
     
+    # Add manually processed fields
     response_data["segment_mix"] = segment_mix_data
+    response_data["tutorial"] = tutorial_data
     
     return response_data
 

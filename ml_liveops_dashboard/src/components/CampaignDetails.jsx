@@ -20,7 +20,6 @@ const SegmentEntry = ({ entry, index }) => (
     </div>
 );
 
-
 export default function CampaignDetails({ campaign }) {
     const isSegmentedMAB = campaign?.campaign_type?.toLowerCase() === 'segmented_mab';
 
@@ -30,11 +29,8 @@ export default function CampaignDetails({ campaign }) {
                 <h3 className="text-xl font-bold text-gray-800 mb-3">Campaign Details</h3>
                 <dl className="space-y-2 text-sm">
                     {/* FIELDS ALL CAMPAIGNS SHARE */}
-                    <DetailRow label="Static Campaign ID" value={campaign.static_campaign_id} />
-                    <DetailRow label="Tutorial ID" value={campaign.tutorial_id} />
-                    <DetailRow label="Campaign Type" value={campaignFriendlyNames[campaign.campaign_type?.toLowerCase()]} />
+                    <DetailRow label="Tutorial" value={campaign.tutorial.title} />
                     <DetailRow label="Duration (Minutes)" value={campaign.duration} />
-                    <DetailRow label="Segment Mix ID" value={campaign.segment_mix_id || "N/A"} />
 
                     {/* SEGMENTED MAB FIELDS */}
                     {isSegmentedMAB && campaign.segment_mix && (
