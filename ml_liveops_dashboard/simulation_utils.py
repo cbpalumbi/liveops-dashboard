@@ -101,7 +101,7 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
     return true_ctr
 
 def load_static_campaigns():
-    with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
+    with open("ml_liveops_dashboard/data/static_tutorials.json", "r", encoding="utf-8") as f:
         return json.load(f)    
 
 @dataclass

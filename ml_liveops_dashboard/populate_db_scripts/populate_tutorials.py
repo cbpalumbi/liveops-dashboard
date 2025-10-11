@@ -1,5 +1,5 @@
 # populate_tutorials.py
-# Populates the db with the tutorials defined in campaigns.json
+# Populates the db with the tutorials defined in static_tutorials.json
 import sys
 import json
 from sqlalchemy import create_engine
@@ -10,7 +10,7 @@ from ml_liveops_dashboard.db_utils import clear
 from constants import DB_PATH, TESTS_DB_PATH
 
 def populate(db_path):
-    """Populates the database with the tutorials and variants defined in campaigns.json"""
+    """Populates the database with the tutorials and variants defined in static_tutorials.json"""
     
     # --- SQLAlchemy Engine and Session Setup ---
     engine = create_engine(db_path, echo=False)  
@@ -20,7 +20,7 @@ def populate(db_path):
     # --- Create all tables from Base ---
     Base.metadata.create_all(engine)
 
-    with open("ml_liveops_dashboard/src/data/campaigns.json", "r", encoding="utf-8") as f:
+    with open("ml_liveops_dashboard/data/static_tutorials.json", "r", encoding="utf-8") as f:
         CAMPAIGN_DATA = json.load(f)
 
     print("\n--- POPULATE TUTORIALS: Inserting Tutorial and Variant Definitions ---")
