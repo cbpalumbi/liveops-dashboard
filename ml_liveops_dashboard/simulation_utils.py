@@ -147,8 +147,8 @@ def generate_regret_summary (
         if campaign_type == "segmented_mab" and segment_id is not None:
             segment_logs[segment_id].append(impression)
 
-        if i % 10 == 0 or i == total_impressions:
-            print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
+        # if i % 10 == 0 or i == total_impressions:
+        #     print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
 
     # Variant counts overall
     variant_ids = [entry["variant_id"] for entry in impression_log]

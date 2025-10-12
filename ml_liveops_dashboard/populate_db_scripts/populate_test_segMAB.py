@@ -27,31 +27,76 @@ def populate(db_path):
     clear("segment_mixes", db=session)
     clear("segments", db=session)
     clear("segment_mix_entries", db=session)
+    clear("segment_variant_performance", db=session) 
+
+    # --- Constants for consistency ---
+    DATA_CAMPAIGN_ID = 1
+    TUTORIAL_ID = 0 
+    SEGMENT_ID_MOBILE = 1 
+    SEGMENT_ID_OTHER = 2   
+    VARIANT_ID_V1 = 1 # Option A (Base CTR 0.1)
+    VARIANT_ID_V2 = 2 # Option B (Base CTR 0.2)
 
     # --- Insert segment mix ---
     insert("segment_mixes", {"name": "Platform Mix"}, db=session)
 
     # --- Insert segments ---
-    insert("segments", {"name": "Mobile Users", "description": "", "segment_ctr_modifier": 0.04}, db=session)
-    insert("segments", {"name": "Other Users", "description": "", "segment_ctr_modifier": 0.15}, db=session)
+    insert("segments", {"name": "Mobile Users", "description": ""}, db=session)
+    insert("segments", {"name": "Other Users", "description": ""}, db=session)
 
     # --- Insert segment mix entries ---
-    insert("segment_mix_entries", {"segment_mix_id": 1, "segment_id": 1, "percentage": 40}, db=session)
-    insert("segment_mix_entries", {"segment_mix_id": 1, "segment_id": 2, "percentage": 60}, db=session)
+    insert("segment_mix_entries", {"segment_mix_id": 1, "segment_id": SEGMENT_ID_MOBILE, "percentage": 40}, db=session)
+    insert("segment_mix_entries", {"segment_mix_id": 1, "segment_id": SEGMENT_ID_OTHER, "percentage": 60}, db=session)
 
     # --- Insert data campaign ---
     insert(
         "data_campaigns",
         {
+            "id": DATA_CAMPAIGN_ID, 
             "static_campaign_id": 1,
-            "tutorial_id": 1,
+            "tutorial_id": TUTORIAL_ID, 
             "campaign_type": "SEGMENTED_MAB",
             "duration": 1,
             "segment_mix_id": 1,
-            "start_time": datetime.datetime.now() # default for testing
+            "start_time": datetime.datetime.now()
         },
         db=session,
     )
+    
+    # --- Insert Segment-Variant Performance Modifiers ---
+    # Goal: Segment 1 (Mobile) favors V1. Segment 2 (Other) favors V2. (Reversal)
+
+    # 1. Segment 1 (Mobile) - Variant 1 (Base 0.1) gets a positive modifier -> True CTR = 0.20 (WINNER)
+    insert("segment_variant_performance", {
+        "data_campaign_id": DATA_CAMPAIGN_ID, 
+        "segment_id": SEGMENT_ID_MOBILE,
+        "variant_id": VARIANT_ID_V1, # CORRECTED TO V1
+        "performance_modifier": 0.10 # Base 0.1 + 0.10 = 0.20
+    }, db=session)
+
+    # 2. Segment 1 (Mobile) - Variant 2 (Base 0.2) gets a negative modifier -> True CTR = 0.15
+    insert("segment_variant_performance", {
+        "data_campaign_id": DATA_CAMPAIGN_ID, 
+        "segment_id": SEGMENT_ID_MOBILE,
+        "variant_id": VARIANT_ID_V2, # CORRECTED TO V2
+        "performance_modifier": -0.05 # Base 0.2 - 0.05 = 0.15
+    }, db=session)
+    
+    # 3. Segment 2 (Other) - Variant 1 (Base 0.1) gets a negative modifier -> True CTR = 0.05
+    insert("segment_variant_performance", {
+        "data_campaign_id": DATA_CAMPAIGN_ID, 
+        "segment_id": SEGMENT_ID_OTHER,
+        "variant_id": VARIANT_ID_V1, 
+        "performance_modifier": -0.05 # Base 0.1 - 0.05 = 0.05
+    }, db=session)
+
+    # 4. Segment 2 (Other) - Variant 2 (Base 0.2) gets a positive modifier -> True CTR = 0.25 (WINNER)
+    insert("segment_variant_performance", {
+        "data_campaign_id": DATA_CAMPAIGN_ID, 
+        "segment_id": SEGMENT_ID_OTHER,
+        "variant_id": VARIANT_ID_V2, 
+        "performance_modifier": 0.05 # Base 0.2 + 0.05 = 0.25
+    }, db=session)
 
     # --- Print all tables to verify ---
     print_tables(None, db=session)
