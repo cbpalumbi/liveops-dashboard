@@ -2,7 +2,7 @@ import hashlib
 import json
 import random
 import numpy as np
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Union, Tuple
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
@@ -203,51 +203,57 @@ def generate_regret_summary (
         completed=True
     )
 
+
+# Type hint for the segment-variant modifier structure, for clarity
+SegmentVariantPerformanceMap = Dict[Tuple[int, int], float] 
+
 def generate_regret_summary_segmented (
     impression_log: List[dict],
     base_ctrs: Dict[int, float],
-    # Corrected structure: {segment_id: modifier_factor}
-    segment_ctr_modifiers: Dict[int, float], 
+    segment_variant_performance: SegmentVariantPerformanceMap, #(segment_id, variant_id) -> modifier
     campaign_type: str
 ) -> 'SimulationResult':
     """
     Calculates cumulative regret for a segmented MAB where the expected reward 
     (CTR) is unique for every (segment, variant) pair.
 
-    The true CTRs are derived by applying the single segment modifier uniformly 
-    to all variant base CTRs: TrueCTR = BaseCTR + SegmentModifier.
+    The true CTRs are derived using the segment-variant specific additive modifier: 
+    TrueCTR = BaseCTR + SegmentVariantModifier.
 
     Regret is calculated against the Segment-Specific Optimal Variant CTR.
     """
 
-    # set up the true_ctrs_map, just a more convenient way of arranging the info 
+    # Extract all segment IDs present in the performance map
+    all_segment_ids = {seg_id for seg_id, _ in segment_variant_performance.keys()}
+    
+    # Also include segments that appeared in the log, in case they were unconfigured 
+    # (though they will use default 0.0 modifier)
+    log_segment_ids = {imp.get("segment_id") for imp in impression_log if imp.get("segment_id") is not None}
+    all_segment_ids.update(log_segment_ids)
+    
+    # Build the true_ctrs_map: {segment_id: {variant_id: TrueCTR}}
     true_ctrs_map = defaultdict(dict)
     
-    # Collect all segment IDs that appeared in the log or in the modifiers
-    log_segment_ids = {imp.get("segment_id") for imp in impression_log if imp.get("segment_id") is not None}
-    modifier_segment_ids = set(segment_ctr_modifiers.keys())
-    all_segment_ids = log_segment_ids.union(modifier_segment_ids)
-
     for segment_id in all_segment_ids:
-        # Get the single segment-wide modifier, defaulting to 0 (no modification)
-        modifier = segment_ctr_modifiers.get(segment_id, 0) 
-        
         for variant_id, base_ctr in base_ctrs.items():
-            # Calculate true CTR (BaseCTR * Modifier)
-            true_ctr = base_ctr + modifier
+            
+            # Look up the specific modifier for this segment-variant pair, defaulting to 0.0
+            lookup_key = (segment_id, variant_id)
+            performance_modifier = segment_variant_performance.get(lookup_key, 0.0)
+            
+            # Calculate true CTR (BaseCTR + SegmentVariantModifier)
+            true_ctr = base_ctr + performance_modifier
             
             # Clamp between 0.0 and 1.0 (CTR cannot be negative or > 1)
             true_ctr = max(0.0, min(1.0, true_ctr))
             
             true_ctrs_map[segment_id][variant_id] = true_ctr
-
-    # REGRET LOGIC
     
     cumulative_regret_mab = 0.0
     cumulative_regret_uniform = 0.0
     total_impressions = len(impression_log)
 
-    # 1. Pre-calculate Segment-Specific Optimal CTRs and Uniform Baseline CTRs
+    # Pre-calculate Segment-Specific Optimal CTRs and Uniform Baseline CTRs
     segment_optimum_ctrs: Dict[int, float] = {}
     segment_average_ctrs: Dict[int, float] = {}
     
@@ -259,7 +265,7 @@ def generate_regret_summary_segmented (
         segment_optimum_ctrs[segment_id] = max(variant_ctrs.values())
         
         # Uniform Baseline (Average of all variant CTRs for this segment, 
-        # representing random allocation)
+        # representing uniform random allocation)
         segment_average_ctrs[segment_id] = sum(variant_ctrs.values()) / len(variant_ctrs)
         
     # For segmented campaigns, track impressions per segment

@@ -94,7 +94,7 @@ class ReportRequest(BaseModel):
 class SegmentRequest(BaseModel):
     id: int
     name: str
-    segment_ctr_modifier: float
+    segment_ctr_modifier: float # deprecated, don't use
     model_config = {
         "from_attributes": True 
     }

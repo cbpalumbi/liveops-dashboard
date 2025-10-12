@@ -89,14 +89,24 @@ def run_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float
 
 
 
-def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float = 0.02) -> SimulationResult:
-    """Run a segmented MAB campaign locally."""
+def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, delay: float = 0.02) -> 'SimulationResult':
+    """
+    Run a segmented MAB campaign locally.
+    """
     try:
-        dc = db.query(DataCampaign).filter(DataCampaign.id == data_campaign_id).first()
+        # Load DataCampaign and its segment-variant modifiers
+        dc = (
+            db.query(DataCampaign)
+            .options(selectinload(DataCampaign.segment_variant_modifiers)) # Eagerly load the segment variant modifiers
+            .filter(DataCampaign.id == data_campaign_id)
+            .first()
+        )
+        
         if not dc:
             print(f"DataCampaign {data_campaign_id} not found")
-            return
+            return None
 
+        # Load Tutorial and its variants
         query_result = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
         if not query_result:
             print(f"Tutorial not found in local DB")
@@ -110,11 +120,10 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
             for v in tutorial.variants
         }
 
-        # load in the segments 
+        # Load Segment Mix
         statement = (
             select(SegmentMix)
             .where(SegmentMix.id == dc.segment_mix_id)
-            
             .options(
                 selectinload(SegmentMix.entries)
                 .selectinload(SegmentMixEntry.segment)
@@ -122,54 +131,66 @@ def run_segmented_mab_local(data_campaign_id: int, db, impressions: int = 50, de
         )
         
         segment_mix = db.execute(statement).scalar_one_or_none()
+        
+        if not segment_mix:
+             print("Segment Mix not found for this campaign.")
+             return None
 
+        # Create a lookup table for Segment-Variant performance modifiers
+        # Key: (segment_id, variant_id), Value: performance_modifier
+        segment_variant_performance = {
+            (p.segment_id, p.variant_id): p.performance_modifier
+            for p in dc.segment_variant_modifiers
+        }
+        
+        if not segment_variant_performance:
+             print("Warning: Segment Variant Performance modifiers were not configured for this simulation.")
+
+
+        # --- Time Initialization  ---
         if dc.start_time is None:
             print("Simulation doesn't have a start time.")
             return
 
-        if dc.end_time is None:
-            # If end_time isn't defined, calculate it from start_time and duration
-            end_time = dc.start_time + timedelta(minutes=dc.duration)
-        else:
-            end_time = dc.end_time
-
+        end_time = dc.end_time or (dc.start_time + timedelta(minutes=dc.duration))
         duration_timedelta = end_time - dc.start_time
-        if impressions > 1:
-            time_step = duration_timedelta / impressions
-
+        time_step = duration_timedelta / impressions if impressions > 1 else timedelta(minutes=0)
         timestamp = dc.start_time
-
-        segment_ctr_modifiers = {
-            entry.segment.id: entry.segment.segment_ctr_modifier
-            for entry in segment_mix.entries
-        }
-
+        
         for i in range(impressions):
             serve_data = serve_variant_segmented(dc, db)
             variant = serve_data["variant"]
             segment_id = serve_data["segment_id"]
+            
+            variant_json_id = variant.json_id
+            
+            # Apply the segment-variant specific modifier
+            segment_variant_lookup_key = (segment_id, variant_json_id)
+            performance_modifier = segment_variant_performance.get(segment_variant_lookup_key, 0.0)
 
-            # ctr is derived from segment instead of from variant 
-            # TODO: Future work: make the segment a modifer on the ctr instead of a full override
-
-            ctr = base_ctrs[variant.json_id] + segment_ctr_modifiers[segment_id]
+            ctr = base_ctrs[variant_json_id] + performance_modifier
+            ctr = max(0.0, min(1.0, ctr)) # Clamp between 0 and 1
+            
             clicked = random.random() < ctr
             timestamp += time_step
 
-            report_impression(data_campaign_id, variant.json_id, clicked, timestamp, db, segment_id=segment_id)
+            report_impression(data_campaign_id, variant_json_id, clicked, timestamp, db, segment_id=segment_id)
 
             impression_log.append({
-                "variant_id": variant.json_id,
+                "variant_id": variant_json_id,
                 "clicked": int(clicked),
                 "segment_id": segment_id
             })
 
-            #print(f"Impression {i+1}: variant {variant['name']} (id {variant['id']}), "
-            #      f"segment {segment_id}, clicked: {clicked} (CTR={ctr:.2%})")
             if delay > 0:
                 time.sleep(delay)
 
-        return generate_regret_summary_segmented(impression_log, base_ctrs, segment_ctr_modifiers, campaign_type="segmented_mab")
+        return generate_regret_summary_segmented(
+            impression_log, 
+            base_ctrs, 
+            segment_variant_performance, 
+            campaign_type="segmented_mab"
+        )
 
     finally:
         db.close()
