@@ -162,13 +162,13 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
                             value={newSegmentName}
                             onChange={(e) => setNewSegmentName(e.target.value)}
                         />
-                        <p className="pt-3">Modifier:</p>
+                        {/* <p className="pt-3">Modifier:</p>
                         <input
                             type="number"
                             className="w-half p-2 border rounded"
                             value={newSegmentModifier}
                             onChange={(e) => setNewSegmentModifier(e.target.value)}
-                        />
+                        /> */}
                         
                         <button
                             type="button"
