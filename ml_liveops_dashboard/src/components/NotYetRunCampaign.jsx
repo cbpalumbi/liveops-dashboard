@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CampaignDetails from "./CampaignDetails";
+import SegVarCTRModifierEditor from "./SegVarCTRModifierEditor"
 
 export default function NotYetRunCampaign({ campaign }) {
     const [isRunning, setIsRunning] = useState(false);
@@ -122,7 +123,7 @@ export default function NotYetRunCampaign({ campaign }) {
             </button>
             {runError && <p className="text-red-600 mt-2 text-sm">{runError}</p>}
             {runSuccess && <p className="text-green-600 mt-2 text-sm">{runSuccess}</p>}
-            
+            <SegVarCTRModifierEditor campaign={campaign} />
             <CampaignDetails
                 campaign={campaign}
             />

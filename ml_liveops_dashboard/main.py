@@ -25,7 +25,9 @@ from ml_liveops_dashboard.ml_scripts.mab import (
 )
 from ml_liveops_dashboard.run_simulation import simulate_data_campaign
 from ml_liveops_dashboard.simulation_utils import SimulationResult
+from ml_liveops_dashboard.db_utils import clear
 from ml_liveops_dashboard.populate_db_scripts.populate_tutorials import populate as populate_tutorials
+from ml_liveops_dashboard.populate_db_scripts.populate_test_segMAB import populate as populate_test_segMAB
 from ml_liveops_dashboard.populate_db_scripts.populate_example_segment_mix import populate as populate_example_segment_mix
 
 engine = create_engine(DB_PATH, connect_args={"check_same_thread": False})
@@ -33,17 +35,18 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 Base.metadata.create_all(bind=engine)
 
-# --- App ---
-app = FastAPI()
-populate_tutorials(DB_PATH)
-populate_example_segment_mix(DB_PATH)
-
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()        
+        db.close()     
+
+# --- App ---
+app = FastAPI()
+populate_tutorials(DB_PATH)
+#populate_example_segment_mix(DB_PATH)
+populate_test_segMAB(DB_PATH)   
 
 # --- Pydantic models ---
 class CreateDataCampaignRequest(BaseModel):
@@ -65,7 +68,6 @@ class CreateSegmentMixEntryRequest(BaseModel):
 
 class CreateSegmentRequest(BaseModel):
     name: str
-    segment_ctr_modifier: float
     description: Optional[str] = None
 
 class PlayerContext(BaseModel): # Used for contextual MAB campaigns
@@ -94,7 +96,6 @@ class ReportRequest(BaseModel):
 class SegmentRequest(BaseModel):
     id: int
     name: str
-    segment_ctr_modifier: float # deprecated, don't use
     model_config = {
         "from_attributes": True 
     }
@@ -410,7 +411,6 @@ def create_segment(req: CreateSegmentRequest, db: Session = Depends(get_db)):
     new_seg = Segment(
         name=req.name,
         description=req.description,
-        segment_ctr_modifier=req.segment_ctr_modifier,
     )
     db.add(new_seg)
     db.commit()

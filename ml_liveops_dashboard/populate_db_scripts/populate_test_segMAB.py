@@ -58,7 +58,7 @@ def populate(db_path):
             "campaign_type": "SEGMENTED_MAB",
             "duration": 1,
             "segment_mix_id": 1,
-            "start_time": datetime.datetime.now()
+            "start_time": None
         },
         db=session,
     )

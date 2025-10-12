@@ -15,7 +15,6 @@ const SegmentEntry = ({ entry, index }) => (
         <dl className="space-y-1 text-sm pl-2">
             <DetailRow label="Name" value={entry.segment?.name || 'N/A'} />
             <DetailRow label="Percentage" value={`${(entry.percentage).toFixed(0)}%`} />
-            <DetailRow label="CTR Modifier" value={entry.segment?.segment_ctr_modifier.toFixed(2)} />
         </dl>
     </div>
 );
