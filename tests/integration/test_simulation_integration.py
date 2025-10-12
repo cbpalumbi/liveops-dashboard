@@ -27,7 +27,7 @@ def test_segmented_mab_simulation_flow(test_db_session):
     populate_test_segMAB(TESTS_DB_PATH)
 
     # Run simulation
-    TOTAL_IMPRESSIONS = 750
+    TOTAL_IMPRESSIONS = 2000
     # Data Campaign ID is explicitly 1 from the setup script
     result = simulate_data_campaign(1, mode="local", impressions=TOTAL_IMPRESSIONS, db_path=TESTS_DB_PATH)
 
