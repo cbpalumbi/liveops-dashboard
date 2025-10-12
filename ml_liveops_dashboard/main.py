@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session ,selectinload
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 
 from constants import DB_PATH
 from ml_liveops_dashboard.sqlite_models import (
@@ -15,7 +15,8 @@ from ml_liveops_dashboard.sqlite_models import (
     Segment, 
     SimulationResultModel,
     Tutorial,
-    Variant
+    Variant, 
+    SegmentVariantPerformance
 )
 from ml_liveops_dashboard.ml_scripts.mab import (
     report_impression, 
@@ -25,7 +26,6 @@ from ml_liveops_dashboard.ml_scripts.mab import (
 )
 from ml_liveops_dashboard.run_simulation import simulate_data_campaign
 from ml_liveops_dashboard.simulation_utils import SimulationResult
-from ml_liveops_dashboard.db_utils import clear
 from ml_liveops_dashboard.populate_db_scripts.populate_tutorials import populate as populate_tutorials
 from ml_liveops_dashboard.populate_db_scripts.populate_test_segMAB import populate as populate_test_segMAB
 from ml_liveops_dashboard.populate_db_scripts.populate_example_segment_mix import populate as populate_example_segment_mix
@@ -142,7 +142,7 @@ class SegmentVariantPerformanceRequest(BaseModel):
     Defines the performance modifier for a specific Segment-Variant
     interaction within a single simulation run (DataCampaign).
     """
-    id: int
+    id: Optional[int] = None
     segment_id: int
     variant_id: int
     performance_modifier: float 
@@ -206,6 +206,12 @@ class SimulationResultRequest(BaseModel):
 class PatchVariantRequest(BaseModel):
     base_ctr: Optional[float] = Field(None, ge=0.0, le=1.0) # Ensures 0 <= CTR <= 1
     base_params_weights_json: str
+
+class PatchSegmentVariantModifiersRequest(BaseModel):
+    """
+    The incoming payload containing the list of segment variant modifiers to apply.
+    """
+    modifiers: List[SegmentVariantPerformanceRequest]
 
 # --- Endpoint to create a data campaign ---
 @app.post("/data_campaign")
@@ -417,6 +423,52 @@ def create_segment(req: CreateSegmentRequest, db: Session = Depends(get_db)):
     db.refresh(new_seg)
 
     return {"status": "created", "segment_id": new_seg.id}
+
+@app.patch("/campaign/{campaign_id}/modifiers", response_model=DataCampaignRequest)
+def patch_campaign_modifiers(
+    campaign_id: int, 
+    req: PatchSegmentVariantModifiersRequest, 
+    db: Session = Depends(get_db)
+):
+    """
+    Updates or creates SegmentVariantPerformance modifiers for a given campaign.
+    """
+    # Fetch the campaign object
+    campaign = db.query(DataCampaign).filter(DataCampaign.id == campaign_id).first()
+
+    if not campaign:
+        raise HTTPException(status_code=404, detail=f"Campaign with ID {campaign_id} not found")
+
+    # Create a lookup map for existing modifiers for efficient updates
+    existing_modifiers: Dict[Tuple[int, int], SegmentVariantPerformance] = {
+        (mod.segment_id, mod.variant_id): mod 
+        for mod in campaign.segment_variant_modifiers
+    }
+
+    # Iterate through the incoming request data
+    for mod_data in req.modifiers:
+        key = (mod_data.segment_id, mod_data.variant_id)
+        
+        # Check if the modifier exists for this segment/variant pair
+        if key in existing_modifiers:
+            # UPDATE existing modifier
+            existing_mod = existing_modifiers[key]
+            existing_mod.performance_modifier = mod_data.performance_modifier
+            print(f"Updating modifier ID {existing_mod.id} to {mod_data.performance_modifier}")
+        else:
+            # CREATE new modifier record
+            new_mod = SegmentVariantPerformance(
+                campaign_id=campaign_id,
+                segment_id=mod_data.segment_id,
+                variant_id=mod_data.variant_id,
+                performance_modifier=mod_data.performance_modifier,
+            )
+            db.add(new_mod)
+            print(f"Creating new modifier for Segment {mod_data.segment_id}, Variant {mod_data.variant_id}")
+
+    db.commit()
+    db.refresh(campaign)
+    return campaign
 
 @app.post("/run_simulation", response_model=SimulationResult)
 def run_simulation_from_frontend(req: RunSimulationRequest, db: Session = Depends(get_db)):

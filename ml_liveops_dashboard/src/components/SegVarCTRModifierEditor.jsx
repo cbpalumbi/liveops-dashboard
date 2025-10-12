@@ -23,12 +23,20 @@ export default function SegVarCTRModifierEditor({ campaign }) {
     const variants = campaign?.tutorial?.variants || [];
     const isSegmentedMAB = campaign?.campaign_type?.toLowerCase() === 'segmented_mab';
 
-    // Initialize state to hold the modifiers.
-    // The structure will be: { segmentId: { variantId: modifierValue } }
+   // Helper to find the existing modifier for a segment/variant pair
+    const getExistingModifier = (segmentId, variantId) => {
+        const modifier = campaign?.segment_variant_modifiers?.find(mod => 
+            mod.segment_id === segmentId && mod.variant_id === variantId
+        );
+        // Load the existing value or default to '0.00' (no addition)
+        return modifier ? modifier.performance_modifier.toFixed(2) : '0.00'; 
+    };
+
+    // Initialize state by loading existing modifiers from campaign.segment_variant_modifiers
     const initialModifiers = segments.reduce((acc, segment) => {
         acc[segment.id] = variants.reduce((vAcc, variant) => {
-            // TODO: Load current db value here
-            vAcc[variant.id] = '0.00'; 
+            // Load current db value here or default to '0.00'
+            vAcc[variant.id] = getExistingModifier(segment.id, variant.id); 
             return vAcc;
         }, {});
         return acc;
@@ -53,46 +61,41 @@ export default function SegVarCTRModifierEditor({ campaign }) {
         setSaveStatus(''); // Clear status when a change is made
     };
 
-    const handleSave = useCallback(async () => {
+const handleSave = useCallback(async () => {
         setIsSaving(true);
         setSaveStatus('Saving...');
-        console.log('Attempting to save modifiers:', modifiers);
-
-        // --- PLACEHOLDER: Patch Request to Server ---
+        
         const payload = {
-            campaignId: campaign.id,
+            // The endpoint expects a 'modifiers' key containing the list of SegmentVariantPerformanceRequest objects
             modifiers: Object.entries(modifiers).flatMap(([segmentId, variantModifiers]) =>
                 Object.entries(variantModifiers).map(([variantId, modifierValue]) => ({
-                    segment_id: segmentId,
-                    variant_id: variantId,
-                    // Ensure the value is a number for the API, even if the state holds a string
-                    ctr_modifier: parseFloat(modifierValue), 
+                    segment_id: parseInt(segmentId),
+                    variant_id: parseInt(variantId),
+                    performance_modifier: parseFloat(modifierValue), 
                 }))
             )
         };
         
-        console.log('Sending PATCH payload:', payload);
-
+        console.log('Sending PATCH payload to update modifiers:', payload);
+        const endpoint = `http://localhost:8000/campaign/${campaign.id}/modifiers`;     
         try {
-            // Simulate an API call delay
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
-            
-            // Replace with actual fetch call:
-            /*
-            const response = await fetch(`/api/campaigns/${campaign.id}/ctr-modifiers`, {
+            const response = await fetch(endpoint, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to save modifiers.');
+                const errorData = await response.json().catch(() => ({ detail: 'No error message provided.' }));
+                throw new Error(`Failed to save modifiers: ${response.status} - ${errorData.detail}`);
             }
-            */
+            
             setSaveStatus('Modifiers saved successfully!');
         } catch (error) {
             console.error('Save failed:', error);
-            setSaveStatus('Error saving modifiers.');
+            setSaveStatus(`Error saving modifiers: ${error.message.substring(0, 100)}`);
         } finally {
             setIsSaving(false);
         }
@@ -152,15 +155,3 @@ export default function SegVarCTRModifierEditor({ campaign }) {
         </div>
     );
 }
-
-// NOTE on integration:
-// 1. You would import this component: `import CtrModifierEditor from './CtrModifierEditor';`
-// 2. You would place it in your main page component below the Run Simulation button:
-/*
-<div>
-    <NumberImpressionsInput />
-    <RunSimulationButton />
-    <CtrModifierEditor campaign={campaignData} /> // <--- NEW COMPONENT HERE
-    <CampaignDetails campaign={campaignData} />
-</div>
-*/
