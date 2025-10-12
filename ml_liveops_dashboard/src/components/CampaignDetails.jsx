@@ -11,7 +11,7 @@ const DetailRow = ({ label, value }) => (
 // Helper component to display a single Segment Mix Entry
 const SegmentEntry = ({ entry, index }) => (
     <div className="pl-4 border-l-2 border-indigo-200 mt-2">
-        <h4 className="text-md font-semibold text-black">Segment {index + 1}</h4>
+        <h4 className="text-md font-semibold text-black pb-2">Segment {index + 1}</h4>
         <dl className="space-y-1 text-sm pl-2">
             <DetailRow label="Name" value={entry.segment?.name || 'N/A'} />
             <DetailRow label="Percentage" value={`${(entry.percentage).toFixed(0)}%`} />

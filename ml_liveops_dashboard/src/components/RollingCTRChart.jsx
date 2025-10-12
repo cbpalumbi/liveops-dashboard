@@ -40,7 +40,7 @@ export default function RollingCTRChart({ rollingCTRData }) {
         <div>
             <h3 className="text-gray-800 text-xl font-bold mb-3">Rolling CTR</h3>
 
-            <button
+            {/* <button
                 onClick={onPlayClick}
                 className="px-4 py-2 bg-blue-600 text-black rounded mb-2"
             >
@@ -54,7 +54,7 @@ export default function RollingCTRChart({ rollingCTRData }) {
                 value={frame}
                 onChange={onSliderChange}
                 className="w-full mb-4"
-            />
+            /> */}
 
             <LineChart
                 width={700}

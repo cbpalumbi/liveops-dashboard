@@ -67,7 +67,7 @@ export default function ServesPerVariantChart({ impressions, campaignType, segme
         <div>
             <h3 className="text-gray-800 text-xl font-bold mb-3">Variants Served Over Time</h3>
             <ScatterChart
-                width={600}
+                width={700}
                 height={400}
                 margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
                 >
