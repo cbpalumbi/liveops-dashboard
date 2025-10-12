@@ -1,4 +1,5 @@
-# populate_db.py
+# populate_test_segMAB.py
+# Used in tests for segmented MAB
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -58,7 +59,7 @@ def populate(db_path):
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print("Usage: python populate_db.py --mode <dev|test>")
+        print("Usage: python populate_test_segMAB.py --mode <dev|test>")
         sys.exit(1)
 
     # Check mode flag

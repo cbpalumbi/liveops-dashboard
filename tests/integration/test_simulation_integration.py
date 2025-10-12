@@ -3,8 +3,8 @@ from ml_liveops_dashboard.sqlite_models import DataCampaign
 from ml_liveops_dashboard.run_simulation import simulate_data_campaign
 from ml_liveops_dashboard.simulation_utils import SimulationResult
 from ml_liveops_dashboard.sqlite_models import DataCampaign, SegmentMixEntry, Segment
-from ml_liveops_dashboard.populate_db_scripts.populate_db import populate as populate_db 
-from ml_liveops_dashboard.populate_db_scripts.populate_db2 import populate as populate_db2
+from ml_liveops_dashboard.populate_db_scripts.populate_test_segMAB import populate as populate_segMAB 
+from ml_liveops_dashboard.populate_db_scripts.populate_test_MAB import populate as populate_db2
 from constants import TESTS_DB_PATH
 
 def test_mab_simulation_flow():
@@ -22,7 +22,7 @@ def test_segmented_mab_simulation_flow(test_db_session):
     session = test_db_session
 
     # populate DB
-    populate_db(TESTS_DB_PATH)
+    populate_segMAB(TESTS_DB_PATH)
 
     # fetch data campaign
     dc = session.query(DataCampaign).filter(DataCampaign.id == 1).first()

@@ -1,4 +1,5 @@
-# populate_db2.py
+# populate_test_MAB.py
+# Used in tests for MAB
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import datetime
@@ -44,7 +45,7 @@ def populate(db_path):
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print("Usage: python populate_db2.py --mode <dev|test>")
+        print("Usage: python populate_test_MAB.py --mode <dev|test>")
         sys.exit(1)
 
     # Check mode flag

@@ -1,5 +1,5 @@
 # populate_example_segment_mix.py
-# Adds just a segment mix and related segment mix entries and segments. no campaigns.
+# Adds a segment mix and related segment mix entries and segments. No campaigns.
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
