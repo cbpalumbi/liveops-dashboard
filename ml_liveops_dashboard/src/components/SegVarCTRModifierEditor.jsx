@@ -13,7 +13,7 @@ const ModifierInputRow = ({ label, value, onChange }) => (
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="w-24 text-right border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-1"
-            placeholder="e.g., 1.25"
+            placeholder="e.g., 0.25"
         />
     </div>
 );
