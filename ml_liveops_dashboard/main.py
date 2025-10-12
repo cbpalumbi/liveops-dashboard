@@ -136,6 +136,19 @@ class TutorialRequest(BaseModel):
         "from_attributes": True
     }
 
+class SegmentVariantPerformanceRequest(BaseModel):
+    """
+    Defines the performance modifier for a specific Segment-Variant
+    interaction within a single simulation run (DataCampaign).
+    """
+    id: int
+    segment_id: int
+    variant_id: int
+    performance_modifier: float 
+    model_config = {
+        "from_attributes": True
+    }
+
 class DataCampaignRequest(BaseModel):
     id: int
     static_campaign_id: int
@@ -143,8 +156,11 @@ class DataCampaignRequest(BaseModel):
     duration: int
     tutorial_id: int
     tutorial: Optional[TutorialRequest] = None
+
     segment_mix_id: Optional[int] = None
     segment_mix: Optional[SegmentMixRequest] = None
+    segment_variant_modifiers: Optional[List[SegmentVariantPerformanceRequest]] = None
+
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     model_config = {
@@ -301,6 +317,16 @@ def get_data_campaign(data_campaign_id: int, db: Session = Depends(get_db)):
     # Add manually processed fields
     response_data["segment_mix"] = segment_mix_data
     response_data["tutorial"] = tutorial_data
+
+    # Add the segment_variant_modifiers list to the response data
+    if dc.segment_variant_modifiers:
+        modifiers = [
+            SegmentVariantPerformanceRequest.model_validate(modifier) 
+            for modifier in dc.segment_variant_modifiers
+        ]
+        response_data["segment_variant_modifiers"] = modifiers
+    else:
+        response_data["segment_variant_modifiers"] = []
     
     return response_data
 

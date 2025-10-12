@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, JSON, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, JSON, Boolean, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 
@@ -17,6 +17,13 @@ class DataCampaign(Base):
     end_time = Column(DateTime, nullable=True)
 
     simulation_result = relationship("SimulationResultModel", back_populates="campaign", uselist=False)
+
+    # A campaign has many segment-variant performance modifiers
+    segment_variant_modifiers = relationship(
+        "SegmentVariantPerformance", 
+        back_populates="data_campaign", 
+        cascade="all, delete-orphan" # Ensure modifiers are deleted with the campaign
+    )
     
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -122,3 +129,27 @@ class Variant(Base):
     # Base CTR and Contextual Weights
     base_ctr = Column(Float, default=0.0) 
     base_params_weights_json = Column(String, default="{}") # Stored as JSON string
+
+class SegmentVariantPerformance(Base):
+    __tablename__ = "segment_variant_performance"
+    
+    # Primary Key
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Foreign Keys - Identifiers for the relationship
+    # Links the modifier directly to the specific simulation run
+    data_campaign_id = Column(Integer, ForeignKey("data_campaigns.id"), nullable=False)
+    
+    # These link to the Segment and Variant objects that define the context
+    segment_id = Column(Integer, nullable=False)
+    variant_id = Column(Integer, nullable=False)
+    
+    performance_modifier = Column(Float, nullable=False)
+    
+    data_campaign = relationship("DataCampaign", back_populates="segment_variant_modifiers")
+    
+    # A unique constraint to prevent duplicate entries for the same combination
+    __table_args__ = (
+        UniqueConstraint('data_campaign_id', 'segment_id', 'variant_id', 
+                         name='_segment_variant_campaign_uc'),
+    )
