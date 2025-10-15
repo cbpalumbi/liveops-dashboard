@@ -124,7 +124,7 @@ export default function SimulationPage() {
         );
     }
 
-    if (campaign["start_time"] == null) {
+    if (campaign["start_time"] == null || impressions == null || impressions.length === 0) {
         return (
             <NotYetRunCampaign
                 campaign={campaign}
