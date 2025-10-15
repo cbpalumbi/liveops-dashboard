@@ -6,6 +6,7 @@ import ServesPerVariantChart from "../components/ServesPerVariantChart";
 import SegmentedMABComponent from "../components/SegmentedMABComponent";
 import NotYetRunCampaign from "../components/NotYetRunCampaign";
 import CampaignDetails from "../components/CampaignDetails";
+import SimulationResultDetails from "../components/SimulationResultDetails";
 
 export default function SimulationPage() {
 	const { id } = useParams();
@@ -139,7 +140,10 @@ export default function SimulationPage() {
                 <SimulationHeader id={id} campaign={campaign} error={error} />
                 <br></br>
                 <hr></hr>
-                
+                <SimulationResultDetails
+                    campaign={campaign}
+                    simulationResult={simulationResult} 
+                />                
                 <CampaignDetails
                     campaign={campaign}
                 />
@@ -165,6 +169,10 @@ export default function SimulationPage() {
                 <SimulationHeader id={id} campaign={campaign} error={error} />
                 <br></br>
                 <hr></hr>
+                <SimulationResultDetails
+                    campaign={campaign}
+                    simulationResult={simulationResult} 
+                />   
                 <CampaignDetails
                     campaign={campaign}
                 />
