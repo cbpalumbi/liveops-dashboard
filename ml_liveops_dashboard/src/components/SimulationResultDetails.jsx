@@ -28,13 +28,13 @@ const SegmentResult = ({ segmentEntry, resultData, variantNameLookup }) => {
             <dl className="space-y-1 text-sm pt-2">
                 <DetailRow label="Total Impressions" value={formatNumber(totalImpressions)} />
                 <DetailRow label="MAB Regret" value={parseInt(resultData.mab_regret).toFixed(2)} />
-                <DetailRow label="Uniform Regret" value={parseInt(resultData.uniform_regret).toFixed(2)} />
+                <DetailRow label="Uniform Random Regret" value={parseInt(resultData.uniform_regret).toFixed(2)} />
             </dl>
 
             {/* VARIANT DISTRIBUTION WITHIN THIS SEGMENT */}
             {Object.keys(variantCounts).length > 0 && (
                 <div className="pt-3">
-                    <h6 className="font-semibold text-gray-700 text-xs mb-1">Variant Serves:</h6>
+                    <h6 className="font-semibold text-gray-700 text-xs mb-1">Impressions Per Variant</h6>
                     <div className="space-y-1 pl-2">
                         {Object.entries(variantCounts).map(([variantId, count]) => {
                             const percent = ((count / totalImpressions) * 100).toFixed(1);
