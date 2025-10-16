@@ -8,11 +8,12 @@ export default function NotYetRunCampaign({ campaign }) {
     const [runResponse, setRunResponse] = useState(null);
     const [runError, setRunError] = useState(null);
     const [runSuccess, setRunSuccess] = useState(null);
+    const [sentRunText, setSentRunText] = useState(null);
 
     const [impressions, setImpressions] = useState(100); 
 
     async function runCampaign() {
-        
+        setSentRunText(null)
         setRunSuccess(null);
         setRunError(null);
 
@@ -23,6 +24,7 @@ export default function NotYetRunCampaign({ campaign }) {
         }
 
         setIsRunning(true);
+        setSentRunText("Running simulation..."); 
 
         const body = {
             data_campaign_id: campaign["id"],
@@ -48,7 +50,8 @@ export default function NotYetRunCampaign({ campaign }) {
 
             setRunResponse(post_run_simulation_res_json);
             console.log([post_run_simulation_res_json]);
-            setRunSuccess("Success! The simulation is running. The page will now reload.");
+            setRunSuccess("Success! The simulation finished running. The page will now reload.");
+            setSentRunText(null); // Clear running text on success
 
             setTimeout(() => {
                 window.location.reload();
@@ -56,8 +59,9 @@ export default function NotYetRunCampaign({ campaign }) {
 
         } catch (err) {
             setRunError("Could not run simulation. " + err.message);
-            // Re-enable the button on error
+            // Re-enable the button and clear running text on error
             setIsRunning(false);
+            setSentRunText(null);
         }
     }
 
@@ -68,7 +72,7 @@ export default function NotYetRunCampaign({ campaign }) {
             // Style for disabled: turns gray and uses cursor-not-allowed
             ? "bg-gray-400 text-gray-700 cursor-not-allowed"
             // Style for active state 
-            : "bg-blue-500 hover:bg-blue-600 text-black active:bg-blue-700"
+            : "bg-blue-500 hover:bg-blue-600 text-black active:bg-blue-700" // Changed text to white for contrast
         }
     `;
 
@@ -121,8 +125,12 @@ export default function NotYetRunCampaign({ campaign }) {
                 )}
                 <label className="cursor-pointer mb-0">{isRunning ? "Running..." : "Run Simulation"}</label>
             </button>
+            {/* Display loading text immediately */}
+            {sentRunText && <p className="text-black font-medium mt-2 text-sm">{sentRunText}</p>}
+            {/* Error and Success messages */}
             {runError && <p className="text-red-600 mt-2 text-sm">{runError}</p>}
             {runSuccess && <p className="text-green-600 mt-2 text-sm">{runSuccess}</p>}
+
             <SegVarCTRModifierEditor campaign={campaign} />
             <CampaignDetails
                 campaign={campaign}

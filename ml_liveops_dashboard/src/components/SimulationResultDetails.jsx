@@ -18,12 +18,13 @@ const formatNumber = (num) => new Intl.NumberFormat().format(num);
 
 const SegmentResult = ({ segmentEntry, resultData, variantNameLookup }) => {
     const segmentName = segmentEntry?.segment?.name || 'Untitled Segment';
+    const segmentPercentage = segmentEntry?.percentage || 0;
     const totalImpressions = resultData.impressions;
     const variantCounts = resultData.variant_counts || {};
 
     return (
         <div className="pl-4 border-l-2 border-indigo-200 mt-3 bg-white p-2 rounded-lg shadow-sm">
-            <h5 className="text-md font-bold text-indigo-700 pb-2 border-b border-indigo-100">{segmentName}</h5>
+            <h5 className="text-md font-bold text-indigo-700 pb-2 border-b border-indigo-100">{segmentName} ({segmentPercentage}%)</h5>
 
             <dl className="space-y-1 text-sm pt-2">
                 <DetailRow label="Total Impressions" value={formatNumber(totalImpressions)} />
