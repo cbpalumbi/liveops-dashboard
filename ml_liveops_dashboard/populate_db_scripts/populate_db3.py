@@ -2,7 +2,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import sys
-import datetime
+from datetime import datetime, timedelta
 
 from ml_liveops_dashboard.sqlite_models import Base
 from ml_liveops_dashboard.db_utils import insert, print as print_tables
@@ -30,11 +30,11 @@ def populate(db_path):
         "camp",
         {
             "static_campaign_id": 1,  # assuming your static campaign exists
-            "tutorial_id": 1,           # the tutorial you want to test
+            "tutorial_id": 0,           # the tutorial you want to test
             "campaign_type": "CONTEXTUAL_MAB",
             "duration": 1,
             "segment_mix_id": None,  # not used for regular MAB
-            "start_time": datetime.datetime.now() # default for testing
+            "start_time": datetime.now() + timedelta(weeks=1)
         },
     )
 

@@ -47,7 +47,7 @@ const SegmentEntry = ({ entry, index, variants, modifierLookup, showSegmentVaria
                                 
                                 // Format display: show '+' sign for positive additions
                                 const modifierWithSign = modifier >= 0 
-                                    ? `+${modifier.toFixed(2)}` // Show up to 4 decimal places for precision
+                                    ? `+${modifier.toFixed(2)}` 
                                     : `${modifier.toFixed(2)}`;
 
                                 const modifierDisplay = modifierWithSign + ` (Total: ${(variant.base_ctr + modifier).toFixed(2)})`

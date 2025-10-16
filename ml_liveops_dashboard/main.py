@@ -45,8 +45,8 @@ def get_db():
 # --- App ---
 app = FastAPI()
 populate_tutorials(DB_PATH)
-#populate_example_segment_mix(DB_PATH)
-populate_test_segMAB(DB_PATH)   
+# populate_example_segment_mix(DB_PATH)
+# populate_test_segMAB(DB_PATH)   
 
 # --- Pydantic models ---
 class CreateDataCampaignRequest(BaseModel):

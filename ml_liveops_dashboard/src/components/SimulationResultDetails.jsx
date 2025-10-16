@@ -28,8 +28,8 @@ const SegmentResult = ({ segmentEntry, resultData, variantNameLookup }) => {
 
             <dl className="space-y-1 text-sm pt-2">
                 <DetailRow label="Total Impressions" value={formatNumber(totalImpressions)} />
-                <DetailRow label="MAB Regret" value={parseInt(resultData.mab_regret).toFixed(2)} />
-                <DetailRow label="Uniform Random Regret" value={parseInt(resultData.uniform_regret).toFixed(2)} />
+                <DetailRow label="MAB Regret" value={parseFloat(resultData.mab_regret).toFixed(2)} />
+                <DetailRow label="Uniform Random Regret" value={parseFloat(resultData.uniform_regret).toFixed(2)} />
             </dl>
 
             {/* VARIANT DISTRIBUTION WITHIN THIS SEGMENT */}
@@ -99,12 +99,12 @@ export default function SimulationResultDetails({ campaign, simulationResult }) 
                             />
                             <HighlightedDetailRow 
                                 label="MAB Algorithm Regret" 
-                                value={parseInt(simulationResult.cumulative_regret_mab).toFixed(2)}
+                                value={parseFloat(simulationResult.cumulative_regret_mab).toFixed(2)}
                                 colorClass='rgba(191, 219, 254, 0.4)' 
                             />
                             <HighlightedDetailRow 
                                 label="Uniform Random Regret" 
-                                value={parseInt(simulationResult.cumulative_regret_uniform).toFixed(2)}
+                                value={parseFloat(simulationResult.cumulative_regret_uniform).toFixed(2)}
                                 colorClass='rgba(191, 219, 254, 0.4)' // Light blue
                             />
                             <p className="text-xs text-gray-500 pt-1 pl-3">

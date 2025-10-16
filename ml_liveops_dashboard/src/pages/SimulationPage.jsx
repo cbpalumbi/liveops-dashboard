@@ -58,6 +58,7 @@ export default function SimulationPage() {
                         }
                     }
                     console.log("Simulation result is " + simulationResultData);
+                    console.log("Simulation result is " + simulationResultData.cumulative_regret_mab);
 
                 } else {
                     throw new Error("Failed to load simulationResult");
