@@ -247,7 +247,8 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5) ->
 
             # report
             player_context = player_context_json_to_vector(simulated_player_context_string) # TODO: Make variation on this function to accept json dict 
-            
+            player_context.append(1.0) # add 1.0 bias term 
+
             # for each impressions calculate the probability of click based on the true_ctr_vector for the served variant 
                 # and the context vector via a logistic function
             true_ctr = calculate_true_ctr_logistic(np.array(player_context), true_param_vectors[served_variant_id])
@@ -261,6 +262,7 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5) ->
                 "variant_id": served_variant_id,
                 "clicked": int(clicked),
                 "player_context_vector": player_context,
+                "currentLearnedWeights": serve_data["currentLearnedWeights"],
             })
 
         return generate_regret_summary_contextual(impression_log, true_param_vectors)

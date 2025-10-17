@@ -78,24 +78,19 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
     Calculates the true click-through rate (CTR) using a logistic function.
     
     Args:
-        context_vector: A NumPy array representing the player's features.
-        true_param_vector: A NumPy array representing the "true" parameters for a specific tutorial variant.
+        context_vector: A NumPy array representing the player's features (expected to 
+                        include the bias term if the LinUCB model uses one).
+        true_param_vector: A NumPy array representing the "true" parameters for a specific 
+                           tutorial variant (expected to include the true bias weight).
         
     Returns:
         The simulated true CTR, a value between 0 and 1.
     """
-    # Normalize context_vector with L2 norm
-    norm_context = np.linalg.norm(context_vector)
-    normalized_context = context_vector / norm_context if norm_context != 0 else np.zeros_like(context_vector)
     
-    # Normalize true_param_vector with L2 norm
-    norm_param = np.linalg.norm(true_param_vector)
-    normalized_param = true_param_vector / norm_param if norm_param != 0 else np.zeros_like(true_param_vector)
+    dot_product = np.dot(true_param_vector, context_vector)
     
-    # Calculate the dot product of the normalized vectors
-    dot_product = np.dot(normalized_param, normalized_context)
-    
-    # Apply the logistic function to map the result to a probability
+    # Apply the logistic function (sigmoid) to map the logit to a probability [0, 1]
+    # logistic(z) = 1 / (1 + exp(-z))
     true_ctr = 1 / (1 + np.exp(-dot_product))
     
     return true_ctr
@@ -439,6 +434,8 @@ def generate_regret_summary_contextual (
     print(f"\nFinal cumulative regret after {total_impressions} impressions:")
     print(f"  Contextual MAB policy: {cumulative_regret_mab:.3f}")
     print(f"  Uniform random: {cumulative_regret_uniform:.3f}")
+
+    print("Final Learned Weights: ", impression_log[-1]["currentLearnedWeights"])
 
     true_ctrs_summary = {}
     for vid, params in true_param_vectors.items():

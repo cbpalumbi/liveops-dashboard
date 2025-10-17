@@ -304,31 +304,64 @@ def player_context_json_to_vector(ctx_json: str) -> List[float]:
     return vector
 
 class LinUCB: 
-    def __init__(self, n_arms, n_features, alpha=0.05): # alpha controls prioritization of exploration vs exploitation
+    def __init__(self, n_arms, n_features, alpha=0.08):
+        # We assume n_features is the number of external features.
+        # The true dimension (D) will be n_features + 1 (for the bias term).
         self.n_arms = n_arms
-        self.n_features = n_features
+        self.external_n_features = n_features
+        self.n_features = n_features + 1 # +1 for the constant bias term
         self.alpha = alpha
-        self.A = [np.identity(n_features) for _ in range(n_arms)]  # A_i: DxD matrix for each arm
-        self.b = [np.zeros(n_features) for _ in range(n_arms)]  # b_i: Dx1 vector for each arm
+        
+        # Initialize A and b with the augmented dimension (D+1)
+        self.A = [np.identity(self.n_features) for _ in range(n_arms)]
+        self.b = [np.zeros(self.n_features) for _ in range(n_arms)]
+
+    def _add_bias_term(self, context_vector):
+        """Internal helper to append a constant '1' to the context vector."""
+        # Convert the incoming list/array to a NumPy array if it isn't already
+        np_context_vector = np.array(context_vector)
+        # Append the bias term (1.0)
+        return np.append(np_context_vector, 1.0)
 
     def choose_arm(self, context_vector):
-        np_context_vector = np.array(context_vector)
+        # Augment the context vector with the bias term
+        x_t = self._add_bias_term(context_vector)
+        
         p_t = np.zeros(self.n_arms)
         for i in range(self.n_arms):
             A_i_inv = np.linalg.inv(self.A[i])
             theta_i = np.dot(A_i_inv, self.b[i])
             
-            # The LinUCB formula: E[r] + exploration term
-            # E[r] = theta_i^T * x
-            # exploration = alpha * sqrt(x^T * A_i_inv * x)
-            p_t[i] = np.dot(theta_i.T, np_context_vector) + self.alpha * np.sqrt(np.dot(np_context_vector.T, np.dot(A_i_inv, np_context_vector)))
+            # The LinUCB formula uses the augmented vector x_t
+            p_t[i] = np.dot(theta_i.T, x_t) + self.alpha * np.sqrt(
+                np.dot(x_t.T, np.dot(A_i_inv, x_t))
+            )
         
         return np.argmax(p_t)
 
     def update(self, chosen_arm, reward, context_vector):
-        np_context_vector = np.array(context_vector)
-        self.A[chosen_arm] += np.outer(np_context_vector, np_context_vector)
-        self.b[chosen_arm] += reward * np_context_vector
+        # Augment the context vector with the bias term
+        x_t = self._add_bias_term(context_vector)
+        
+        # Update A and b using the augmented vector x_t
+        self.A[chosen_arm] += np.outer(x_t, x_t)
+        self.b[chosen_arm] += reward * x_t
+
+    def get_current_weights(self):
+        """
+        Calculates and returns the CURRENT learned weight vector (theta_hat) for each arm.
+        Note: The last element of each vector is the learned BIAS term.
+        """
+        current_weights = {}
+        for i in range(self.n_arms):
+            try:
+                A_i_inv = np.linalg.inv(self.A[i])
+                theta_i_hat = np.dot(A_i_inv, self.b[i])
+                current_weights[i] = theta_i_hat.tolist()
+            except np.linalg.LinAlgError:
+                # If arm hasn't been pulled enough, return zeros (including the bias term)
+                current_weights[i] = [0.0] * self.n_features
+        return current_weights
 
 linucb_model = None #TODO: persist
 
@@ -348,11 +381,10 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
 
     player_vector = player_context_json_to_vector(player_context)
     n_arms = len(tutorial_variant_ids)
-    n_features = len(player_vector)
 
     # Initialize the model on the first call
     if linucb_model is None:
-        linucb_model = LinUCB(n_arms, n_features)
+        linucb_model = LinUCB(n_arms, 7)
 
     # Choose the best variant based on the context vector
     chosen_arm_index = linucb_model.choose_arm(player_vector)
@@ -362,7 +394,8 @@ def serve_variant_contextual(dc: DataCampaign, db: Session, player_context: Opti
         "data_campaign_id": dc.id,
         "static_campaign_id": dc.static_campaign_id,
         "tutorial_id": dc.tutorial_id,
-        "variant": chosen_variant
+        "variant": chosen_variant,
+        "currentLearnedWeights": json.dumps(linucb_model.get_current_weights()),
     }
 
      
