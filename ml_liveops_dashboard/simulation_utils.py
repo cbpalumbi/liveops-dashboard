@@ -73,25 +73,27 @@ def get_true_params_for_variant(static_campaign, tutorial_id, variant_id):
                     return variant_vector
     raise ValueError("Variant not found")
 
+LOGIT_SCALING_FACTOR = 0.05  
+
 def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: np.ndarray):
     """
     Calculates the true click-through rate (CTR) using a logistic function.
     
-    Args:
-        context_vector: A NumPy array representing the player's features (expected to 
-                        include the bias term if the LinUCB model uses one).
-        true_param_vector: A NumPy array representing the "true" parameters for a specific 
-                           tutorial variant (expected to include the true bias weight).
-        
-    Returns:
-        The simulated true CTR, a value between 0 and 1.
+    The dot product is multiplied by a scaling factor to prevent 
+    CTR saturation near 1.0.
     """
     
+    # 1. Calculate the linear predictor (logit)
     dot_product = np.dot(true_param_vector, context_vector)
     
-    # Apply the logistic function (sigmoid) to map the logit to a probability [0, 1]
-    # logistic(z) = 1 / (1 + exp(-z))
-    true_ctr = 1 / (1 + np.exp(-dot_product))
+    # 2. Apply the scaling factor to reduce the magnitude of the logit
+    scaled_logit = dot_product * LOGIT_SCALING_FACTOR
+    
+    # 3. Apply the logistic function
+    true_ctr = 1 / (1 + np.exp(-scaled_logit))
+    
+    return true_ctr
+
     
     return true_ctr
 
