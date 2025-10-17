@@ -58,7 +58,6 @@ export default function SimulationPage() {
                         }
                     }
                     console.log("Simulation result is " + simulationResultData);
-                    console.log("Simulation result is " + simulationResultData.cumulative_regret_mab);
 
                 } else {
                     throw new Error("Failed to load simulationResult");
@@ -196,6 +195,10 @@ export default function SimulationPage() {
         return (
             <div>
                 <SimulationHeader id={id} campaign={campaign} error={error} />
+                <SimulationResultDetails
+                    campaign={campaign}
+                    simulationResult={simulationResult} 
+                />
                 <CampaignDetails
                     campaign={campaign}
                 />

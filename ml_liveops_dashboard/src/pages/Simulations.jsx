@@ -212,7 +212,7 @@ export default function Simulations() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-      });
+    });
       if (!res.ok) {
         const errData = await res.json();
         throw new Error(errData.detail || `HTTP error ${res.status}`);
@@ -387,7 +387,6 @@ export default function Simulations() {
                 <option value="MAB">Multi-Armed Bandit (MAB)</option>
                 <option value="SEGMENTED_MAB">Segmented MAB</option>
                 <option value="CONTEXTUAL_MAB">Contextual MAB with LinUCB</option>
-                <option value="Random">Random</option>
               </select>
             </div>
             <div>
@@ -407,35 +406,7 @@ export default function Simulations() {
             />
 
             {/* Conditional Fields for CONTEXTUAL_MAB */}
-            {formCampaignType === "CONTEXTUAL_MAB" && (
-              <div className="p-4 border-t border-dashed">
-                <h3 className="text-lg font-semibold mb-2">Contextual MAB Options</h3>
-                <label className="block mb-1 font-semibold" htmlFor="segment-mix-select">
-                  Segment Mix
-                </label>
-                <select
-                  id="segment-mix-select"
-                  className="w-full p-2 border rounded"
-                  value={formSegmentMixId}
-                  onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === 'new') {
-                          setShowMixCreator(true);
-                          setShowForm(false);
-                      } else {
-                          setFormSegmentMixId(value);
-                          setSelectedSegmentMix(segmentMixes.find((mix) => mix.id === formSegmentMixId))
-                      }
-                  }}
-                >
-                  <option value="" disabled>Select a mix or create new</option>
-                  {segmentMixes.map((mix) => (
-                      <option key={mix.id} value={mix.id}>{mix.name}</option>
-                  ))}
-                  <option value="new">-- Add New Mix --</option>
-                </select>
-              </div>
-            )}
+            {/* Nothing for now */}
 
             {/* Submit button and messages */}
             <button

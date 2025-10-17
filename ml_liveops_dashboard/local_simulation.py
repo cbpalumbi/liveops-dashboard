@@ -205,23 +205,20 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5) ->
             print(f"DataCampaign {data_campaign_id} not found")
             return
 
-        static_campaigns = load_static_campaigns()
-        static_campaign = next((c for c in static_campaigns if c["id"] == dc.static_campaign_id), None)
-        if not static_campaign:
-            print("Static campaign for data campaign not found")
-            return
+        tutorial = db.query(Tutorial).options(selectinload(Tutorial.variants)).filter(Tutorial.id == dc.tutorial_id).first()
+        if not tutorial:
+            print(f"Tutorial not found in local DB")
+            return None
 
         impression_log = []
-        tutorial_id = dc.tutorial_id
-
-        static_tutorial_variants_ids = [
-            v["id"] for b in static_campaign["tutorials"] if b["id"] == tutorial_id for v in b["variants"]
-        ]
 
         # instead of determining true ctrs per variant here, i need to determine a 'true param vector' for each variant
         true_param_vectors = {
-            variant_id: np.array(get_true_params_for_variant(static_campaign, tutorial_id, variant_id))
-            for variant_id in static_tutorial_variants_ids
+            v.json_id: np.array([
+                float(x.strip()) 
+                for x in v.base_params_weights_json.strip('{}').split(',')
+            ], dtype=float)
+            for v in tutorial.variants
         }
 
         if dc.start_time is None:

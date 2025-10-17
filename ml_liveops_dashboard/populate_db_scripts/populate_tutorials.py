@@ -53,6 +53,7 @@ def populate(db_path):
                 name=variant_data["name"],
                 color=variant_data["color"],
                 base_ctr=variant_data["base_ctr"],
+                base_params_weights_json="{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}"
             )
             tutorial_obj.variants.append(variant_obj)
         

@@ -12,11 +12,22 @@ export default function TutorialVariant({ variant }) {
         "Playstyle Vector 3: Collector"
     ];
 
+    const parseVectorString = (vectorString) => {
+        return vectorString
+            // Remove the leading and trailing curly braces, and any whitespace
+            .trim()
+            .slice(1, -1) // Removes the first '{' and the last '}'
+            //  Split the remaining string by the comma and optional space
+            .split(',')
+            // Map each resulting string element to a float
+            .map(str => parseFloat(str.trim()));
+    };
+
     // Initialize the context vector. Use variant data or a default if missing/invalid.
     const initialContextVector = useMemo(() => {
         if (variant.base_params_weights_json && typeof variant.base_params_weights_json === 'string') {
             try {
-                const parsedVector = JSON.parse(variant.base_params_weights_json);
+                const parsedVector = parseVectorString(variant.base_params_weights_json);
                 
                 if (Array.isArray(parsedVector) && parsedVector.length === 7) {
                     // Convert all elements to floats 
@@ -27,7 +38,7 @@ export default function TutorialVariant({ variant }) {
             }
         }
         // Fallback to default if the string is missing, invalid, or parsing failed
-        return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+        return [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
     }, [variant.base_params_weights_json]); 
 
     const [trueCtr, setTrueCtr] = useState(variant.base_ctr);
@@ -91,9 +102,11 @@ export default function TutorialVariant({ variant }) {
         setIsSaving(true);
         setFeedback('Saving...');
 
+        const vectorString = validContextVector.join(', ');
+        const formattedVectorString = `{${vectorString}}`;
         const body = {
             base_ctr: ctrValue,
-            base_params_weights_json: JSON.stringify(validContextVector), 
+            base_params_weights_json: formattedVectorString, 
         };
 
         try {
