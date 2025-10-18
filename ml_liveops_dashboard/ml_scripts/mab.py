@@ -295,16 +295,16 @@ def player_context_json_to_vector(ctx_json: str) -> List[float]:
 
     # exclude region and device type because they are not numeric. could add back later but need to convert to enum or something
     vector = [
-        ctx["age"],
-        ctx["sessions_per_day"],
-        ctx["avg_session_length"],
-        ctx["lifetime_spend"],
+        ctx["age_normalized"],
+        ctx["sessions_per_day_normalized"],
+        ctx["avg_session_length_normalized"],
+        ctx["lifetime_spend_normalized"],
     ] + ctx["playstyle_vector"]
 
     return vector
 
 class LinUCB: 
-    def __init__(self, n_arms, n_features, alpha=0.08):
+    def __init__(self, n_arms, n_features, alpha=0.25):
         # We assume n_features is the number of external features.
         # The true dimension (D) will be n_features + 1 (for the bias term).
         self.n_arms = n_arms

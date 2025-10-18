@@ -73,7 +73,7 @@ def get_true_params_for_variant(static_campaign, tutorial_id, variant_id):
                     return variant_vector
     raise ValueError("Variant not found")
 
-LOGIT_SCALING_FACTOR = 0.05  
+LOGIT_SCALING_FACTOR = 0.1
 
 def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: np.ndarray):
     """
