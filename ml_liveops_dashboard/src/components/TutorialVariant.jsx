@@ -25,11 +25,13 @@ export default function TutorialVariant({ variant }) {
 
     // Initialize the context vector. Use variant data or a default if missing/invalid.
     const initialContextVector = useMemo(() => {
+        console.log(variant.name);
+        console.log(variant.base_params_weights_json);
         if (variant.base_params_weights_json && typeof variant.base_params_weights_json === 'string') {
             try {
                 const parsedVector = parseVectorString(variant.base_params_weights_json);
                 
-                if (Array.isArray(parsedVector) && parsedVector.length === 7) {
+                if (Array.isArray(parsedVector) && parsedVector.length === 8) {
                     // Convert all elements to floats 
                     return parsedVector.map(v => parseFloat(v));
                 }
@@ -63,7 +65,7 @@ export default function TutorialVariant({ variant }) {
         const floatValue = parseFloat(value);
         
         // Allow empty string for temporary editing, or valid float between 0 and 1
-        if (value === '' || (floatValue >= 0 && floatValue <= 1)) {
+        if (value === '' || (floatValue >= -1 && floatValue <= 1)) {
             setContextVector(prev => {
                 const newVector = [...prev];
                 newVector[index] = value === '' ? '' : floatValue;
@@ -71,7 +73,7 @@ export default function TutorialVariant({ variant }) {
             });
             setFeedback('');
         } else {
-            setFeedback('Context weights must be between 0 and 1.0.');
+            setFeedback('Context weights must be between -1.0 and 1.0.');
         }
     };
 
@@ -92,8 +94,8 @@ export default function TutorialVariant({ variant }) {
         const validContextVector = [];
         for (const val of contextVector) {
             const floatVal = parseFloat(val);
-            if (floatVal < 0 || floatVal > 1 || isNaN(floatVal)) {
-                setFeedback('One or more context weights are invalid (must be 0 to 1).');
+            if (floatVal < -1 || floatVal > 1 || isNaN(floatVal)) {
+                setFeedback('One or more context weights are invalid (must be -1 to 1).');
                 return;
             }
             validContextVector.push(floatVal);

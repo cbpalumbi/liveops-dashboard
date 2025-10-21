@@ -17,12 +17,6 @@ NORMALIZATION_RANGES = {
     "lifetime_spend": {"min": 0, "max": 20.0},
 }
 
-
-def generate_playstyle_vector(dim=3):
-    """Generate a normalized playstyle vector using Dirichlet distribution."""
-    return np.random.dirichlet(np.ones(dim)).round(3).tolist()
-
-
 def normalize_value(key: str, value: float) -> float:
     """Applies Min-Max scaling to a single numerical value based on predefined ranges."""
     if key not in NORMALIZATION_RANGES:
@@ -42,25 +36,36 @@ def normalize_value(key: str, value: float) -> float:
     return (clamped_value - min_val) / (max_val - min_val)
 
 
+def generate_playstyle_vector(dim=3):
+    """Generate a normalized playstyle vector using Dirichlet distribution."""
+    return np.random.dirichlet(np.ones(dim)).round(3).tolist()
+
 def generate_player(player_id: int):
     """
     Generates a player profile and normalizes all numerical features to [0, 1].
     """
-    # --- 1. Generate raw values ---
-    raw_session_length = int(np.random.normal(20, 10))
+    # --- Generate raw values ---
+    raw_session_length = int(np.clip(np.random.normal(20, 10), 5, 60))
+
+    sessions_per_day = max(1, int(np.random.poisson(2)))
+
+    # Incorporate sessions per day into lifetime spend so more active players are more likely to spend more
+    lifetime_spend = round(
+        max(0, np.random.exponential(3 + 0.5 * sessions_per_day)), 2
+    )
     
     player_data = {
         "player_id": player_id,
         "age": random.randint(13, 50),
         "region": random.choice(REGIONS),
         "device_type": random.choice(DEVICES),
-        "sessions_per_day": max(1, int(np.random.poisson(2))),
-        "avg_session_length": max(0, raw_session_length), # Ensure non-negative
-        "lifetime_spend": round(max(0, np.random.exponential(5)), 2),
+        "sessions_per_day": sessions_per_day,
+        "avg_session_length": raw_session_length, 
+        "lifetime_spend": lifetime_spend,
         "playstyle_vector": generate_playstyle_vector(),
     }
     
-    # --- 2. Normalize numerical fields ---
+    # --- Normalize numerical fields ---
     
     # Age
     player_data["age_normalized"] = normalize_value("age", player_data["age"])
@@ -74,7 +79,6 @@ def generate_player(player_id: int):
     # Lifetime Spend
     player_data["lifetime_spend_normalized"] = normalize_value("lifetime_spend", player_data["lifetime_spend"])
     
-    # --- 3. Return the complete dictionary (including normalized and categorical data) ---
     return player_data
 
 def main():

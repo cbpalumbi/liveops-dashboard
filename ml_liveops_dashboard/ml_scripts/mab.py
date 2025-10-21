@@ -304,7 +304,7 @@ def player_context_json_to_vector(ctx_json: str) -> List[float]:
     return vector
 
 class LinUCB: 
-    def __init__(self, n_arms, n_features, alpha=0.25):
+    def __init__(self, n_arms, n_features, alpha=0.5):
         # We assume n_features is the number of external features.
         # The true dimension (D) will be n_features + 1 (for the bias term).
         self.n_arms = n_arms
