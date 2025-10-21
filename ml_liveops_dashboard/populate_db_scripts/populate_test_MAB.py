@@ -23,7 +23,7 @@ def populate(db_path):
     import ml_liveops_dashboard.db_utils as db_utils
     db_utils.session = session
 
-    populate_tutorials(db_path)
+    populate_tutorials(db_path, "ml_liveops_dashboard/data/test_MAB_tutorials.json")
 
     # --- Insert data campaign ---
     insert(

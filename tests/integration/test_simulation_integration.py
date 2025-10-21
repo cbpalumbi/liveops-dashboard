@@ -2,6 +2,7 @@ from ml_liveops_dashboard.run_simulation import simulate_data_campaign
 from ml_liveops_dashboard.simulation_utils import SimulationResult
 from ml_liveops_dashboard.populate_db_scripts.populate_test_segMAB import populate as populate_test_segMAB 
 from ml_liveops_dashboard.populate_db_scripts.populate_test_MAB import populate as populate_test_MAB
+from ml_liveops_dashboard.populate_db_scripts.populate_test_contextualMAB import populate as populate_test_contextualMAB
 from constants import TESTS_DB_PATH
 
 def test_mab_simulation_flow():
@@ -78,3 +79,21 @@ def test_segmented_mab_simulation_flow(test_db_session):
     assert v2_count_other > 2 * v1_count_other, \
         f"Segment {SEGMENT_ID_OTHER} should favor Variant {VARIANT_ID_V2} (Optimal: 0.25 CTR)."
 
+
+def test_contextual_bandit_simulation_flow(test_db_session):
+     
+    populate_test_contextualMAB(TESTS_DB_PATH)
+    TOTAL_IMPRESSIONS = 5000
+    # Data Campaign ID is explicitly 1 from the setup script
+    result = simulate_data_campaign(1, mode="local", impressions=TOTAL_IMPRESSIONS, db_path=TESTS_DB_PATH)
+    # Basic Assertions
+    assert isinstance(result, SimulationResult)
+    assert len(result.impression_log) == TOTAL_IMPRESSIONS
+    assert result.campaign_type == "contextual_mab"
+
+    assert result.cumulative_regret_mab < 0.8 * result.cumulative_regret_uniform, \
+        "Overall Contextual MAB regret must be significantly lower than Uniform Random regret."
+
+    final_learned_weights =  result.impression_log[-1]["currentLearnedWeights"]
+
+    

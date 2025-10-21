@@ -21,7 +21,7 @@ def populate(db_path):
     # --- Create all tables from Base ---
     Base.metadata.create_all(engine)
 
-    populate_tutorials(db_path)
+    populate_tutorials(db_path, "ml_liveops_dashboard/data/test_segMAB_tutorials.json")
 
     # --- Clear segment-related tables first ---
     clear("segment_mixes", db=session)

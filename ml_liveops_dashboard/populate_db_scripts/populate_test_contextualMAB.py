@@ -1,4 +1,4 @@
-# populate_db3.py
+# populate_test_contextualMAB.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import sys
@@ -23,7 +23,7 @@ def populate(db_path):
     import ml_liveops_dashboard.db_utils as db_utils
     db_utils.session = session
 
-    populate_tutorials(db_path)
+    populate_tutorials(db_path, "ml_liveops_dashboard/data/test_contextualMAB_tutorials.json")
 
     # --- Insert data campaign ---
     insert(
@@ -33,7 +33,7 @@ def populate(db_path):
             "tutorial_id": 0,           # the tutorial you want to test
             "campaign_type": "CONTEXTUAL_MAB",
             "duration": 1,
-            "segment_mix_id": None,  # not used for regular MAB
+            "segment_mix_id": None,  # not used for contextual MAB
             "start_time": datetime.now() + timedelta(weeks=1)
         },
     )

@@ -1,0 +1,55 @@
+[
+  {
+    "name": "First Time User Experience",
+    "id": 1,
+    "tutorials": [
+      {
+        "title": "Guided Tutorial",
+        "id": 0,
+        "variants": [
+          { 
+            "id": 1,  
+            "name": "Option A: 5 Hints",
+            "base_ctr": 0.10,
+            "color": "bg-teal-400",
+            "base_params_weights_json": "{0.1, 0.4, 0.3, 0.2, -0.4, 0.8, 0.0, 1.0}" 
+          },
+          { 
+            "id": 2, 
+            "name": "Option B: 10 Hints",
+            "base_ctr": 0.20, 
+            "color": "bg-pink-400",
+            "base_params_weights_json": "{0.1, -0.2, 0.0, 0.0, 0.8, -0.5, 0.2, 1.0}"
+          }
+        ]
+      },
+      {
+        "title": "Open-Ended Tutorial",
+        "id": 1,
+        "variants": [
+          { 
+            "id": 1, 
+            "name": "Option A: 3 Minutes Intended Completion Time",
+            "base_ctr": 0.10, 
+            "color": "bg-red-400",
+            "base_params_weights_json": "{-0.2, -0.3, -0.3, -0.1, 1.0, -0.3, 0.0, 1.0}"
+          },
+          { 
+            "id": 2, 
+            "name": "Option B: 5 Minutes Intended Completion Time", 
+            "base_ctr": 0.20,
+            "color": "bg-yellow-400",
+            "base_params_weights_json": "{0.0, 0.1, 0.0, 0.1, 0.3, 0.4, 0.2, 1.0}"
+          },
+          { 
+            "id": 3, 
+            "name": "Option C: 10 Minutes Intended Completion Time", 
+            "base_ctr": 0.30,
+            "color": "bg-indigo-400",
+            "base_params_weights_json": "{0.2, 0.3, 0.4, 0.3, -0.6, 0.8, 0.2, 1.0}"
+          }
+        ]
+      }
+    ]
+  }
+]

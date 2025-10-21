@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 
-from constants import DB_PATH
+from constants import DB_PATH, DEV_CAMPAIGNS_JSON_PATH
 from ml_liveops_dashboard.sqlite_models import (
     Base, 
     DataCampaign,
@@ -44,9 +44,7 @@ def get_db():
 
 # --- App ---
 app = FastAPI()
-populate_tutorials(DB_PATH)
-# populate_example_segment_mix(DB_PATH)
-# populate_test_segMAB(DB_PATH)   
+populate_tutorials(DB_PATH, DEV_CAMPAIGNS_JSON_PATH)
 
 # --- Pydantic models ---
 class CreateDataCampaignRequest(BaseModel):

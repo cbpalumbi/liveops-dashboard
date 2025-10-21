@@ -9,8 +9,8 @@ from ml_liveops_dashboard.sqlite_models import Base, Tutorial, Variant
 from ml_liveops_dashboard.db_utils import clear
 from constants import DB_PATH, TESTS_DB_PATH
 
-def populate(db_path):
-    """Populates the database with the tutorials and variants defined in static_tutorials.json"""
+def populate(db_path, tutorials_source):
+    """Populates the database with the tutorials and variants defined the source json file"""
     
     # --- SQLAlchemy Engine and Session Setup ---
     engine = create_engine(db_path, echo=False)  
@@ -19,8 +19,11 @@ def populate(db_path):
     
     # --- Create all tables from Base ---
     Base.metadata.create_all(engine)
+    
+    # TODO: Add some error checking around tutorials_source
 
-    with open("ml_liveops_dashboard/data/static_tutorials.json", "r", encoding="utf-8") as f:
+    # dev is "ml_liveops_dashboard/data/static_tutorials.json"
+    with open(tutorials_source, "r", encoding="utf-8") as f:
         CAMPAIGN_DATA = json.load(f)
 
     print("\n--- POPULATE TUTORIALS: Inserting Tutorial and Variant Definitions ---")
@@ -65,21 +68,28 @@ def populate(db_path):
     
 if __name__ == "__main__":
 
-    if len(sys.argv) < 2:
-        print("Usage: python populate_tutorials.py --mode <dev|test>")
+    if len(sys.argv) < 4:
+        print("Usage: python populate_tutorials.py --mode <dev|test> --source <path to .json>")
         sys.exit(1)
 
     # Check mode flag
     if sys.argv[1] != "--mode":
-        print("First argument must be --mode")
+        print("First argument must be --mode flag")
         sys.exit(1)
 
     mode = sys.argv[2].lower()
     if mode not in ("dev", "test"):
         print("Mode must be either 'dev' or 'test'")
         sys.exit(1)
+
+    # Check source flag
+    if sys.argv[3] != "--source":
+        print("Third argument must be --source flag")
+        sys.exit(1)
+
+    source = sys.argv[4]
     
     if mode == "dev":
-        populate(DB_PATH)
+        populate(DB_PATH, source)
     else:
-        populate(TESTS_DB_PATH)
+        populate(TESTS_DB_PATH, source)

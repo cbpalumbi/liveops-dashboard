@@ -423,8 +423,8 @@ def generate_regret_summary_contextual (
         uniform_regret = optimal_ctr - expected_uniform_ctr
         cumulative_regret_uniform += uniform_regret
 
-        if i % 10 == 0 or i == total_impressions:
-            print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
+        #if i % 10 == 0 or i == total_impressions:
+        #    print(f"Impression {i}: Cumulative regret MAB = {cumulative_regret_mab:.3f}, Uniform = {cumulative_regret_uniform:.3f}")
 
     # --- 5. Generate final summary metrics ---
     variant_ids = [entry["variant_id"] for entry in impression_log]
