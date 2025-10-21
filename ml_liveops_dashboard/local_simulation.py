@@ -22,7 +22,8 @@ from ml_liveops_dashboard.simulation_utils import (
     generate_regret_summary_contextual, 
     load_static_campaigns, 
     get_true_params_for_variant, 
-    calculate_true_ctr_logistic
+    calculate_true_ctr_logistic,
+    calculate_true_ctr_linear
 )
 from ml_liveops_dashboard.sqlite_models import DataCampaign, Tutorial, SegmentMix, SegmentMixEntry
 from ml_liveops_dashboard.generate_fake_players import generate_player
@@ -250,8 +251,8 @@ def run_contextual_mab_local(data_campaign_id: int, db, impressions: int = 5) ->
             player_context.append(1.0) # add 1.0 bias term 
 
             # for each impressions calculate the probability of click based on the true_ctr_vector for the served variant 
-                # and the context vector via a logistic function
-            true_ctr = calculate_true_ctr_logistic(np.array(player_context), true_param_vectors[served_variant_id])
+                # and the context vector via a linear functions (in line with Linear UCB model)
+            true_ctr = calculate_true_ctr_linear(np.array(player_context), true_param_vectors[served_variant_id])
             
             # simulate click event
             clicked = random.random() < true_ctr

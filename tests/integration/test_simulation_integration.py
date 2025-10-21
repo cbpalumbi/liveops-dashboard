@@ -5,6 +5,10 @@ from ml_liveops_dashboard.populate_db_scripts.populate_test_MAB import populate 
 from ml_liveops_dashboard.populate_db_scripts.populate_test_contextualMAB import populate as populate_test_contextualMAB
 from constants import TESTS_DB_PATH
 
+import numpy as np
+import re
+import json
+
 def test_mab_simulation_flow():
     
     populate_test_MAB(TESTS_DB_PATH)
@@ -94,6 +98,5 @@ def test_contextual_bandit_simulation_flow(test_db_session):
     assert result.cumulative_regret_mab < 0.8 * result.cumulative_regret_uniform, \
         "Overall Contextual MAB regret must be significantly lower than Uniform Random regret."
 
+    #TODO: Add assertions around learned weights
     final_learned_weights =  result.impression_log[-1]["currentLearnedWeights"]
-
-    

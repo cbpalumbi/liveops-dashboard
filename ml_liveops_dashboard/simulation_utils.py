@@ -83,19 +83,41 @@ def calculate_true_ctr_logistic(context_vector: np.ndarray, true_param_vector: n
     CTR saturation near 1.0.
     """
     
-    # 1. Calculate the linear predictor (logit)
+    # Calculate the linear predictor (logit)
     dot_product = np.dot(true_param_vector, context_vector)
     
-    # 2. Apply the scaling factor to reduce the magnitude of the logit
+    # Apply the scaling factor to reduce the magnitude of the logit
     scaled_logit = dot_product * LOGIT_SCALING_FACTOR
     
-    # 3. Apply the logistic function
+    # Apply the logistic function
     true_ctr = 1 / (1 + np.exp(-scaled_logit))
     
     return true_ctr
 
-    
+def calculate_true_ctr_linear(context_vector: np.ndarray, true_param_vector: np.ndarray):
+    """
+    Calculates the true CTR using a *linear* model, clipped to [0,1].
+
+    This aligns with LinUCB's assumptions (expected reward = θᵀx).
+    It still includes a base rate and mild noise for realism.
+    """
+    # Compute raw linear score
+    score = np.dot(true_param_vector, context_vector)
+
+    # add a small random noise term for realism
+    score += np.random.normal(0, 0.02)
+
+    # Center and scale the score to typical CTR range (e.g., around 0.1–0.3)
+    # You can tune the base (intercept) and scaling factor as you like.
+    base_ctr = 0.15  # global average CTR
+    scale = 0.15     # how much variance features contribute
+    true_ctr = base_ctr + scale * score
+
+    # Clip to [0, 1] to stay valid
+    true_ctr = np.clip(true_ctr, 0.0, 1.0)
+
     return true_ctr
+
 
 def load_static_campaigns():
     with open("ml_liveops_dashboard/data/static_tutorials.json", "r", encoding="utf-8") as f:

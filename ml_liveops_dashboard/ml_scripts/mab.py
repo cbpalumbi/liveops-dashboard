@@ -316,7 +316,7 @@ class LinUCB:
         self.A = [np.identity(self.n_features) for _ in range(n_arms)]
         self.b = [np.zeros(self.n_features) for _ in range(n_arms)]
 
-    def _add_bias_term(self, context_vector):
+    def add_bias_term(self, context_vector):
         """Internal helper to append a constant '1' to the context vector."""
         # Convert the incoming list/array to a NumPy array if it isn't already
         np_context_vector = np.array(context_vector)
@@ -325,7 +325,7 @@ class LinUCB:
 
     def choose_arm(self, context_vector):
         # Augment the context vector with the bias term
-        x_t = self._add_bias_term(context_vector)
+        x_t = self.add_bias_term(context_vector)
         
         p_t = np.zeros(self.n_arms)
         for i in range(self.n_arms):
@@ -341,7 +341,7 @@ class LinUCB:
 
     def update(self, chosen_arm, reward, context_vector):
         # Augment the context vector with the bias term
-        x_t = self._add_bias_term(context_vector)
+        x_t = self.add_bias_term(context_vector)
         
         # Update A and b using the augmented vector x_t
         self.A[chosen_arm] += np.outer(x_t, x_t)
