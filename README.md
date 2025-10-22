@@ -21,7 +21,9 @@ The platform dynamically allocates traffic to the best-performing content varian
 - Data-Driven Visualization: A modern frontend provides a clear, real-time dashboard view of campaign performance, showing variant traffic allocation, cumulative rewards, and overall metrics.
 - API-First Design: The simulation engine is built with an API-first approach, allowing for easy extension into a production environment where real-world products could hook into the platform's decision-making service.
 
-
+<hr></hr>
 <img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/tutorials.PNG?raw=true" width="500px"/>
+<hr></hr>
 <img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/config.PNG?raw=true" width="500px"/>
+<hr></hr>
 <img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/graphs.PNG?raw=true" width="500px"/>
