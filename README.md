@@ -23,6 +23,6 @@ The platform dynamically allocates traffic to the best-performing content varian
 - API-First Design: The simulation engine is built with an API-first approach, allowing for easy extension into a production environment where real-world products could hook into the platform's decision-making service.
 
 
-<img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/frontend.PNG?raw=true" width="500px"/>
-<img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/simulation.PNG?raw=true" width="500px"/>
-<img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/db.PNG?raw=true" width="500px"/>
+<img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/tutorials.PNG?raw=true" width="500px"/>
+<img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/config.PNG?raw=true" width="500px"/>
+<img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/graphs.PNG?raw=true" width="500px"/>
