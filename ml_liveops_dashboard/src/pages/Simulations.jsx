@@ -97,42 +97,62 @@ export default function Simulations() {
     fetchDataCampaigns();
   }, [submitSuccess]);
 
-  async function handleNewMixCreated (newMix) {
+async function handleNewMixCreated (newMix) {
     setSubmitSegmentMixSuccess(null);
-    // Add new segment mix and get back the segment mix id.
-    // Then add the correct segment mix entries and pass in that segment mix id
-    const body = {
-      name: newMix.name
-    };
+    setSubmitError(null); // Clear previous errors
+
+    const mixBody = { name: newMix.name };
 
     let create_segment_mix_res = null;
     let create_seg_mix_res_json = null;
-    try {
-      create_segment_mix_res = await fetch("http://localhost:8000/segment_mix", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      create_seg_mix_res_json = await create_segment_mix_res.json();
-      if (!create_segment_mix_res.ok) {
-        throw new Error(create_seg_mix_res.detail || `HTTP error ${create_segment_mix_res.status}`);
-      }
-      setSubmitSegmentMixSuccess(true);
-      setShowMixCreator(false);
-      setShowForm(true);
-    } catch (err) {
-      setSubmitError("Could not create new segment mix.");
-    }
-    newMix.entries.forEach(entry => {
-      const segMixEntryBody = {
-        segment_mix_id: create_seg_mix_res_json["segment_mix_id"],
-        segment_id: entry.segment.id,
-        percentage: entry.percentage
-      }
-      postSegMixEntry(segMixEntryBody);
-    });
+    let newMixId;
 
-  }
+    try {
+        create_segment_mix_res = await fetch("http://localhost:8000/segment_mix", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(mixBody),
+        });
+        
+        create_seg_mix_res_json = await create_segment_mix_res.json();
+        if (!create_segment_mix_res.ok) {
+            throw new Error(create_seg_mix_res_json.detail || `HTTP error ${create_segment_mix_res.status}`);
+        }
+        newMixId = create_seg_mix_res_json["segment_mix_id"];
+
+        const newSegmentMix = {
+            id: newMixId,
+            name: newMix.name,
+            entries: newMix.entries.map(entry => ({
+                segment_mix_id: newMixId,
+                segment_id: entry.segment.id,
+                percentage: entry.percentage,
+                segment: entry.segment 
+            }))
+        };
+
+        setSegmentMixes(prevMixes => [...prevMixes, newSegmentMix]);
+        setFormSegmentMixId(newMixId); // Auto-select the new mix
+
+        const postPromises = newMix.entries.map(entry => {
+            const segMixEntryBody = {
+                segment_mix_id: newMixId,
+                segment_id: entry.segment.id,
+                percentage: entry.percentage
+            }
+            return postSegMixEntry(segMixEntryBody); 
+        });
+
+        await Promise.all(postPromises);
+
+        setSubmitSegmentMixSuccess(true);
+        setShowMixCreator(false);
+        setShowForm(true);
+
+    } catch (err) {
+        setSubmitError(`Could not create new segment mix: ${err.message}`);
+    }
+}
 
   async function postSegMixEntry(body) {
     try {
@@ -176,7 +196,7 @@ export default function Simulations() {
         setSubmitSegmentSuccess(true);
         return resJson.segment_id;
       } catch (err) {
-        setSubmitError("Could not create new segment.");
+          setSubmitError("Could not create new segment.");
         return null;
       }
   }
@@ -386,7 +406,7 @@ export default function Simulations() {
               >
                 <option value="MAB">Multi-Armed Bandit (MAB)</option>
                 <option value="SEGMENTED_MAB">Segmented MAB</option>
-                <option value="CONTEXTUAL_MAB">Contextual MAB with LinUCB</option>
+                {/* <option value="CONTEXTUAL_MAB">Contextual MAB with LinUCB</option> */}
               </select>
             </div>
             <div>

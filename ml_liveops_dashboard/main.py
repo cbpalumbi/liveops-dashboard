@@ -456,7 +456,7 @@ def patch_campaign_modifiers(
         else:
             # CREATE new modifier record
             new_mod = SegmentVariantPerformance(
-                campaign_id=campaign_id,
+                data_campaign_id=campaign_id,
                 segment_id=mod_data.segment_id,
                 variant_id=mod_data.variant_id,
                 performance_modifier=mod_data.performance_modifier,

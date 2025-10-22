@@ -196,15 +196,15 @@ export default function TutorialVariant({ variant }) {
                 </div>
                 
                 {/* Toggle Button for Context Vector Menu */}
-                <button
+                {/* <button
                     onClick={toggleContextVectorMenu}
                     className="mt-4 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition ease-in-out duration-150 bg-gray-200 text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
                 >
                     {showContextVectorMenu ? 'Hide True Feature Weights' : 'Modify True Feature Weights'}
-                </button>
+                </button> */}
                 
                 {/* Context Vector Input Menu (Conditionally Rendered) */}
-                {showContextVectorMenu && (
+                {/* {showContextVectorMenu && (
                     <div className="p-4 mt-4 bg-white border border-gray-200 rounded-lg shadow-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <p className="col-span-full text-md font-semibold text-gray-700 mb-2">Feature Weight (0.0 - 1.0)</p>
                         {contextLabels.map((label, index) => (
@@ -225,7 +225,7 @@ export default function TutorialVariant({ variant }) {
                             </div>
                         ))}
                     </div>
-                )}
+                )} */}
                 
                 {/* Feedback/Error Display */}
                 {feedback && (

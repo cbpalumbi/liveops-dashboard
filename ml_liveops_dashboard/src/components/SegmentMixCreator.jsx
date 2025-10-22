@@ -118,7 +118,7 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
                         >
                             <option value="">Select Segment</option>
                             {segments.map(s => (
-                                <option key={s.id} value={s.id}>{s.name} (modifier +{s.segment_ctr_modifier}%)</option>
+                                <option key={s.id} value={s.id}>{s.name}</option>
                             ))}
                         </select>
                     </div>
@@ -185,7 +185,7 @@ export default function SegmentMixCreator({ segments, onSave, onCancel, onAddNew
                     <ul className="list-disc list-inside space-y-1">
                         {newEntries.map((entry, index) => (
                             <li key={index} className="flex justify-between items-center text-gray-700">
-                                <span>{entry.segment.name} (modifier: +{entry.segment.segment_ctr_modifier}%): {entry.percentage}%</span>
+                                <span>{entry.segment.name}: {entry.percentage}%</span>
                                 <button 
                                     type="button"
                                     onClick={() => handleRemoveEntry(index)} 

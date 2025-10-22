@@ -199,6 +199,9 @@ export default function SimulationPage() {
                     campaign={campaign}
                     simulationResult={simulationResult} 
                 />
+                <RollingCTRChart 
+                    rollingCTRData={rollingCTRData}
+                />
                 <CampaignDetails
                     campaign={campaign}
                 />
