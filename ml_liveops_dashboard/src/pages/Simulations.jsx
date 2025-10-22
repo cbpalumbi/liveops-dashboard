@@ -316,8 +316,8 @@ async function handleNewMixCreated (newMix) {
                 <ul className="list-disc list-inside">
                   {selectedSegmentMix.entries.map((entry, index) => (
                     <li key={index} className="text-sm">
-                      <span className="text-gray-700">{entry.segment.name} (modifier: +{entry.segment.segment_ctr_modifier}% )</span>: 
-                      <span className="font-bold ml-1">{entry.percentage}%</span>
+                      <span className="font-bold text-gray-700">{entry.segment.name}</span>: 
+                      <span className="font-semibold ml-1">{entry.percentage}%</span>
                     </li>
                   ))}
                 </ul>
