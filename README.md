@@ -1,6 +1,5 @@
-**WORK IN PROGRESS**
+## **LiveOps Optimization Dashboard: Multi-Armed Bandit A/B Testing Platform** 
 
-**LiveOps Optimization Dashboard: Multi-Armed Bandit A/B Testing Platform** 
 This project is a full-stack, end-to-end LiveOps dashboard designed to automate and optimize the decision-making process for in-game content releases. It is intended to be a data sandbox and a demonstration of how machine learning (ML) can improve upon manual A/B testing, driving superior business outcomes like higher tutorial completion rates.
 
 The tool allows a user to set up content variants, create a new campaign, and then run simulations of various machine learning algorithms to optimize tutorial completion rate.
@@ -14,7 +13,7 @@ The platform dynamically allocates traffic to the best-performing content varian
 **ML Algorithms:** Multi-Armed Bandit (MAB), Segmented MAB. Algorithms implemented from scratch in Python (no machine learning libraries).
 
 **Key Features and Capabilities** 
-- Dynamic Campaign Management: Users can configure and launch new optimization campaigns, defining content variants, setting simulation parameters, and specifying ground-truth performance.
+- Dynamic Campaign Management: Users can configure and launch new simulated campaigns, defining content variants, setting simulation parameters, and specifying ground-truth performance.
 
 - Automated Optimization Strategies: The tool implements and visualizes the performance of two distinct machine learning strategies:
     - Standard Multi-Armed Bandit (MAB): Dynamically identifies and exploits the single highest-performing content variant.
