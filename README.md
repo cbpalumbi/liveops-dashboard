@@ -1,16 +1,27 @@
 **WORK IN PROGRESS**
 
-**Full-stack live-ops dashboard** that uses machine learning techniques like Multi-Armed Bandit (MAB) to automate and optimize A/B testing of in-game content like FTUE (first time user experience / tutorial) variants. 
+**LiveOps Optimization Dashboard: Multi-Armed Bandit A/B Testing Platform** 
+This project is a full-stack, end-to-end LiveOps dashboard designed to automate and optimize the decision-making process for in-game content releases. It is intended to be a data sandbox and a demonstration of how machine learning (ML) can improve upon manual A/B testing, driving superior business outcomes like higher tutorial completion rates.
 
-The tool allows a user to set up content variants, create a new campaign, and then run simulations of various machine learning algorithms to optimize metrics like click through rate. The app also allows for the definition of user segments and true click-through rates. 
+The tool allows a user to set up content variants, create a new campaign, and then run simulations of various machine learning algorithms to optimize tutorial completion rate.
+
+The platform dynamically allocates traffic to the best-performing content variants as the simulation progresses, focusing on the core Multi Armed Bandit principle of exploration vs. exploitation.
 
 **Frontend:** React, Vite, Tailwind CSS, Recharts
 
 **Backend:** Python, FastAPI, SQLite
 
-**ML Algorithms:** Multi-Armed Bandit (MAB), Segmented MAB, Contextual MAB with LinUCB
+**ML Algorithms:** Multi-Armed Bandit (MAB), Segmented MAB. Algorithms implemented from scratch in Python (no machine learning libraries).
 
-The app is built to work in simulation mode, so all the incoming 'player' requests and impressions are simulated. There is also an API mode so real products could easily hook into the program. 
+**Key Features and Capabilities** 
+- Dynamic Campaign Management: Users can configure and launch new optimization campaigns, defining content variants, setting simulation parameters, and specifying ground-truth performance.
+
+- Automated Optimization Strategies: The tool implements and visualizes the performance of two distinct machine learning strategies:
+    - Standard Multi-Armed Bandit (MAB): Dynamically identifies and exploits the single highest-performing content variant.
+    - Segmented MAB: Applies unique MAB policies to distinct, user-defined segments (e.g., region, platform), each with modifiers to tutorial completion rate, maximizing performance across a heterogeneous user base.
+- Data-Driven Visualization: A modern frontend provides a clear, real-time dashboard view of campaign performance, showing variant traffic allocation, cumulative rewards, and overall metrics.
+- API-First Design: The simulation engine is built with an API-first approach, allowing for easy extension into a production environment where real-world products could hook into the platform's decision-making service.
+
 
 <img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/frontend.PNG?raw=true" width="500px"/>
 <img src="https://github.com/cbpalumbi/liveops-dashboard/blob/main/readme_images/simulation.PNG?raw=true" width="500px"/>
