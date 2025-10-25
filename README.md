@@ -6,6 +6,8 @@ The tool allows a user to set up content variants, create a new campaign, and th
 
 The platform dynamically allocates traffic to the best-performing content variants as the simulation progresses, focusing on the core Multi Armed Bandit principle of exploration vs. exploitation.
 
+Check out a video here: https://www.youtube.com/watch?v=vEyCZdIfBWY
+
 **Frontend:** React, Vite, Tailwind CSS, Recharts
 
 **Backend:** Python, FastAPI, SQLite
